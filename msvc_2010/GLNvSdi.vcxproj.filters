@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="GLCommon">
+      <UniqueIdentifier>{02cf1416-7983-4913-945f-32f911e73714}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NvSdiApi">
+      <UniqueIdentifier>{4d9e66bc-d0e0-491b-a86e-3a3aba8d0c94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NvSdiApi\Header Files">
+      <UniqueIdentifier>{c5ea0ef5-954b-4100-949c-414cced7389c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NvSdiApi\Source Files">
+      <UniqueIdentifier>{299b3faf-9305-459c-a6bb-6c5efc3858d1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\GLNvSdi\GLNvSdi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLNvSdi\GLNvSdiInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLNvSdi\GLNvSdiOutput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLNvSdi\GLNvSdiUnity3D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLNvSdi\SdiOptions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLNvSdi\SdiPresentFrame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLCommon\ClockTime.cpp">
+      <Filter>GLCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLCommon\GLFbo.cpp">
+      <Filter>GLCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLCommon\Logger.cpp">
+      <Filter>GLCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\Colorbar.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\CommandLine.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\Console.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\digits.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\nvSDIin.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\nvSDIout.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\nvSDIutil.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\platform.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\timecode.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\Timer.cpp">
+      <Filter>NvSdiApi\Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\GLNvSdi\GLNvSdi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLNvSdi\GLNvSdiCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLNvSdi\SdiOptions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLNvSdi\SdiPresentFrame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\ClockTime.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\EnumString.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\Fbo.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\GLFbo.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\GLFont.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\GLTeapot.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\Logger.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\OpenGL.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\Singleton.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\Texture.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\CommandLine.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\common.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\digits.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\fbo.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\glExtensions.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\nvSDIin.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\nvSDIout.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\nvSDIutil.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\platform.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\teapot.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\timecode.h">
+      <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\NvSdiApi\Cuda.Rules">
+      <Filter>NvSdiApi</Filter>
+    </None>
+  </ItemGroup>
+</Project>

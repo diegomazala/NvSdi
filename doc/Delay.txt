@@ -1,0 +1,26 @@
+
+01 -- 6 frames (Debug = 7 frames)
+- Teste com a Unity usando fsaa = 1
+- Criando Fbo para render composto input/output
+
+
+
+02 -- 6 frames
+- Teste com a Unity usando fsaa = 8
+- Criando Fbo para render composto input/output
+
+
+03 -- 4 frames
+- Simples composição sem Unity3D (barra de espaços comuta entre processamento do vídeo)
+
+
+04 -- 9 3 4 3 3 frames   (debug = 3 frames)
+- Passthru Nvidia
+
+
+05 -- 5 frames
+- Passthru Unity3D
+
+
+06 -- 6 frames
+- Passthru Unity3D Plotting Input
