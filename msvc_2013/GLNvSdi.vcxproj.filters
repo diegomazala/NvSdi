@@ -25,6 +25,9 @@
     <Filter Include="NvSdiApi\Source Files">
       <UniqueIdentifier>{299b3faf-9305-459c-a6bb-6c5efc3858d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UnityPlugin">
+      <UniqueIdentifier>{be957a94-9fc2-45b7-a1fa-ed4bb465becb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\GLNvSdi\GLNvSdi.cpp">
@@ -169,6 +172,21 @@
     </ClInclude>
     <ClInclude Include="..\src\NvSdiApi\timecode.h">
       <Filter>NvSdiApi\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UnityPlugin\IUnityGraphics.h">
+      <Filter>UnityPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UnityPlugin\IUnityGraphicsD3D9.h">
+      <Filter>UnityPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UnityPlugin\IUnityGraphicsD3D11.h">
+      <Filter>UnityPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UnityPlugin\IUnityGraphicsD3D12.h">
+      <Filter>UnityPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\UnityPlugin\IUnityInterface.h">
+      <Filter>UnityPlugin</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
