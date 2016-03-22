@@ -101,7 +101,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>glu32.lib;opengl32.lib;nvapi.lib;WinAppGLd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\WinAppGL\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\WinAppGL\msvc_2010\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -122,7 +122,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>glu32.lib;opengl32.lib;nvapi.lib;WinAppGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\WinAppGL\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\WinAppGL\msvc_2010\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -151,7 +151,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>glu32.lib;opengl32.lib;nvapi64.lib;WinAppGLd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\WinAppGL\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\WinAppGL\msvc_2010\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -175,7 +175,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>glu32.lib;opengl32.lib;nvapi64.lib;WinAppGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\WinAppGL\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib\WinAppGL\msvc_2010\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
