@@ -1,5 +1,5 @@
 #pragma once
-#include "UnityPlugin/IUnityInterface.h"
+#include "IUnityInterface.h"
 
 typedef enum UnityGfxRenderer
 {

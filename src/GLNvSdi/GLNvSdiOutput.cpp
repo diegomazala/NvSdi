@@ -1,5 +1,5 @@
 
-#include "GLNvSdi.h"
+#include "GLNvSdiOutput.h"
 #include "glExtensions.h"
 #include "fbo.h"
 #include "common.h"
@@ -107,6 +107,12 @@ extern "C"
 	GLNVSDI_API void SdiOutputSetTexture(int index, GLuint id)
 	{
 		attr::outputTexture[index].SetId(id);
+	}
+
+	GLNVSDI_API void SdiOutputSetTexturePtr(int index, void* texturePtr, int w, int h)
+	{
+		GLuint gltex = (GLuint)(size_t)(texturePtr);
+		attr::outputTexture[index].SetId(gltex);
 	}
 
 

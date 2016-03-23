@@ -566,9 +566,15 @@ CNvSDIin::SetupDevice(bool bShowMessageBox, int deviceNumber)
     // Cache framerate so that it may later be compared with the actual
 	// achievable framerate.
 	if (l_vioSignalFormatDetail.videoMode.interlaceMode == NVVIOINTERLACEMODE_INTERLACE)
+	{
 		m_fFrameRate = l_vioSignalFormatDetail.videoMode.fFrameRate / 2.0f;
+		m_bInterlaced = TRUE;
+	}
 	else
+	{
 		m_fFrameRate = l_vioSignalFormatDetail.videoMode.fFrameRate;
+		m_bInterlaced = FALSE;
+	}
 
 	// Get video width and height.  Should be the same for all streams.
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UnityPlugin/IUnityInterface.h"
+#include "IUnityInterface.h"
 
 
 // Which platform we are on?

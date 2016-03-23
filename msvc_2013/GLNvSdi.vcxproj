@@ -18,6 +18,63 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\GLCommon\ClockTime.cpp" />
+    <ClCompile Include="..\src\GLCommon\GLFbo.cpp" />
+    <ClCompile Include="..\src\GLCommon\Logger.cpp" />
+    <ClCompile Include="..\src\GLNvSdi\GLNvSdi.cpp" />
+    <ClCompile Include="..\src\GLNvSdi\GLNvSdiInput.cpp" />
+    <ClCompile Include="..\src\GLNvSdi\GLNvSdiOutput.cpp" />
+    <ClCompile Include="..\src\GLNvSdi\SdiOptions.cpp" />
+    <ClCompile Include="..\src\GLNvSdi\SdiPresentFrame.cpp" />
+    <ClCompile Include="..\src\GL\glew.c" />
+    <ClCompile Include="..\src\NvSdiApi\Colorbar.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\CommandLine.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\Console.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\digits.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\nvSDIin.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\nvSDIout.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\nvSDIutil.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\platform.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\timecode.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\Timer.cpp" />
+    <ClCompile Include="..\src\UnityPlugin\UnityPlugin.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\GLCommon\ClockTime.h" />
+    <ClInclude Include="..\src\GLCommon\EnumString.h" />
+    <ClInclude Include="..\src\GLCommon\Fbo.h" />
+    <ClInclude Include="..\src\GLCommon\GLFbo.h" />
+    <ClInclude Include="..\src\GLCommon\GLFont.h" />
+    <ClInclude Include="..\src\GLCommon\GLTeapot.h" />
+    <ClInclude Include="..\src\GLCommon\Logger.h" />
+    <ClInclude Include="..\src\GLCommon\OpenGL.h" />
+    <ClInclude Include="..\src\GLCommon\Singleton.h" />
+    <ClInclude Include="..\src\GLCommon\Texture.h" />
+    <ClInclude Include="..\src\GLNvSdi\GLNvSdi.h" />
+    <ClInclude Include="..\src\GLNvSdi\GLNvSdiCore.h" />
+    <ClInclude Include="..\src\GLNvSdi\GLNvSdiInput.h" />
+    <ClInclude Include="..\src\GLNvSdi\SdiOptions.h" />
+    <ClInclude Include="..\src\GLNvSdi\SdiPresentFrame.h" />
+    <ClInclude Include="..\src\GL\glew.h" />
+    <ClInclude Include="..\src\GL\glxew.h" />
+    <ClInclude Include="..\src\GL\wglew.h" />
+    <ClInclude Include="..\src\NvSdiApi\CommandLine.h" />
+    <ClInclude Include="..\src\NvSdiApi\common.h" />
+    <ClInclude Include="..\src\NvSdiApi\digits.h" />
+    <ClInclude Include="..\src\NvSdiApi\fbo.h" />
+    <ClInclude Include="..\src\NvSdiApi\glExtensions.h" />
+    <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h" />
+    <ClInclude Include="..\src\NvSdiApi\nvSDIin.h" />
+    <ClInclude Include="..\src\NvSdiApi\nvSDIout.h" />
+    <ClInclude Include="..\src\NvSdiApi\nvSDIutil.h" />
+    <ClInclude Include="..\src\NvSdiApi\platform.h" />
+    <ClInclude Include="..\src\NvSdiApi\teapot.h" />
+    <ClInclude Include="..\src\NvSdiApi\timecode.h" />
+    <ClInclude Include="..\src\UnityPlugin\UnityPlugin.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7A74E879-D9C6-494F-8DB8-DC12D3B39AF9}</ProjectGuid>
     <RootNamespace>GLNvSdi</RootNamespace>
@@ -94,7 +151,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\GLNvSdi;..\src\GLCommon;..\src\NvSdiApi;..\include\NvApi;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLNVSDI_EXPORTS;WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -116,13 +173,13 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) $(SolutionDir)\..\unity\Assets\GLNvSdi\Plugins\x86\</Command>
+      <Command>copy /Y $(TargetPath) $(SolutionDir)\..\unity\Assets\GLNvSdi\Plugins\x86\$(ProjectName)$(TargetExt)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\GLNvSdi;..\src\GLCommon;..\src\NvSdiApi;..\include\NvApi;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>RENDERINGPLUGIN_EXPORTS;GLNVSDI_EXPORTS;WIN32;_DEBUG;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -143,12 +200,13 @@
       </ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) $(SolutionDir)\..\unity\Assets\GLNvSdi\Plugins\x86_64\</Command>
+      <Command>copy /Y $(TargetPath) $(SolutionDir)\..\unity\Assets\GLNvSdi\Plugins\x86_64\$(ProjectName)$(TargetExt)
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\GLNvSdi;..\src\GLCommon;..\src\NvSdiApi;..\include\NvApi;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLNVSDI_EXPORTS;WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
@@ -176,7 +234,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\GLNvSdi;..\src\GLCommon;..\src\NvSdiApi;..\include\NvApi;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLNVSDI_EXPORTS;WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -200,65 +258,6 @@
       <Command>copy /Y $(TargetPath) $(SolutionDir)\..\unity\Assets\GLNvSdi\Plugins\x86_64\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\GLNvSdi\GLNvSdi.cpp" />
-    <ClCompile Include="..\src\GLNvSdi\GLNvSdiInput.cpp" />
-    <ClCompile Include="..\src\GLNvSdi\GLNvSdiOutput.cpp" />
-    <ClCompile Include="..\src\GLNvSdi\GLNvSdiUnity3D.cpp" />
-    <ClCompile Include="..\src\GLNvSdi\SdiOptions.cpp" />
-    <ClCompile Include="..\src\GLNvSdi\SdiPresentFrame.cpp" />
-    <ClCompile Include="..\src\GLCommon\ClockTime.cpp" />
-    <ClCompile Include="..\src\GLCommon\GLFbo.cpp" />
-    <ClCompile Include="..\src\GLCommon\Logger.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\Colorbar.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\CommandLine.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\Console.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\digits.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\nvSDIin.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\nvSDIout.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\nvSDIutil.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\platform.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\timecode.cpp" />
-    <ClCompile Include="..\src\NvSdiApi\Timer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\src\GLNvSdi\GLNvSdi.h" />
-    <ClInclude Include="..\src\GLNvSdi\GLNvSdiCore.h" />
-    <ClInclude Include="..\src\GLNvSdi\SdiOptions.h" />
-    <ClInclude Include="..\src\GLNvSdi\SdiPresentFrame.h" />
-    <ClInclude Include="..\src\GLCommon\ClockTime.h" />
-    <ClInclude Include="..\src\GLCommon\EnumString.h" />
-    <ClInclude Include="..\src\GLCommon\Fbo.h" />
-    <ClInclude Include="..\src\GLCommon\GLFbo.h" />
-    <ClInclude Include="..\src\GLCommon\GLFont.h" />
-    <ClInclude Include="..\src\GLCommon\GLTeapot.h" />
-    <ClInclude Include="..\src\GLCommon\Logger.h" />
-    <ClInclude Include="..\src\GLCommon\OpenGL.h" />
-    <ClInclude Include="..\src\GLCommon\Singleton.h" />
-    <ClInclude Include="..\src\GLCommon\Texture.h" />
-    <ClInclude Include="..\src\NvSdiApi\CommandLine.h" />
-    <ClInclude Include="..\src\NvSdiApi\common.h" />
-    <ClInclude Include="..\src\NvSdiApi\digits.h" />
-    <ClInclude Include="..\src\NvSdiApi\fbo.h" />
-    <ClInclude Include="..\src\NvSdiApi\glExtensions.h" />
-    <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h" />
-    <ClInclude Include="..\src\NvSdiApi\nvSDIin.h" />
-    <ClInclude Include="..\src\NvSdiApi\nvSDIout.h" />
-    <ClInclude Include="..\src\NvSdiApi\nvSDIutil.h" />
-    <ClInclude Include="..\src\NvSdiApi\platform.h" />
-    <ClInclude Include="..\src\NvSdiApi\teapot.h" />
-    <ClInclude Include="..\src\NvSdiApi\timecode.h" />
-    <ClInclude Include="..\src\UnityPlugin\IUnityGraphics.h" />
-    <ClInclude Include="..\src\UnityPlugin\IUnityGraphicsD3D11.h" />
-    <ClInclude Include="..\src\UnityPlugin\IUnityGraphicsD3D12.h" />
-    <ClInclude Include="..\src\UnityPlugin\IUnityGraphicsD3D9.h" />
-    <ClInclude Include="..\src\UnityPlugin\IUnityInterface.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\src\NvSdiApi\Cuda.Rules" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

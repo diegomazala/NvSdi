@@ -89,11 +89,14 @@ protected:
 	GLuint        m_captureTimeQuery;
 
 	int mRingBufferSizeInFrames;
+	BOOL m_bInterlaced;						// Interlaced flag.
 
 public:
 
 	void SetRingBufferSize(int frameCount){mRingBufferSizeInFrames = frameCount;}
 	int  GetRingBufferSize()const {return mRingBufferSizeInFrames;}
+
+	inline BOOL IsInterlaced() { return m_bInterlaced; };
 
 	
 	float m_gviTime;	

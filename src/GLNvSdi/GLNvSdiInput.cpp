@@ -1,5 +1,5 @@
 
-#include "GLNvSdi.h"
+#include "GLNvSdiInput.h"
 #include "glExtensions.h"
 
 
@@ -20,6 +20,8 @@ extern "C"
 
 		int droppedFrames = 0;
 		int droppedFramesCount = 0;
+
+		GLenum captureStatus = GL_FAILURE_NV;
 	}
 
 
@@ -125,6 +127,12 @@ extern "C"
 	GLNVSDI_API void SdiInputSetTexture(int index, GLuint id)
 	{
 		attr::inputTextures[index].SetId(id);
+	}
+
+	GLNVSDI_API void SdiInputSetTexturePtr(int index, void* texturePtr, int w, int h)
+	{
+		GLuint gltex = (GLuint)(size_t)(texturePtr);
+		attr::inputTextures[index].SetId(gltex);
 	}
 
 
@@ -515,6 +523,11 @@ extern "C"
 		
 	}
 
+	GLNVSDI_API bool SdiInputIsCapturing()
+	{
+		return attr::isCapturing;
+	}
+
 
 	///////////////////////////////////////////////////////////////////////
 	/// Start the sdi capture
@@ -550,6 +563,10 @@ extern "C"
 		}
 	}
 
+	GLNVSDI_API int SdiInputCaptureStatus()
+	{
+		return attr::captureStatus;
+	}
 
 	///////////////////////////////////////////////////////////////////////
 	/// Capture the current frame for all sdi inputs available
@@ -559,7 +576,7 @@ extern "C"
 		static GLint64EXT captureTime;
 		GLuint sequenceNum;    
 		static GLuint prevSequenceNum = 0;
-		GLenum ret = GL_FAILURE_NV;
+		attr::captureStatus = GL_FAILURE_NV;
 		static int numFails = 0;
 		static int numTries = 0;
 		static bool bShowMessageBox = true;  
@@ -569,7 +586,7 @@ extern "C"
 		{
 #endif
 			// Capture the video to a buffer object
-			ret = attr::sdiIn.Capture(&sequenceNum, &captureTime);
+			attr::captureStatus = attr::sdiIn.Capture(&sequenceNum, &captureTime);
 			attr::droppedFrames = sequenceNum - prevSequenceNum - 1;
 			attr::droppedFramesCount += attr::droppedFrames;
 			if(sequenceNum - prevSequenceNum > 1)
@@ -578,7 +595,7 @@ extern "C"
 			}
 			
 			prevSequenceNum = sequenceNum;
-			switch(ret) 
+			switch (attr::captureStatus)
 			{
 				case GL_SUCCESS_NV:
 					//std::cout << "Frame: " << sequenceNum << " gpuTime: " << attr::sdiIn.m_gpuTime << " gviTime: " << attr::sdiIn.m_gviTime << std::endl;
@@ -586,17 +603,17 @@ extern "C"
 					break;
 
 				case GL_PARTIAL_SUCCESS_NV:
-					std::cout << "glVideoCaptureNV: GL_PARTIAL_SUCCESS_NV" << std::endl;
+					//std::cout << "glVideoCaptureNV: GL_PARTIAL_SUCCESS_NV" << std::endl;
 					numFails = 0;
 					break;
 
 				case GL_FAILURE_NV:
-					std::cout << "glVideoCaptureNV: GL_FAILURE_NV - Video capture failed." << std::endl;
+					//std::cout << "glVideoCaptureNV: GL_FAILURE_NV - Video capture failed." << std::endl;
 					numFails++;
 					break;
 
 				default:
-					std::cout << "glVideoCaptureNV: Unknown return value." << std::endl;
+					//std::cout << "glVideoCaptureNV: Unknown return value." << std::endl;
 					break;
 			} // switch
 #if 0
@@ -629,12 +646,142 @@ extern "C"
 			return GL_FAILURE_NV;
 		}
 #endif
-
-		return ret;
+		return attr::captureStatus;
 	}
 
 
 
-	
+
+	static void UNITY_INTERFACE_API OnSdiInputRenderEvent(int render_event_id)
+	{
+		switch (static_cast<SdiInputRenderEvent>(render_event_id))
+		{
+			case SdiInputRenderEvent::Render:
+			{
+				if (SdiInputCaptureVideo() != GL_FAILURE_NV)
+				{
+					SdiAncCapture();
+				}
+				else
+				{
+					//Debug.LogError("Capture fail");
+				}
+				break;
+			}
+
+			case SdiInputRenderEvent::Initialize:
+			{
+				SdiSetupLogFile();
+				SdiSetCurrentDC();
+				SdiSetCurrentGLRC();
+
+				if (!SdiInputInitialize())
+				{
+					SdiLog() << "SdiInputInitialize failed" << std::endl;
+				}
+
+				const int ringBufferSizeInFrames = 2;
+				SdiInputSetGlobalOptions(ringBufferSizeInFrames);
+
+				if (!SdiInputSetupDevices())
+				{
+					SdiLog() << "SdiInputSetupDevices failed" << std::endl;
+				}
+
+				if (!SdiMakeCurrent())
+				{
+					SdiLog() << "SdiMakeCurrent failed" << std::endl;
+				}
+
+				break;
+			}
+
+			case SdiInputRenderEvent::Setup:
+			{
+				if (!SdiInputSetupGL())
+				{
+					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+					//return false;
+				}
+
+				if (attr::sdiIn.IsInterlaced())
+				{
+					if (!SdiInputBindVideoTextureField())
+					{
+						//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+						//return false;
+					}
+				}
+				else
+				{
+					if (!SdiInputBindVideoTextureFrame())
+					{
+						//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+						//return false;
+					}
+				}
+
+
+				if (!SdiAncSetupInput())
+				{
+					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+					//return false;
+				}
+
+
+				break;
+			}
+
+			case SdiInputRenderEvent::StartCapture:
+			{
+				if (!SdiInputStart())
+				{
+					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+					//return false;
+				}
+				break;
+			}
+
+			case SdiInputRenderEvent::StopCapture:
+			{
+				SdiMakeCurrent();
+				SdiInputStop();
+				SdiAncCleanupInput();
+				break;
+			}
+
+			case SdiInputRenderEvent::Shutdown:
+			{
+				SdiLog() << "SdiInputRenderEvent::Shutdown" << std::endl;
+
+				//SdiSetCurrentDC();
+				//SdiSetCurrentGLRC();
+				SdiMakeCurrent();
+				SdiInputStop();
+				SdiAncCleanupInput();
+
+				if (attr::sdiIn.IsInterlaced())
+					SdiInputUnbindVideoTextureField();
+				else
+					SdiInputUnbindVideoTextureFrame();
+
+				SdiInputCleanupGL();
+				SdiInputUninitialize();
+				//SdiMakeUtyCurrent();
+
+				break;
+			}
+		}
+
+		SdiLog() << "OnSdiInputRenderEvent" << std::endl;
+	}
+
+	// --------------------------------------------------------------------------
+	// GetRenderEventFunc, an example function we export which is used to get a rendering event callback function.
+	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetSdiInputRenderEventFunc()
+	{
+		return OnSdiInputRenderEvent;
+	}
+
 
 };	//extern "C"
