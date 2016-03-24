@@ -44,6 +44,7 @@ public class GLNvSdiOut : MonoBehaviour
     IEnumerator Start()
     {
         UtyGLNvSdi.SdiSetupLogFile();
+        
         yield return StartCoroutine(SdiOutputCoroutine());
 
     }
@@ -58,6 +59,15 @@ public class GLNvSdiOut : MonoBehaviour
 
     private IEnumerator SdiOutputCoroutine()
     {
+        UtyGLNvSdi.SdiOutputSetGlobalOptions();
+        UtyGLNvSdi.SdiOutputSetVideoFormat(
+            options.videoFormat,
+            options.syncSource,
+            options.hDelay,
+            options.vDelay,
+            options.dualOutput,
+            options.flipQueueLength);
+
         yield return new WaitForEndOfFrame();
 
         if (!SetupOutputTextures())
@@ -68,6 +78,7 @@ public class GLNvSdiOut : MonoBehaviour
         yield return new WaitForEndOfFrame();
 
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Setup);
 
         while (true)
         {
@@ -139,7 +150,7 @@ public class GLNvSdiOut : MonoBehaviour
 
 
                 GLNvSdiRenderTexture sdiTex = m_Camera[i].GetComponent<GLNvSdiRenderTexture>();
-                if (sdiTex.sdiRenderTarget == null)
+                if (sdiTex != null)
                 {
                     sdiTex.CreateSdiTexture(m_TexWidth, m_TexHeight, 32, false, "RenderTex_" + m_Camera[i].name);
 

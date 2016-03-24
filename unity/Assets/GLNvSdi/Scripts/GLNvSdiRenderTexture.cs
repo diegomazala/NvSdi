@@ -28,13 +28,14 @@ public class GLNvSdiRenderTexture : MonoBehaviour
         sdiRenderTarget.wrapMode = TextureWrapMode.Clamp;
         sdiRenderTarget.antiAliasing = 8;
         sdiRenderTarget.anisoLevel = 0; // RenderTexture wit depth must have an Aniso Level of 0
-        sdiRenderTarget.Create();
+        if (!sdiRenderTarget.Create())
+            Debug.LogError("Could not create RenderTexture");
 
         this.GetComponent<Camera>().targetTexture = sdiRenderTarget;
     }
     
 
-    void OnApplicationQuit()
+    void OnDisable()
     {
         if (sdiRenderTarget != null)
         {

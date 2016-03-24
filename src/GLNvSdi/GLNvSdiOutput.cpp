@@ -593,8 +593,13 @@ extern "C"
 				{
 				}
 
-				SdiOutputSetGlobalOptions();
-				SdiOutputSetVideoFormat(SdiVideoFormat::HD_1080I_59_94, SdiSyncSource::NONE, 0, 0, false, 5);
+				break;
+			}
+
+			case SdiRenderEvent::Setup:
+			{
+				//SdiOutputSetGlobalOptions();
+				//SdiOutputSetVideoFormat(SdiVideoFormat::HD_1080I_59_94, SdiSyncSource::NONE, 0, 0, false, 5);
 
 				if (!SdiOutputSetupDevices())
 				{
@@ -624,10 +629,10 @@ extern "C"
 
 				if (!SdiOutputStart())
 				{
-				//	//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
-				//	SdiOutputUnbindVideo();
-				//	SdiOutputCleanupDevices();
-				//	//return false;
+					//	//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+					//	SdiOutputUnbindVideo();
+					//	SdiOutputCleanupDevices();
+					//	//return false;
 				}
 
 				break;
