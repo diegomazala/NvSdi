@@ -50,6 +50,7 @@ typedef class CNvGpuTopology
 		bool init();
 	public:
 		static CNvGpuTopology& instance();
+		static void destroy();
 		virtual CNvGpu *getGpu(int index);	
 		virtual CNvGpu *getPrimaryGpu();	
 		int				getNumGpu();	

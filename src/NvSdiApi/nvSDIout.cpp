@@ -85,7 +85,8 @@ CNvSDIout::Init(Options *options, CNvSDIoutGpu *SDIoutGpu)
 		m_vioHandle = SDIoutGpu->getVioHandle();
 	}
 	// Open the SDI device
-	if (NvAPI_VIO_Open(m_vioHandle, NVVIOCLASS_SDI, NVVIOOWNERTYPE_APPLICATION) != NVAPI_OK) {
+	l_ret = NvAPI_VIO_Open(m_vioHandle, NVVIOCLASS_SDI, NVVIOOWNERTYPE_APPLICATION);
+	if (l_ret != NVAPI_OK) {
 		return E_FAIL;
 	}
 
@@ -1647,6 +1648,7 @@ CNvSDIout::GetSyncDelay(NVVIOSYNCDELAY *delay)
 
 
 
+
 CNvSDIoutGpuTopology::CNvSDIoutGpuTopology() 	
 {
 	m_bInitialized = false;
@@ -1657,12 +1659,33 @@ CNvSDIoutGpuTopology::CNvSDIoutGpuTopology()
 
 CNvSDIoutGpuTopology::~CNvSDIoutGpuTopology()
 {
-	if(m_bInitialized == false)
+	if (m_bInitialized == false)
 		return;
-	for( int i = 0; i < m_nGpu; i++)
+	
+	for (int i = 0; i < m_nGpu; i++)
 	{
 		delete dynamic_cast<CNvSDIoutGpu*>(m_lGpu[i]);
 		m_lGpu[i] = NULL;
+	}
+	
+	m_bInitialized = false;
+	m_nGpu = 0;
+}
+
+static CNvSDIoutGpuTopology *s_instance = nullptr;
+CNvSDIoutGpuTopology& CNvSDIoutGpuTopology::instance()
+{
+	if (!s_instance)
+		s_instance = new CNvSDIoutGpuTopology;
+	return *s_instance;
+}
+
+void CNvSDIoutGpuTopology::destroy()
+{
+	if (s_instance)
+	{
+		delete s_instance;
+		s_instance = nullptr;
 	}
 }
 
@@ -1670,6 +1693,8 @@ bool CNvSDIoutGpuTopology::init()
 {
 	if(m_bInitialized)
 		return true;
+
+	m_nGpu = 0;
 
 	HWND hWnd;
 	HGLRC hGLRC;
@@ -1825,12 +1850,6 @@ bool CNvSDIoutGpuTopology::init()
 
 }
 
-CNvSDIoutGpuTopology& CNvSDIoutGpuTopology::instance()
-{		
-	static CNvSDIoutGpuTopology instance;
-	instance.init();
-	return instance;
-}
 
 CNvSDIoutGpu *CNvSDIoutGpuTopology::getGpu(int index)
 {

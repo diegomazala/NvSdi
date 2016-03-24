@@ -235,8 +235,6 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiInputInitialize()
 	{
-		
-
 		attr::droppedFrames = 0;
 		attr::droppedFramesCount = 0;
 
@@ -264,6 +262,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API void SdiInputUninitialize()
 	{
+		CNvGpuTopology::destroy();
 		std::cout << "Dropped Frames Count: " << attr::droppedFramesCount << std::endl;
 	}
 
@@ -654,9 +653,9 @@ extern "C"
 
 	static void UNITY_INTERFACE_API OnSdiInputRenderEvent(int render_event_id)
 	{
-		switch (static_cast<SdiInputRenderEvent>(render_event_id))
+		switch (static_cast<SdiRenderEvent>(render_event_id))
 		{
-			case SdiInputRenderEvent::Render:
+			case SdiRenderEvent::CaptureFrame:
 			{
 				if (SdiInputCaptureVideo() != GL_FAILURE_NV)
 				{
@@ -669,7 +668,7 @@ extern "C"
 				break;
 			}
 
-			case SdiInputRenderEvent::Initialize:
+			case SdiRenderEvent::Initialize:
 			{
 				SdiSetupLogFile();
 				SdiSetCurrentDC();
@@ -696,7 +695,7 @@ extern "C"
 				break;
 			}
 
-			case SdiInputRenderEvent::Setup:
+			case SdiRenderEvent::Setup:
 			{
 				if (!SdiInputSetupGL())
 				{
@@ -732,7 +731,7 @@ extern "C"
 				break;
 			}
 
-			case SdiInputRenderEvent::StartCapture:
+			case SdiRenderEvent::StartCapture:
 			{
 				if (!SdiInputStart())
 				{
@@ -742,7 +741,7 @@ extern "C"
 				break;
 			}
 
-			case SdiInputRenderEvent::StopCapture:
+			case SdiRenderEvent::StopCapture:
 			{
 				SdiMakeCurrent();
 				SdiInputStop();
@@ -750,9 +749,9 @@ extern "C"
 				break;
 			}
 
-			case SdiInputRenderEvent::Shutdown:
+			case SdiRenderEvent::Shutdown:
 			{
-				SdiLog() << "SdiInputRenderEvent::Shutdown" << std::endl;
+				SdiLog() << "SdiRenderEvent::Shutdown" << std::endl;
 
 				//SdiSetCurrentDC();
 				//SdiSetCurrentGLRC();

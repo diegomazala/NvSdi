@@ -4,7 +4,6 @@
 #include "GLNvSdi.h"
 
 
-
 extern "C"
 {
 
@@ -86,6 +85,8 @@ extern "C"
 	/// Stop output sending sdi
 	GLNVSDI_API bool SdiOutputStop();
 
+	/// Return true if the system is running properly
+	GLNVSDI_API bool SdiOutputIsPresentingFrames();
 
 	/// Return true if the system was setup interlaced output
 	GLNVSDI_API bool SdiOutputIsInterlaced();
@@ -137,6 +138,9 @@ extern "C"
 
 	/// Reset the count of duplicated frames in the last run
 	GLNVSDI_API void SdiOutputResetDuplicatedFramesCount();
+
+	/// Function called by Unity through rendering events
+	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetSdiOutputRenderEventFunc();
 
 };
 

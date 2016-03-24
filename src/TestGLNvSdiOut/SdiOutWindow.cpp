@@ -212,7 +212,6 @@ bool SdiOutWindow::InitGL()
 
 	gFont.Create(-24);
 
-
 	return true;
 }
 
@@ -223,4 +222,5 @@ void SdiOutWindow::CleanupSdi()
 	SdiOutputUnbindVideo();
 	SdiOutputCleanupGL();
 	SdiOutputCleanupDevices();
+	SdiOutputUninitialize();
 }

@@ -94,7 +94,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include\FreeImage;..\src\GLCommon;..\src\GLNvSdi;..\src\NvSdiApi;..\src\TestGLNvSdiIn\common;..\include\NvApi;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include\FreeImage;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -117,7 +117,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include\FreeImage;..\src\GLCommon;..\src\GLNvSdi;..\src\NvSdiApi;..\src\TestGLNvSdiIn\common;..\include\NvApi;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include\FreeImage;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
@@ -144,7 +144,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include\FreeImage;..\src\GLCommon;..\src\GLNvSdi;..\src\NvSdiApi;..\src\TestGLNvSdiIn\common;..\include\NvApi;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include\FreeImage;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -170,7 +170,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include\FreeImage;..\src\GLCommon;..\src\GLNvSdi;..\src\NvSdiApi;..\src\TestGLNvSdiIn\common;..\include\NvApi;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include\FreeImage;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>

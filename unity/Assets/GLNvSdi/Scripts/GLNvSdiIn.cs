@@ -39,7 +39,7 @@ public class GLNvSdiIn : MonoBehaviour
 
         // Issue a plugin event with an integer identifier.
         // The plugin can distinguish between different based on this ID.
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiInputRenderEvent.Initialize);
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
         yield return new WaitForEndOfFrame();
 
         if (captureFields)
@@ -47,8 +47,8 @@ public class GLNvSdiIn : MonoBehaviour
         else
             CreateTextures(4, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight());
 
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiInputRenderEvent.Setup);
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiInputRenderEvent.StartCapture);
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Setup);
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.StartCapture);
         yield return new WaitForEndOfFrame();
 
         while (UtyGLNvSdi.SdiInputIsCapturing())
@@ -60,7 +60,7 @@ public class GLNvSdiIn : MonoBehaviour
             //Debug.Log(UtyGLNvSdi.SdiInputCaptureStatus().ToString());
 
             // Capture frame from device
-            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiInputRenderEvent.Render);
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
         }
         
     }
@@ -106,7 +106,7 @@ public class GLNvSdiIn : MonoBehaviour
     {
         StopCoroutine(SdiInputCoroutine());
 
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiInputRenderEvent.Shutdown);
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
 
         DestroyTextures();
     }

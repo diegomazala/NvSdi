@@ -4,15 +4,6 @@
 #include "GLNvSdi.h"
 
 
-enum SdiInputRenderEvent
-{
-	Initialize,
-	Setup,
-	StartCapture,
-	StopCapture,
-	Render,
-	Shutdown
-};
 
 extern "C"
 {

@@ -6,13 +6,14 @@ using System.Globalization;
 
 
 [System.Serializable]
-public enum SdiInputRenderEvent
+public enum SdiRenderEvent
 {
     Initialize,
     Setup,
     StartCapture,
     StopCapture,
-    Render,
+    CaptureFrame,
+    PresentFrame,
     Shutdown
 };
 
@@ -197,9 +198,11 @@ public class UtyGLNvSdi
     [DllImport("GLNvSdi")]
     public static extern void SdiOutputPresentFrame();
     [DllImport("GLNvSdi")]
+    public static extern bool SdiOutpuIsPresentingFrames();
+    [DllImport("GLNvSdi")]
     public static extern void SdiOutputSetTexture(int index, int id);
     [DllImport("GLNvSdi")]
-    public static extern void SdiOutputSetTexture(int index, System.IntPtr texture, int width, int height);
+    public static extern void SdiOutputSetTexturePtr(int index, System.IntPtr texture, int width, int height);
     [DllImport("GLNvSdi")]
     public static extern void SdiOutputInvertFields(bool invert);
     [DllImport("GLNvSdi")]
@@ -212,6 +215,8 @@ public class UtyGLNvSdi
     public static extern int SdiOutputDuplicatedFramesCount();
     [DllImport("GLNvSdi")]
     public static extern void SdiOutputResetDuplicatedFramesCount();
+    [DllImport("GLNvSdi")]
+    public static extern System.IntPtr GetSdiOutputRenderEventFunc();
 
 
     [DllImport("GLNvSdi")]

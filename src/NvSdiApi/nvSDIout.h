@@ -31,18 +31,49 @@ typedef class CNvSDIoutGpu : public virtual CNvGpu
 }CNvSDIoutGpu;
 
 
+#if 1
 typedef class CNvSDIoutGpuTopology : public virtual CNvGpuTopology
 {
-	protected:
+protected:
+	CNvSDIoutGpuTopology();
+	virtual ~CNvSDIoutGpuTopology();
+	bool init();
+
+public:
+	static CNvSDIoutGpuTopology& instance();
+	//{
+	//	if (!s_instance)
+	//		s_instance = new CNvSDIoutGpuTopology;
+	//	return *s_instance;
+	//}
+	static void destroy();
+	//{
+	//	if (s_instance)
+	//	{
+	//		delete s_instance;
+	//		s_instance = nullptr;
+	//	}
+	//}
+	virtual CNvSDIoutGpu *getGpu(int index);
+	virtual CNvSDIoutGpu *getPrimaryGpu();
+}CNvSDIoutGpuTopology;
+
+#else
+
+typedef class CNvSDIoutGpuTopology : public virtual CNvGpuTopology
+{
+	//protected:
+	public:
 		CNvSDIoutGpuTopology();
 		virtual ~CNvSDIoutGpuTopology();
 		bool init();
+		void destroy();
 	public:
 		static CNvSDIoutGpuTopology& instance();
 		virtual CNvSDIoutGpu *getGpu(int index);
 		virtual CNvSDIoutGpu *getPrimaryGpu();
 }CNvSDIoutGpuTopology;
-
+#endif
 
 typedef class CNvSDIout
 {

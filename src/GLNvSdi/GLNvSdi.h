@@ -3,6 +3,17 @@
 
 
 
+enum SdiRenderEvent
+{
+	Initialize,
+	Setup,
+	StartCapture,
+	StopCapture,
+	CaptureFrame,
+	PresentFrame,
+	Shutdown
+};
+
 
 #include "UnityPlugin.h"
 #include "IUnityGraphics.h"

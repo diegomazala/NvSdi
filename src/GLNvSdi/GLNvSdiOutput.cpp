@@ -33,6 +33,8 @@ extern "C"
 		int						duplicateFramesCount = 0;
 
 		bool					dualOutput = false;
+
+		bool					isPresentingFrames = false;
 	}
 	
 
@@ -185,6 +187,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API void SdiOutputUninitialize()
 	{
+		CNvSDIoutGpuTopology::destroy();
 		std::cout << "Duplicated Frames Count: " << attr::duplicateFramesCount << std::endl;
 	}
 
@@ -472,7 +475,8 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiOutputStart()
 	{
-		return (attr::sdiOut.Start() == S_OK);
+		attr::isPresentingFrames = (attr::sdiOut.Start() == S_OK);
+		return attr::isPresentingFrames;
 	}
 
 
@@ -481,9 +485,15 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiOutputStop()
 	{
-		return (attr::sdiOut.Stop() == S_OK);
+		attr::isPresentingFrames = (attr::sdiOut.Stop() == S_OK);
+		return attr::isPresentingFrames;
 	}
 
+	/// Return true if the system is running properly
+	GLNVSDI_API bool SdiOutputIsPresentingFrames()
+	{
+		return attr::isPresentingFrames;
+	}
 
 	/// Return true if the system was setup interlaced output
 	GLNVSDI_API bool SdiOutputIsInterlaced()
@@ -558,6 +568,95 @@ extern "C"
 		attr::duplicateFramesCount += duplicated_frames;
 	}
 
+
+
+
+	static void UNITY_INTERFACE_API OnSdiOutputRenderEvent(int render_event_id)
+	{
+		switch (static_cast<SdiRenderEvent>(render_event_id))
+		{
+			case SdiRenderEvent::PresentFrame:
+			{
+				SdiMakeCurrent();
+				SdiOutputPresentFrame();
+				
+				break;
+			}
+
+			case SdiRenderEvent::Initialize:
+			{
+				SdiSetupLogFile();
+				SdiSetCurrentDC();
+				SdiSetCurrentGLRC();
+
+				if (!SdiOutputInitialize())
+				{
+				}
+
+				SdiOutputSetGlobalOptions();
+				SdiOutputSetVideoFormat(SdiVideoFormat::HD_1080I_59_94, SdiSyncSource::NONE, 0, 0, false, 5);
+
+				if (!SdiOutputSetupDevices())
+				{
+					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+					//return false;
+				}
+
+				SdiMakeCurrent();
+
+				//if (!SdiOutputSetupContextGL(SdiGetDC(), SdiGetGLRC()))
+				//{
+				//}
+
+				if (!SdiOutputSetupGL())
+				{
+					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+					SdiOutputCleanupDevices();
+					//return false;
+				}
+
+				if (!SdiOutputBindVideo())
+				{
+					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+					SdiOutputCleanupDevices();
+					//return false;
+				}
+
+				if (!SdiOutputStart())
+				{
+				//	//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
+				//	SdiOutputUnbindVideo();
+				//	SdiOutputCleanupDevices();
+				//	//return false;
+				}
+
+				break;
+			}
+
+
+			case SdiRenderEvent::Shutdown:
+			{
+				SdiLog() << "SdiInputRenderEvent::Shutdown" << std::endl;
+
+				SdiOutputStop();
+				SdiOutputUnbindVideo();
+				SdiOutputCleanupGL();
+				SdiOutputCleanupDevices();
+				SdiOutputUninitialize();
+
+				break;
+			}
+		}
+
+		SdiLog() << "OnSdiOutputRenderEvent" << std::endl;
+	}
+
+	// --------------------------------------------------------------------------
+	// GetRenderEventFunc, an example function we export which is used to get a rendering event callback function.
+	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetSdiOutputRenderEventFunc()
+	{
+		return OnSdiOutputRenderEvent;
+	}
 
 
 };	//extern "C"

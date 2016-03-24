@@ -11,7 +11,7 @@ public class GLNvSdiRenderTexture : MonoBehaviour
     public  RenderTexture sdiRenderTarget = null;
 
     [HideInInspector]
-    public Texture backgroundTex;
+    public Texture backgroundTex = null;
 
     private Material m_Material;
 
@@ -27,6 +27,7 @@ public class GLNvSdiRenderTexture : MonoBehaviour
         sdiRenderTarget.filterMode = FilterMode.Trilinear;
         sdiRenderTarget.wrapMode = TextureWrapMode.Clamp;
         sdiRenderTarget.antiAliasing = 8;
+        sdiRenderTarget.anisoLevel = 0; // RenderTexture wit depth must have an Aniso Level of 0
         sdiRenderTarget.Create();
 
         this.GetComponent<Camera>().targetTexture = sdiRenderTarget;
@@ -50,29 +51,34 @@ public class GLNvSdiRenderTexture : MonoBehaviour
     }
 
 
-
+#if false
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
 		if (backgroundTex != null && material != null)
 		{
+            Debug.Log("backgroundTex != null");
 			material.SetTexture("_BgTex", backgroundTex);
             material.SetFloat("_Scale", imageScale);
 			Graphics.Blit(source, destination, material);
 		}
 		else
 		{
+            RenderTexture.active = destination;
+            Debug.Log("backgroundTex == null");
 			Graphics.Blit(source, destination);
+            
 		}
     }
-	
+#endif
 
 
 
-    public Material material 
+    
+    public Material material
     {
-		get { return m_Material; } 
-        set { m_Material = value; } 
-	}
+        get { return m_Material; }
+        set { m_Material = value; }
+    }
 
 
 }

@@ -107,6 +107,27 @@ CNvGpuTopology::~CNvGpuTopology()
 	}
 }
 
+
+
+static CNvGpuTopology *s_instance = nullptr;
+CNvGpuTopology& CNvGpuTopology::instance()
+{
+	if (!s_instance)
+		s_instance = new CNvGpuTopology;
+	return *s_instance;
+}
+
+void CNvGpuTopology::destroy()
+{
+	if (s_instance)
+	{
+		delete s_instance;
+		s_instance = nullptr;
+	}
+}
+
+
+
 bool CNvGpuTopology::init()
 {
 	if(m_bInitialized)
@@ -187,13 +208,6 @@ bool CNvGpuTopology::init()
 
 }
 
-
-CNvGpuTopology& CNvGpuTopology::instance()
-{		
-	static CNvGpuTopology instance;
-	instance.init();
-	return instance;
-}
 
 
 int CNvGpuTopology::getNumGpu()
