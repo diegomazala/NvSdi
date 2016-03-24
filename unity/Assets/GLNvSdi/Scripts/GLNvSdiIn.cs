@@ -25,11 +25,20 @@ public class GLNvSdiIn : MonoBehaviour
     }
 
 
-
     IEnumerator Start()
     {
         UtyGLNvSdi.SdiSetupLogFile();
         yield return StartCoroutine(SdiInputCoroutine());
+    }
+
+
+    void OnDisable()
+    {
+        StopCoroutine(SdiInputCoroutine());
+
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+
+        DestroyTextures();
     }
 
 
@@ -102,13 +111,6 @@ public class GLNvSdiIn : MonoBehaviour
 
 
 
-    void OnDisable()
-    {
-        StopCoroutine(SdiInputCoroutine());
 
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
-
-        DestroyTextures();
-    }
 
 }

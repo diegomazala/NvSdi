@@ -609,10 +609,6 @@ extern "C"
 
 				SdiMakeCurrent();
 
-				//if (!SdiOutputSetupContextGL(SdiGetDC(), SdiGetGLRC()))
-				//{
-				//}
-
 				if (!SdiOutputSetupGL())
 				{
 					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
@@ -629,10 +625,6 @@ extern "C"
 
 				if (!SdiOutputStart())
 				{
-					//	//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
-					//	SdiOutputUnbindVideo();
-					//	SdiOutputCleanupDevices();
-					//	//return false;
 				}
 
 				break;
@@ -641,8 +633,6 @@ extern "C"
 
 			case SdiRenderEvent::Shutdown:
 			{
-				SdiLog() << "SdiInputRenderEvent::Shutdown" << std::endl;
-
 				SdiOutputStop();
 				SdiOutputUnbindVideo();
 				SdiOutputCleanupGL();
@@ -653,7 +643,6 @@ extern "C"
 			}
 		}
 
-		SdiLog() << "OnSdiOutputRenderEvent" << std::endl;
 	}
 
 	// --------------------------------------------------------------------------

@@ -70,15 +70,13 @@ public class GLNvSdiOut : MonoBehaviour
 
         yield return new WaitForEndOfFrame();
 
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Setup);
+
         if (!SetupOutputTextures())
         {
             UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for output");
         }
-
-        yield return new WaitForEndOfFrame();
-
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Setup);
 
         while (true)
         {
@@ -154,13 +152,13 @@ public class GLNvSdiOut : MonoBehaviour
                 {
                     sdiTex.CreateSdiTexture(m_TexWidth, m_TexHeight, 32, false, "RenderTex_" + m_Camera[i].name);
 
-                    UtyGLNvSdi.SdiOutputSetTexturePtr(i, sdiTex.sdiRenderTarget.GetNativeTexturePtr(), sdiTex.sdiRenderTarget.width, sdiTex.sdiRenderTarget.height);
-
                     if (sdiTex.sdiRenderTarget == null)
                     {
                         UnityEngine.Debug.LogError("Could not create SdiRenderTarget for GLNvSdiRenderTexture in " + m_Camera[i].name);
                         return false;
                     }
+
+                    UtyGLNvSdi.SdiOutputSetTexturePtr(i, sdiTex.sdiRenderTarget.GetNativeTexturePtr(), sdiTex.sdiRenderTarget.width, sdiTex.sdiRenderTarget.height);
                 }
                 else
                 {
