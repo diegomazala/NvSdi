@@ -3,8 +3,7 @@ using System;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
-[AddComponentMenu("Image Effects/Blit Target Texture")]
-public class BlitTargetTexture : MonoBehaviour 
+public class BlitSdiTexture : MonoBehaviour 
 {
     public Camera m_TargetCamera = null;
 
