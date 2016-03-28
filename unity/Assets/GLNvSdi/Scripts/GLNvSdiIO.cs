@@ -100,10 +100,6 @@ public class GLNvSdiIO : MonoBehaviour
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Setup);
 
 
-#if passthru
-        UtyGLNvSdi.SdiOutputSetTexture(0, sdiTexture[0].GetNativeTextureID());
-        UtyGLNvSdi.SdiOutputSetTexture(1, sdiTexture[1].GetNativeTextureID());
-#else
         int texWidth = 1920;
         int texHeight = 1080;
         bool interlaced = true;
@@ -114,8 +110,6 @@ public class GLNvSdiIO : MonoBehaviour
         {
             UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for input/output");
         }
-#endif   
-
         
         while (true)
         {
@@ -191,6 +185,7 @@ public class GLNvSdiIO : MonoBehaviour
                 m_Camera[i].aspect = aspect;
                 m_Camera[i].enabled = true;
 
+
                 GLNvSdiRenderTexture sdiTex = m_Camera[i].GetComponent<GLNvSdiRenderTexture>();
                 if (sdiTex != null)
                 {
@@ -212,7 +207,12 @@ public class GLNvSdiIO : MonoBehaviour
 
                     sdiTex.material = sdiCompositeMaterial[i];
 
+#if true   // render with video
                     UtyGLNvSdi.SdiOutputSetTexturePtr(i, sdiTex.sdiRenderTarget.GetNativeTexturePtr(), sdiTex.sdiRenderTarget.width, sdiTex.sdiRenderTarget.height);
+#else       // input video pasthrough
+                    UtyGLNvSdi.SdiOutputSetTexturePtr(i, sdiTexture[i].GetNativeTexturePtr(), sdiTexture[i].width, sdiTexture[i].height);
+#endif
+
                 }
             }
             else

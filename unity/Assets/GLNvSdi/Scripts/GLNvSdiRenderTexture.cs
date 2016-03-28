@@ -11,12 +11,11 @@ public class GLNvSdiRenderTexture : MonoBehaviour
     public  RenderTexture sdiRenderTarget = null;
 
     [HideInInspector]
-    public Texture backgroundTex = null;
+    public RenderTexture backgroundTex = null;
 
     private Material m_Material;
 
     public float imageScale = 1.0f;
-
 
     public void CreateSdiTexture(int w, int h, int depth, bool is_power_of_two, string name)
     {
@@ -31,7 +30,7 @@ public class GLNvSdiRenderTexture : MonoBehaviour
         if (!sdiRenderTarget.Create())
             Debug.LogError("Could not create RenderTexture");
 
-        this.GetComponent<Camera>().targetTexture = sdiRenderTarget;
+        //this.GetComponent<Camera>().targetTexture = sdiRenderTarget;
     }
     
 
@@ -52,25 +51,23 @@ public class GLNvSdiRenderTexture : MonoBehaviour
     }
 
 
-#if false
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
 		if (backgroundTex != null && material != null)
 		{
-            Debug.Log("backgroundTex != null");
 			material.SetTexture("_BgTex", backgroundTex);
             material.SetFloat("_Scale", imageScale);
-			Graphics.Blit(source, destination, material);
+            Graphics.Blit(source, sdiRenderTarget, material);
+            Graphics.Blit(sdiRenderTarget, destination);
 		}
 		else
 		{
             RenderTexture.active = destination;
-            Debug.Log("backgroundTex == null");
+            Graphics.Blit(source, sdiRenderTarget);
 			Graphics.Blit(source, destination);
             
 		}
     }
-#endif
 
 
 
