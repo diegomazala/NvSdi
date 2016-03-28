@@ -24,9 +24,11 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			return EXIT_FAILURE;							// Quit If Window Was Not Created
 		}
 
-		lWindow.SetupSdi();
-
-		lApp.Run();
+		if (lWindow.SetupSdi())
+		{
+			lApp.Run();
+			lWindow.CleanupSdi();
+		}
 		
 	}
 	catch(const std::exception& e)
@@ -34,10 +36,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		MessageBox(NULL, e.what(), "GLNvSdi Exception", MB_ICONERROR | MB_OK);
 	}
 	
-	
-	lWindow.CleanupSdi();
-
-
 
 	lWindow.Destroy();
 

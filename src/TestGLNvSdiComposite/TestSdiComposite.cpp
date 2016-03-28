@@ -59,7 +59,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	SdiOutputSetGlobalOptions();
 	
 	//SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 788, 513, false, 2);
-	SdiOutputSetVideoFormat(HD_1080I_59_94, NONE, 0, 0, false, 2);
+	SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 0, 0, false, 2);
+	//SdiOutputSetVideoFormat(HD_1080I_59_94, NONE, 0, 0, false, 2);
 	//SdiOutputSetVideoFormat(SD_487I_59_94, COMP_SYNC, 788, 513, false, 2);
 
 	if (!SdiInputSetupDevices())

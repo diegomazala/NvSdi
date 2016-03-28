@@ -44,6 +44,18 @@ public class GLNvSdiIO : MonoBehaviour
 
     IEnumerator Start()
     {
+
+#if !UNITY_EDITOR
+        if (!GLNvSdiOptions.ReadXml(UtyGLNvSdi.sdiConfigFolder + @"Sdi.xml", ref options))
+        {
+            System.IO.DirectoryInfo sdiDir = new System.IO.DirectoryInfo(UtyGLNvSdi.sdiConfigFolder);
+            if (!sdiDir.Exists)
+                sdiDir.Create();
+            GLNvSdiOptions.WriteXml(UtyGLNvSdi.sdiConfigFolder + @"Sdi.xml", options);
+        }
+#endif
+
+
         UtyGLNvSdi.SdiSetupLogFile();
         yield return StartCoroutine(SdiIOCoroutine());
     }

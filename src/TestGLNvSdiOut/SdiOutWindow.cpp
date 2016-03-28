@@ -36,11 +36,13 @@ bool SdiOutWindow::SetupSdi()
 	}
 
 	SdiOutputSetGlobalOptions();
-	SdiOutputSetVideoFormat(HD_1080I_59_94, NONE, 788, 513, false, 2);
+	SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 788, 513, false, 2);
 
 	if (!SdiOutputSetupDevices())
 	{
 		std::cerr << "Error: Could not setup sdi devices for output" << std::endl;
+		SdiOutputCleanupDevices();
+		SdiOutputUninitialize();
 		return false;
 	}
 
@@ -49,6 +51,9 @@ bool SdiOutWindow::SetupSdi()
 	if (!SdiOutputSetupContextGL(this->GetDC(), this->GetGLRC()) || !SdiOutputSetupGL())
 	{
 		std::cerr << "Error: Could not setup opengl for sdi output" << std::endl;
+		SdiOutputCleanupGL();
+		SdiOutputCleanupDevices();
+		SdiOutputUninitialize();
 		return false;
 	}
 	else
@@ -62,6 +67,7 @@ bool SdiOutWindow::SetupSdi()
 	if (!SdiOutputBindVideo() || !SdiOutputStart())
 	{
 		std::cerr << "Error: Could not start opengl sdi output" << std::endl;
+		CleanupSdi();
 		return false;
 	}
 

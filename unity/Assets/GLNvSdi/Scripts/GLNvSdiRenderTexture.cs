@@ -25,12 +25,12 @@ public class GLNvSdiRenderTexture : MonoBehaviour
         sdiRenderTarget.useMipMap = false;
         sdiRenderTarget.filterMode = FilterMode.Trilinear;
         sdiRenderTarget.wrapMode = TextureWrapMode.Clamp;
-        sdiRenderTarget.antiAliasing = 8;
+        sdiRenderTarget.antiAliasing = 1;
         sdiRenderTarget.anisoLevel = 0; // RenderTexture wit depth must have an Aniso Level of 0
         if (!sdiRenderTarget.Create())
             Debug.LogError("Could not create RenderTexture");
 
-        //this.GetComponent<Camera>().targetTexture = sdiRenderTarget;
+        this.GetComponent<Camera>().targetTexture = sdiRenderTarget;
     }
     
 
@@ -57,13 +57,14 @@ public class GLNvSdiRenderTexture : MonoBehaviour
 		{
 			material.SetTexture("_BgTex", backgroundTex);
             material.SetFloat("_Scale", imageScale);
-            Graphics.Blit(source, sdiRenderTarget, material);
-            Graphics.Blit(sdiRenderTarget, destination);
+            //Graphics.Blit(source, sdiRenderTarget, material);
+            //Graphics.Blit(sdiRenderTarget, destination);
+            Graphics.Blit(source, destination, material);
 		}
 		else
 		{
             RenderTexture.active = destination;
-            Graphics.Blit(source, sdiRenderTarget);
+            //Graphics.Blit(source, sdiRenderTarget);
 			Graphics.Blit(source, destination);
             
 		}
