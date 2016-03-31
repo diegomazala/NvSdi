@@ -132,6 +132,9 @@
     <ClInclude Include="..\src\GLNvSdi\GLNvSdiInput.h">
       <Filter>GLNvSdi\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\GLNvSdi\GLNvSdiOutput.h">
+      <Filter>GLNvSdi\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\UnityPlugin\UnityPlugin.cpp">
