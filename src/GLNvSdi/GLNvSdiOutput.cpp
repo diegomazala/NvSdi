@@ -585,7 +585,7 @@ extern "C"
 
 			case SdiRenderEvent::Initialize:
 			{
-				SdiSetupLogFile();
+				//SdiSetupLogFile();
 				SdiSetCurrentDC();
 				SdiSetCurrentGLRC();
 

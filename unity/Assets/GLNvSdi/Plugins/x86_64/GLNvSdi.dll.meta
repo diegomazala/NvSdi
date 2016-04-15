@@ -9,13 +9,14 @@ PluginImporter:
   isPreloaded: 0
   platformData:
     Any:
-      enabled: 1
+      enabled: 0
       settings: {}
     Editor:
-      enabled: 0
+      enabled: 1
       settings:
         CPU: x86_64
         DefaultValueInitialized: true
+        OS: AnyOS
     Linux:
       enabled: 0
       settings:
@@ -25,7 +26,7 @@ PluginImporter:
       settings:
         CPU: x86_64
     LinuxUniversal:
-      enabled: 0
+      enabled: 1
       settings:
         CPU: x86_64
     OSXIntel:
@@ -37,7 +38,7 @@ PluginImporter:
       settings:
         CPU: AnyCPU
     OSXUniversal:
-      enabled: 0
+      enabled: 1
       settings:
         CPU: x86_64
     Win:
