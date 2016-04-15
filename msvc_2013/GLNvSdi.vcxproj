@@ -56,6 +56,7 @@
     <ClInclude Include="..\src\GLNvSdi\GLNvSdi.h" />
     <ClInclude Include="..\src\GLNvSdi\GLNvSdiCore.h" />
     <ClInclude Include="..\src\GLNvSdi\GLNvSdiInput.h" />
+    <ClInclude Include="..\src\GLNvSdi\GLNvSdiOutput.h" />
     <ClInclude Include="..\src\GLNvSdi\SdiOptions.h" />
     <ClInclude Include="..\src\GLNvSdi\SdiPresentFrame.h" />
     <ClInclude Include="..\src\GL\glew.h" />
