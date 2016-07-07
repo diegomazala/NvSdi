@@ -4,6 +4,20 @@ using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 using System.Globalization;
 
+[System.Serializable]
+public class SerializableEnum<T> where T : struct, System.IConvertible
+{
+    public T Value
+    {
+        get { return m_EnumValue; }
+        set { m_EnumValue = value; }
+    }
+
+    [SerializeField]
+    private string m_EnumValueAsString;
+    [SerializeField]
+    private T m_EnumValue;
+}
 
 [System.Serializable]
 public enum SdiRenderEvent
@@ -36,11 +50,12 @@ public enum SdiVideoFormat
 [System.Serializable]
 public enum SdiSyncSource
 {
-    SDI_SYNC,
-	COMP_SYNC,
-	NONE
+    NONE,
+    COMP_SYNC,
+    SDI_SYNC
 };
 
+[System.Serializable]
 public enum SdiReturn
 {
     GL_PARTIAL_SUCCESS_NV  = 0x902E,
@@ -53,29 +68,34 @@ public enum SdiReturn
 [System.Serializable]
 public class GLNvSdiOptions
 {
-   
     public SdiVideoFormat videoFormat;
 	public SdiSyncSource syncSource;
     public int inputRingBufferSize;
-    public int flipQueueLength;
-    public bool dualOutput;
-    public int hDelay;
-    public int vDelay;
-    public bool invertFields;
+    public bool inputCaptureFields;
+    public int outputFlipQueueLength;
+    public int outputHorizontalDelay;
+    public int outputVerticalDelay;
+    public bool outputInvertFields;
+    public bool outputDual;
+    public bool useInputVideoAsBackground;
+    public bool logToFile;
 
     public GLNvSdiOptions()
     {
         videoFormat = SdiVideoFormat.HD_1080I_59_94;
         inputRingBufferSize = 2;
-        dualOutput = false;
-        flipQueueLength = 2;
-        hDelay = 0;
-        vDelay = 0;
-        invertFields = false;
+        outputDual = false;
+        outputFlipQueueLength = 2;
+        outputHorizontalDelay = 0;
+        outputVerticalDelay = 0;
+        outputInvertFields = false;
+        inputCaptureFields = true;
+        useInputVideoAsBackground = true;
+        logToFile = false;
     }
 
 
-    static public bool ReadXml(string xmlFileName, ref GLNvSdiOptions rOptions)
+    static public bool Load(string xmlFileName, ref GLNvSdiOptions rOptions)
     {
         try
         {
@@ -92,10 +112,14 @@ public class GLNvSdiOptions
         }
     }
 
-    static public bool WriteXml(string xmlFileName, GLNvSdiOptions options)
+    static public bool Save(string xmlFileName, GLNvSdiOptions options)
     {
         try
         {
+            System.IO.FileInfo fileInfo = new System.IO.FileInfo(xmlFileName);
+            if (!fileInfo.Exists)
+                System.IO.Directory.CreateDirectory(fileInfo.Directory.FullName);
+            
             XmlSerializer serializer = new XmlSerializer(typeof(GLNvSdiOptions));
             System.IO.TextWriter textWriter = new System.IO.StreamWriter(xmlFileName);
             serializer.Serialize(textWriter, options);
@@ -277,6 +301,7 @@ public class UtyGLNvSdi
     public static extern System.IntPtr GetSdiInputRenderEventFunc();
 
 
+
     public static void GetSizeFromVideoFormat(SdiVideoFormat video_format, ref int rWidth, ref int rHeight, 
                                                                         ref float rAspect, ref bool rIsInterlaced)
     {
@@ -325,16 +350,15 @@ public class UtyGLNvSdi
         GetSizeFromVideoFormat(video_format, ref rWidth, ref rHeight, ref lAspect, ref lInterlaced);
     }
 
-    static public string sdiConfigFolder
+    static public string ConfigFileName
     {
         get
         {
-#if UNITY_EDITOR
-            System.IO.DirectoryInfo mainFolderPath = new System.IO.DirectoryInfo(Application.dataPath + "/");
-#else
-            System.IO.DirectoryInfo mainFolderPath = new System.IO.DirectoryInfo(Application.dataPath + "/../");
+            string path = Application.dataPath + "/";
+#if !UNITY_EDITOR
+            path += "../";
 #endif
-            return mainFolderPath.FullName + @"Config/Sdi/";
+            return (new System.IO.DirectoryInfo(path)).FullName + @"Config/Sdi.xml";
         }
     }
 }

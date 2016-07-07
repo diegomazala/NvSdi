@@ -7,9 +7,6 @@
     <Filter Include="UnityPlugin">
       <UniqueIdentifier>{504aef1c-2551-4db7-be8f-935674b7a88d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GL_GLEW">
-      <UniqueIdentifier>{e3eaf86c-8ff3-430b-88e1-04f00d9a186f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="NvSdiApi">
       <UniqueIdentifier>{026fe07d-f9fe-4250-a318-c019f543ed03}</UniqueIdentifier>
     </Filter>
@@ -41,15 +38,6 @@
   <ItemGroup>
     <ClInclude Include="..\src\UnityPlugin\UnityPlugin.h">
       <Filter>UnityPlugin</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\GL\glew.h">
-      <Filter>GL_GLEW</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\GL\glxew.h">
-      <Filter>GL_GLEW</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\GL\wglew.h">
-      <Filter>GL_GLEW</Filter>
     </ClInclude>
     <ClInclude Include="..\src\NvSdiApi\CommandLine.h">
       <Filter>NvSdiApi\Header Files</Filter>
@@ -139,9 +127,6 @@
   <ItemGroup>
     <ClCompile Include="..\src\UnityPlugin\UnityPlugin.cpp">
       <Filter>UnityPlugin</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\GL\glew.c">
-      <Filter>GL_GLEW</Filter>
     </ClCompile>
     <ClCompile Include="..\src\NvSdiApi\Colorbar.cpp">
       <Filter>NvSdiApi\Source Files</Filter>

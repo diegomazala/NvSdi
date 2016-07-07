@@ -6,35 +6,43 @@ public class GLNvSdiIn : MonoBehaviour
 {
     public const int MAX_COUNT = 8;
 
-    public int ringBufferSizeInFrames = 2;
-
-    public bool captureFields = true;
+    public GLNvSdiOptions options;
 
     public Material[] sdiMaterials = { null, null, null, null, null, null, null, null };
 
     private RenderTexture[] sdiTexture = { null, null, null, null, null, null, null, null };
 
+    private IEnumerator InputCoroutine = null;
 
-    void Awake()
+    void OnEnable()
     {
-        if (!SystemInfo.graphicsDeviceVersion.Contains("OpenGL"))
+        if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiInputInitialize())
         {
             this.enabled = false;
             return;
         }
+
+        InputCoroutine = SdiInputCoroutine();
     }
 
 
     IEnumerator Start()
     {
-        UtyGLNvSdi.SdiSetupLogFile();
-        yield return StartCoroutine(SdiInputCoroutine());
+#if !UNITY_EDITOR
+        if (!GLNvSdiOptions.Load(UtyGLNvSdi.ConfigFileName, ref options))
+            GLNvSdiOptions.Save(UtyGLNvSdi.ConfigFileName, options);
+#endif
+
+        if (options.logToFile)
+            UtyGLNvSdi.SdiSetupLogFile();
+
+        yield return StartCoroutine(InputCoroutine);
     }
 
 
     void OnDisable()
     {
-        StopCoroutine(SdiInputCoroutine());
+        StopCoroutine(InputCoroutine);
 
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
 
@@ -51,7 +59,7 @@ public class GLNvSdiIn : MonoBehaviour
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
         yield return new WaitForEndOfFrame();
 
-        if (captureFields)
+        if (options.inputCaptureFields)
             CreateTextures(8, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight() / 2);
         else
             CreateTextures(4, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight());
@@ -88,7 +96,7 @@ public class GLNvSdiIn : MonoBehaviour
 
             UtyGLNvSdi.SdiInputSetTexturePtr(i, sdiTexture[i].GetNativeTexturePtr(), sdiTexture[i].width, sdiTexture[i].height);
 
-			int multiplier = captureFields ? 2 : 1;
+            int multiplier = options.inputCaptureFields ? 2 : 1;
             if (i < UtyGLNvSdi.SdiInputVideoCount() * multiplier)
 				sdiMaterials[i].mainTexture = sdiTexture[i];
         }

@@ -6,11 +6,7 @@ using System.Runtime.InteropServices;
 public class GLNvSdiIO : MonoBehaviour
 {
     public const int MAX_COUNT = 8;
-
-    public bool captureFields = true;
-
-    public bool useVideoAsBackground = true;
-
+    
     public GLNvSdiOptions options;
 
     public Material[] sdiMaterials = { null, null, null, null, null, null, null, null };
@@ -28,9 +24,11 @@ public class GLNvSdiIO : MonoBehaviour
     public bool showGUI = false;
 
 
+    private IEnumerator IOCoroutine = null;
+
     void OnEnable()
     {
-        if (!SystemInfo.graphicsDeviceVersion.Contains("OpenGL"))
+        if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiInputInitialize())
         {
             this.enabled = false;
             return;
@@ -38,6 +36,8 @@ public class GLNvSdiIO : MonoBehaviour
 
         timeCodeData = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
         timeCodeHandle = GCHandle.Alloc(timeCodeData, GCHandleType.Pinned);
+
+        IOCoroutine = SdiIOCoroutine();
     }
 
 
@@ -46,25 +46,21 @@ public class GLNvSdiIO : MonoBehaviour
     {
 
 #if !UNITY_EDITOR
-        if (!GLNvSdiOptions.ReadXml(UtyGLNvSdi.sdiConfigFolder + @"Sdi.xml", ref options))
-        {
-            System.IO.DirectoryInfo sdiDir = new System.IO.DirectoryInfo(UtyGLNvSdi.sdiConfigFolder);
-            if (!sdiDir.Exists)
-                sdiDir.Create();
-            GLNvSdiOptions.WriteXml(UtyGLNvSdi.sdiConfigFolder + @"Sdi.xml", options);
-        }
+        if (!GLNvSdiOptions.Load(UtyGLNvSdi.ConfigFileName, ref options))
+            GLNvSdiOptions.Save(UtyGLNvSdi.ConfigFileName, options);
 #endif
 
-
-        UtyGLNvSdi.SdiSetupLogFile();
-        yield return StartCoroutine(SdiIOCoroutine());
+        if (options.logToFile)
+            UtyGLNvSdi.SdiSetupLogFile();
+        
+        yield return StartCoroutine(IOCoroutine);
     }
 
     void OnDisable()
     {
         timeCodeHandle.Free();
 
-        StopCoroutine(SdiIOCoroutine());
+        StopCoroutine(IOCoroutine);
 
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
         
@@ -84,7 +80,7 @@ public class GLNvSdiIO : MonoBehaviour
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
         yield return new WaitForEndOfFrame();
 
-        if (captureFields)
+        if (options.inputCaptureFields)
             CreateSdiInputTextures(8, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight() / 2);
         else
             CreateSdiInputTextures(4, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight());
@@ -101,10 +97,10 @@ public class GLNvSdiIO : MonoBehaviour
         UtyGLNvSdi.SdiOutputSetVideoFormat(
             options.videoFormat,
             options.syncSource,
-            options.hDelay,
-            options.vDelay,
-            options.dualOutput,
-            options.flipQueueLength);
+            options.outputHorizontalDelay,
+            options.outputVerticalDelay,
+            options.outputDual,
+            options.outputFlipQueueLength);
 
         yield return new WaitForEndOfFrame();
 
@@ -118,7 +114,7 @@ public class GLNvSdiIO : MonoBehaviour
         float aspect = 1.0f;
 
         UtyGLNvSdi.GetSizeFromVideoFormat(options.videoFormat, ref texWidth, ref texHeight, ref aspect, ref interlaced);
-        if (!SetupOutputTextures(texWidth, texHeight, aspect, interlaced, options.dualOutput))
+        if (!SetupOutputTextures(texWidth, texHeight, aspect, interlaced, options.outputDual))
         {
             UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for input/output");
         }
@@ -140,7 +136,7 @@ public class GLNvSdiIO : MonoBehaviour
     }
 
 
-    bool SetupOutputTextures(int texWidth, int texHeight, float aspect, bool interlaced, bool dualOutput)
+    bool SetupOutputTextures(int texWidth, int texHeight, float aspect, bool interlaced, bool outputDual)
     {
         // Check the count of cameras. The plugin support until two cameras
         if (m_Camera.Length > 4)
@@ -154,7 +150,7 @@ public class GLNvSdiIO : MonoBehaviour
 
         // Verify the amount of render textures needed
         int lTexCount = 0;
-        if (options.dualOutput)
+        if (options.outputDual)
             lTexCount = 2;
         else
             lTexCount = 1;
@@ -163,7 +159,7 @@ public class GLNvSdiIO : MonoBehaviour
             lTexCount *= 2;
 
         // If dual progressive output, change the order of cameras. So, the first two are active
-        if (options.dualOutput && !interlaced)     // dual output progressive
+        if (options.outputDual && !interlaced)     // dual output progressive
         {
             Camera tmp = m_Camera[1];
             m_Camera[1] = m_Camera[2];
@@ -209,9 +205,9 @@ public class GLNvSdiIO : MonoBehaviour
                         return false;
                     }
 
-                    if (useVideoAsBackground)
+                    if (options.useInputVideoAsBackground)
                     {
-                        if (captureFields)
+                        if (options.inputCaptureFields)
                             sdiTex.backgroundTex = sdiTexture[i];
                         else
                             sdiTex.backgroundTex = sdiTexture[i / 2];
@@ -247,7 +243,7 @@ public class GLNvSdiIO : MonoBehaviour
 
         for (int i = 0; i < count; ++i)
         {
-            if (captureFields && texHeight == 243 && i % 2 == 0)
+            if (options.inputCaptureFields && texHeight == 243 && i % 2 == 0)
                 sdiTexture[i] = new RenderTexture(texWidth, texHeight + 1, 32, RenderTextureFormat.ARGB32);
             else
                 sdiTexture[i] = new RenderTexture(texWidth, texHeight, 32, RenderTextureFormat.ARGB32);
@@ -261,7 +257,7 @@ public class GLNvSdiIO : MonoBehaviour
             UtyGLNvSdi.SdiInputSetTexturePtr(i, sdiTexture[i].GetNativeTexturePtr(), sdiTexture[i].width, sdiTexture[i].height);
 
             // attach to texture only the existent video inputs
-            int multiplier = captureFields ? 2 : 1;
+            int multiplier = options.inputCaptureFields ? 2 : 1;
             if (i < UtyGLNvSdi.SdiInputVideoCount() * multiplier)
                 sdiMaterials[i].mainTexture = sdiTexture[i];
         }
@@ -343,7 +339,7 @@ public class GLNvSdiIO : MonoBehaviour
         GUILayout.BeginHorizontal("box");
         {
             GUILayout.Label("Output Flip Queue Length: ");
-            GUILayout.Label(this.options.flipQueueLength.ToString(), "box");
+            GUILayout.Label(this.options.outputFlipQueueLength.ToString(), "box");
         }
         GUILayout.EndHorizontal();
 
@@ -359,21 +355,21 @@ public class GLNvSdiIO : MonoBehaviour
         GUILayout.BeginHorizontal("box");
         {
             GUILayout.Label("Dual Output: ");
-            GUILayout.Label(this.options.dualOutput.ToString(), "box");
+            GUILayout.Label(this.options.outputDual.ToString(), "box");
         }
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal("box");
         {
             GUILayout.Label("Horizontal Delay: ");
-            GUILayout.Label(this.options.hDelay.ToString(), "box");
+            GUILayout.Label(this.options.outputHorizontalDelay.ToString(), "box");
         }
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal("box");
         {
             GUILayout.Label("Vertical Delay: ");
-            GUILayout.Label(this.options.vDelay.ToString(), "box");
+            GUILayout.Label(this.options.outputVerticalDelay.ToString(), "box");
         }
         GUILayout.EndHorizontal();
     }

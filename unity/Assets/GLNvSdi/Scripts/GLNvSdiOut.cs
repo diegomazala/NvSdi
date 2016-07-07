@@ -29,14 +29,18 @@ public class GLNvSdiOut : MonoBehaviour
     private int m_TexWidth = 1920;	// HD=1920, SD=720
     private int m_TexHeight = 1080;	// HD=1080, SD=486
 
+    private IEnumerator OutputCoroutine = null;
 
-    void Awake()
+
+    void OnEnable()
     {
-        if (!SystemInfo.graphicsDeviceVersion.Contains("OpenGL"))
+        if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiOutputInitialize())
         {
             this.enabled = false;
             return;
         }
+
+        OutputCoroutine = SdiOutputCoroutine();
     }
 
 
@@ -44,25 +48,21 @@ public class GLNvSdiOut : MonoBehaviour
     IEnumerator Start()
     {
 #if !UNITY_EDITOR
-        if (!GLNvSdiOptions.ReadXml(UtyGLNvSdi.sdiConfigFolder + @"Sdi.xml", ref options))
-        {
-            System.IO.DirectoryInfo sdiDir = new System.IO.DirectoryInfo(UtyGLNvSdi.sdiConfigFolder);
-            if (!sdiDir.Exists)
-                sdiDir.Create();
-            GLNvSdiOptions.WriteXml(UtyGLNvSdi.sdiConfigFolder + @"Sdi.xml", options);
-        }
+        if (!GLNvSdiOptions.Load(UtyGLNvSdi.ConfigFileName, ref options))
+            GLNvSdiOptions.Save(UtyGLNvSdi.ConfigFileName, options);
 #endif
 
 
-        UtyGLNvSdi.SdiSetupLogFile();
-        
-        yield return StartCoroutine(SdiOutputCoroutine());
+        if (options.logToFile)
+            UtyGLNvSdi.SdiSetupLogFile();
+
+        yield return StartCoroutine(OutputCoroutine);
 
     }
 
     void OnDisable()
     {
-        StopCoroutine(SdiOutputCoroutine());
+        StopCoroutine(OutputCoroutine);
 
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
     }
@@ -74,10 +74,10 @@ public class GLNvSdiOut : MonoBehaviour
         UtyGLNvSdi.SdiOutputSetVideoFormat(
             options.videoFormat,
             options.syncSource,
-            options.hDelay,
-            options.vDelay,
-            options.dualOutput,
-            options.flipQueueLength);
+            options.outputHorizontalDelay,
+            options.outputVerticalDelay,
+            options.outputDual,
+            options.outputFlipQueueLength);
 
         yield return new WaitForEndOfFrame();
 
@@ -117,7 +117,7 @@ public class GLNvSdiOut : MonoBehaviour
 
         // Verify the amount of render textures needed
         int lTexCount = 0;
-        if (options.dualOutput)
+        if (options.outputDual)
             lTexCount = 2;
         else
             lTexCount = 1;
@@ -126,7 +126,7 @@ public class GLNvSdiOut : MonoBehaviour
             lTexCount *= 2;
 
         // If dual progressive output, change the order of cameras. So, the first two are active
-        if (options.dualOutput && !lIsInterlaced)     // dual output progressive
+        if (options.outputDual && !lIsInterlaced)     // dual output progressive
         {
             Camera tmp = m_Camera[1];
             m_Camera[1] = m_Camera[2];
@@ -186,9 +186,9 @@ public class GLNvSdiOut : MonoBehaviour
 
         // If the options to invert fields is marked, we have to invert 
         // the textures id already sent to plugin
-        if (options.invertFields)
+        if (options.outputInvertFields)
         {
-            UtyGLNvSdi.SdiOutputInvertFields(options.invertFields);
+            UtyGLNvSdi.SdiOutputInvertFields(options.outputInvertFields);
         }
 
         return true;

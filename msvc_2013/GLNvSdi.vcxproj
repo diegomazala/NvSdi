@@ -27,7 +27,6 @@
     <ClCompile Include="..\src\GLNvSdi\GLNvSdiOutput.cpp" />
     <ClCompile Include="..\src\GLNvSdi\SdiOptions.cpp" />
     <ClCompile Include="..\src\GLNvSdi\SdiPresentFrame.cpp" />
-    <ClCompile Include="..\src\GL\glew.c" />
     <ClCompile Include="..\src\NvSdiApi\Colorbar.cpp" />
     <ClCompile Include="..\src\NvSdiApi\CommandLine.cpp" />
     <ClCompile Include="..\src\NvSdiApi\Console.cpp" />
@@ -59,9 +58,6 @@
     <ClInclude Include="..\src\GLNvSdi\GLNvSdiOutput.h" />
     <ClInclude Include="..\src\GLNvSdi\SdiOptions.h" />
     <ClInclude Include="..\src\GLNvSdi\SdiPresentFrame.h" />
-    <ClInclude Include="..\src\GL\glew.h" />
-    <ClInclude Include="..\src\GL\glxew.h" />
-    <ClInclude Include="..\src\GL\wglew.h" />
     <ClInclude Include="..\src\NvSdiApi\CommandLine.h" />
     <ClInclude Include="..\src\NvSdiApi\common.h" />
     <ClInclude Include="..\src\NvSdiApi\digits.h" />
@@ -201,8 +197,8 @@
       </ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) $(SolutionDir)\..\unity\Assets\GLNvSdi\Plugins\x86_64\$(ProjectName)$(TargetExt)
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
