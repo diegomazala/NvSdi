@@ -13,16 +13,18 @@ public class GLNvSdiIn : MonoBehaviour
     private RenderTexture[] sdiTexture = { null, null, null, null, null, null, null, null };
 
     private IEnumerator InputCoroutine = null;
+    private bool sdiInitialized = false;
 
     void OnEnable()
     {
+        sdiInitialized = false;
+        InputCoroutine = SdiInputCoroutine();
+
         if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiInputInitialize())
         {
             this.enabled = false;
             return;
         }
-
-        InputCoroutine = SdiInputCoroutine();
     }
 
 
@@ -44,7 +46,8 @@ public class GLNvSdiIn : MonoBehaviour
     {
         StopCoroutine(InputCoroutine);
 
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+        if (sdiInitialized)
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
 
         DestroyTextures();
     }
@@ -67,6 +70,8 @@ public class GLNvSdiIn : MonoBehaviour
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Setup);
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.StartCapture);
         yield return new WaitForEndOfFrame();
+
+        sdiInitialized = true;
 
         while (UtyGLNvSdi.SdiInputIsCapturing())
         {

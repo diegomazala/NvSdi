@@ -25,9 +25,13 @@ public class GLNvSdiIO : MonoBehaviour
 
 
     private IEnumerator IOCoroutine = null;
+    private bool sdiInitialized = false;
 
     void OnEnable()
     {
+        sdiInitialized = false;
+        IOCoroutine = SdiIOCoroutine();
+
         if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiInputInitialize())
         {
             this.enabled = false;
@@ -36,8 +40,6 @@ public class GLNvSdiIO : MonoBehaviour
 
         timeCodeData = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
         timeCodeHandle = GCHandle.Alloc(timeCodeData, GCHandleType.Pinned);
-
-        IOCoroutine = SdiIOCoroutine();
     }
 
 
@@ -62,9 +64,11 @@ public class GLNvSdiIO : MonoBehaviour
 
         StopCoroutine(IOCoroutine);
 
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
-        
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+        if (sdiInitialized)
+        {
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+        }
 
         DestroyTextures();
     }
@@ -118,7 +122,9 @@ public class GLNvSdiIO : MonoBehaviour
         {
             UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for input/output");
         }
-        
+
+        sdiInitialized = true;
+
         while (true)
         {
             // Wait until all frame rendering is done
