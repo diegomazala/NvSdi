@@ -27,6 +27,9 @@
     <ClCompile Include="..\src\TestGLNvSdiIn\TestSdiInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\NvSdiApi\glExtensions.h">
@@ -37,6 +40,9 @@
     </ClInclude>
     <ClInclude Include="..\src\GLCommon\OpenGL.h">
       <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

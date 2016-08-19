@@ -192,11 +192,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp" />
     <ClCompile Include="..\src\TestGLNvSdiIn\SdiInWindow.cpp" />
     <ClCompile Include="..\src\TestGLNvSdiIn\TestSdiInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\NvSdiApi\glExtensions.h" />
+    <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h" />
     <ClInclude Include="..\src\TestGLNvSdiIn\SdiInWindow.h" />
     <ClInclude Include="..\src\GLCommon\OpenGL.h" />
   </ItemGroup>
