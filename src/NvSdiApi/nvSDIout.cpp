@@ -1696,10 +1696,10 @@ bool CNvSDIoutGpuTopology::init()
 
 	m_nGpu = 0;
 
-	HWND hWnd;
-	HGLRC hGLRC;
-	if(CreateDummyGLWindow(&hWnd,&hGLRC) == false)
-		return false;
+	//HWND hWnd;
+	//HGLRC hGLRC;
+	//if(CreateDummyGLWindow(&hWnd,&hGLRC) == false)
+	//	return false;
 
 	if(!loadAffinityExtension())
 	{
@@ -1843,8 +1843,8 @@ bool CNvSDIoutGpuTopology::init()
 	m_nGpu = GPUIdx; 
 	m_bInitialized = true;
 	// We can kill the dummy window now
-	if(DestroyGLWindow(&hWnd,&hGLRC) == false)
-		return false;
+	//if(DestroyGLWindow(&hWnd,&hGLRC) == false)
+	//	return false;
 
 	return true;
 

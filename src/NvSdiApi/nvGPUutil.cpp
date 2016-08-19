@@ -133,10 +133,10 @@ bool CNvGpuTopology::init()
 	if(m_bInitialized)
 		return true;
 
-	HWND hWnd;
-	HGLRC hGLRC;
-	if(CreateDummyGLWindow(&hWnd,&hGLRC) == false)
-		return false;
+	//HWND hWnd;
+	//HGLRC hGLRC;
+	//if(CreateDummyGLWindow(&hWnd,&hGLRC) == false)
+	//	return false;
 
 	if(!loadAffinityExtension())
 	{
@@ -200,10 +200,9 @@ bool CNvGpuTopology::init()
 	m_bInitialized = true;
 
 	// We can kill the dummy window now
-	if(DestroyGLWindow(&hWnd,&hGLRC) == false)
-		return false;
+	//if(DestroyGLWindow(&hWnd,&hGLRC) == false)
+	//	return false;
 	
-
 	return true;
 
 }
