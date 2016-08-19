@@ -30,10 +30,12 @@ enum SdiRenderEvent
 #include "GLNvSdiOutput.h"
 
 
-
+static int sdiError = 0;
 
 extern "C"
 {
+	GLNVSDI_API int SdiError();
+
 	GLNVSDI_API std::stringstream& SdiLog();
 
 	GLNVSDI_API void SdiClearLog();
@@ -98,7 +100,6 @@ extern "C"
 
 	GLNVSDI_API bool SdiAncGetTimeCode(void* timecode_int8, int video_index);
 
-	
 	
 };
 

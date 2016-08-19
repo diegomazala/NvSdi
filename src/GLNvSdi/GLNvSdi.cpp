@@ -16,6 +16,8 @@ extern "C"
 	HDC		gSdiDC = NULL;
 	HDC		gSdiAffinityDC = NULL;
 	
+	
+
 	SdiOptions gOptions;
 
 	HGLRC	gUtyGLRC = NULL;
@@ -33,6 +35,11 @@ extern "C"
 		Logger	gSdiLogger;
 	}
 
+
+	GLNVSDI_API int SdiError()
+	{
+		return sdiError;
+	}
 	
 	GLNVSDI_API std::stringstream& SdiLog()
 	{
