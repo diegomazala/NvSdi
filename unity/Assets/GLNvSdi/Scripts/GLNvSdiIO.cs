@@ -33,12 +33,6 @@ public class GLNvSdiIO : MonoBehaviour
         sdiEnabled = false;
         IOCoroutine = SdiIOCoroutine();
 
-        //if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiInputInitialize())
-        //{
-        //    this.enabled = false;
-        //    return;
-        //}
-
         timeCodeData = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
         timeCodeHandle = GCHandle.Alloc(timeCodeData, GCHandleType.Pinned);
 
@@ -56,9 +50,10 @@ public class GLNvSdiIO : MonoBehaviour
 
     void OnDisable()
     {
-        StopCoroutine(IOCoroutine);
         if (sdiEnabled)
         {
+            StopCoroutine(IOCoroutine);
+
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
             sdiEnabled = false;
@@ -72,6 +67,12 @@ public class GLNvSdiIO : MonoBehaviour
     private IEnumerator SdiIOCoroutine()
     {
         yield return new WaitForEndOfFrame();
+
+        if (UtyGLNvSdi.SdiGpuCount() < 1)
+        {
+            sdiEnabled = false;
+            yield return null;
+        }
 
         //
         // Input

@@ -155,15 +155,15 @@ public class UtyGLNvSdi
         return UtyGLNvSdi.Log;
     }
 
-
-    [DllImport("GLNvSdi")]
-    public static extern int SdiError();
-
+  
     [DllImport("GLNvSdi")]
     public static extern void SdiSetupLogConsole();
     
     [DllImport("GLNvSdi")]
     public static extern void SdiSetupLogFile();
+
+    [DllImport("GLNvSdi")]
+    public static extern int SdiGpuCount();
 
 
     [DllImport("GLNvSdi")]
@@ -302,10 +302,6 @@ public class UtyGLNvSdi
     public static extern SdiReturn SdiInputCaptureStatus();
     [DllImport("GLNvSdi")]
     public static extern System.IntPtr GetSdiInputRenderEventFunc();
-
-
-    [DllImport("GLNvSdi")]
-    public static extern System.IntPtr GetSdiIORenderEventFunc();
 
 
 

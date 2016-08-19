@@ -20,10 +20,6 @@ public class GLNvSdiIn : MonoBehaviour
         sdiEnabled = false;
         InputCoroutine = SdiInputCoroutine();
 
-        //if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiInputInitialize())
-        //{
-        //    this.enabled = false;
-        //    return;
   
 #if !UNITY_EDITOR
         if (!GLNvSdiOptions.Load(UtyGLNvSdi.ConfigFileName, ref options))
@@ -38,11 +34,11 @@ public class GLNvSdiIn : MonoBehaviour
 
 
     void OnDisable()
-    {
-        StopCoroutine(InputCoroutine);
-
+    {        
         if (sdiEnabled)
         {
+            StopCoroutine(InputCoroutine);
+
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
             sdiEnabled = false;
         }
