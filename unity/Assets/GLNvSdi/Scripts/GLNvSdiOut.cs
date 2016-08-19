@@ -30,43 +30,41 @@ public class GLNvSdiOut : MonoBehaviour
     private int m_TexHeight = 1080;	// HD=1080, SD=486
 
     private IEnumerator OutputCoroutine = null;
-    private bool sdiInitialized = false;
+    private bool sdiEnabled = false;
 
     void OnEnable()
     {
         OutputCoroutine = SdiOutputCoroutine();
-        sdiInitialized = false;
+        sdiEnabled = false;
 
-        if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiOutputInitialize())
-        {
-            this.enabled = false;
-            return;
-        }
-    }
+        //if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiOutputInitialize())
+        //{
+        //    this.enabled = false;
+        //    return;
+        //}
 
-
-
-    IEnumerator Start()
-    {
 #if !UNITY_EDITOR
         if (!GLNvSdiOptions.Load(UtyGLNvSdi.ConfigFileName, ref options))
             GLNvSdiOptions.Save(UtyGLNvSdi.ConfigFileName, options);
 #endif
 
-
         if (options.logToFile)
             UtyGLNvSdi.SdiSetupLogFile();
 
-        yield return StartCoroutine(OutputCoroutine);
-
+        StartCoroutine(OutputCoroutine);
     }
+
+
 
     void OnDisable()
     {
         StopCoroutine(OutputCoroutine);
 
-        if (sdiInitialized)
+        if (sdiEnabled)
+        {
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+            sdiEnabled = false;
+        }
     }
 
 
@@ -91,7 +89,7 @@ public class GLNvSdiOut : MonoBehaviour
             UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for output");
         }
 
-        sdiInitialized = true;
+        sdiEnabled = true;
 
         while (true)
         {

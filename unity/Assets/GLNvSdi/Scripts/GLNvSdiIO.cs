@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 [AddComponentMenu("Diem/Video IO SDI - GLNvSdiIO")]
 public class GLNvSdiIO : MonoBehaviour
 {
+    public int frameCount = 0;
     public const int MAX_COUNT = 8;
     
     public GLNvSdiOptions options;
@@ -25,27 +26,21 @@ public class GLNvSdiIO : MonoBehaviour
 
 
     private IEnumerator IOCoroutine = null;
-    private bool sdiInitialized = false;
+    private bool sdiEnabled = false;
 
     void OnEnable()
     {
-        sdiInitialized = false;
+        sdiEnabled = false;
         IOCoroutine = SdiIOCoroutine();
 
-        if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiInputInitialize())
-        {
-            this.enabled = false;
-            return;
-        }
+        //if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore || !UtyGLNvSdi.SdiInputInitialize())
+        //{
+        //    this.enabled = false;
+        //    return;
+        //}
 
         timeCodeData = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
         timeCodeHandle = GCHandle.Alloc(timeCodeData, GCHandleType.Pinned);
-    }
-
-
-
-    IEnumerator Start()
-    {
 
 #if !UNITY_EDITOR
         if (!GLNvSdiOptions.Load(UtyGLNvSdi.ConfigFileName, ref options))
@@ -54,23 +49,23 @@ public class GLNvSdiIO : MonoBehaviour
 
         if (options.logToFile)
             UtyGLNvSdi.SdiSetupLogFile();
-        
-        yield return StartCoroutine(IOCoroutine);
+
+        StartCoroutine(IOCoroutine);
     }
+
 
     void OnDisable()
     {
-        timeCodeHandle.Free();
-
         StopCoroutine(IOCoroutine);
-
-        if (sdiInitialized)
+        if (sdiEnabled)
         {
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+            sdiEnabled = false;
         }
 
         DestroyTextures();
+        timeCodeHandle.Free();
     }
 
 
@@ -92,7 +87,6 @@ public class GLNvSdiIO : MonoBehaviour
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Setup);
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.StartCapture);
         yield return new WaitForEndOfFrame();
-
 
         //
         // Output
@@ -123,7 +117,36 @@ public class GLNvSdiIO : MonoBehaviour
             UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for input/output");
         }
 
-        sdiInitialized = true;
+        sdiEnabled = true;
+
+#if false
+        yield return new WaitForEndOfFrame();
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
+        Debug.Log("capture " + UtyGLNvSdi.SdiError());
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+        Debug.Log("present " + UtyGLNvSdi.SdiError());
+
+        yield return new WaitForEndOfFrame();
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
+        Debug.Log("capture " + UtyGLNvSdi.SdiError());
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+        Debug.Log("present " + UtyGLNvSdi.SdiError());
+
+        yield return new WaitForEndOfFrame();
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
+        Debug.Log("capture " + UtyGLNvSdi.SdiError());
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+        Debug.Log("present " + UtyGLNvSdi.SdiError());
+
+
+        yield return new WaitForEndOfFrame();
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+        Debug.Log("shutdown output " + UtyGLNvSdi.SdiError());
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
+        Debug.Log("shutdown input " + UtyGLNvSdi.SdiError());
+        yield return new WaitForEndOfFrame();
+#endif
+
 
         while (true)
         {
@@ -135,8 +158,9 @@ public class GLNvSdiIO : MonoBehaviour
 
             // Capture frame from device
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
-
+            // Present frame
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+
         }
 
     }

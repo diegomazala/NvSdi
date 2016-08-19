@@ -197,8 +197,7 @@
       </ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy /Y $(TargetPath) $(SolutionDir)\..\unity\Assets\GLNvSdi\Plugins\x86_64\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -665,6 +665,9 @@ extern "C"
 				{
 					//Debug.LogError("Capture fail");
 				}
+
+				sdiError = (int)glGetError();
+
 				break;
 			}
 
@@ -692,11 +695,15 @@ extern "C"
 					SdiLog() << "SdiMakeCurrent failed" << std::endl;
 				}
 
+				sdiError = (int)glGetError();
+
 				break;
 			}
 
 			case SdiRenderEvent::Setup:
 			{
+				sdiError = (int)glGetError();
+
 				if (!SdiInputSetupGL())
 				{
 					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
@@ -720,14 +727,13 @@ extern "C"
 					}
 				}
 
-
 				if (!SdiAncSetupInput())
 				{
 					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
 					//return false;
 				}
 
-
+				sdiError = (int)glGetError();
 				break;
 			}
 
@@ -738,6 +744,7 @@ extern "C"
 					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
 					//return false;
 				}
+				sdiError = (int)glGetError();
 				break;
 			}
 
@@ -746,15 +753,15 @@ extern "C"
 				SdiMakeCurrent();
 				SdiInputStop();
 				SdiAncCleanupInput();
+				sdiError = (int)glGetError();
 				break;
 			}
 
 			case SdiRenderEvent::Shutdown:
 			{
-				SdiLog() << "SdiRenderEvent::Shutdown" << std::endl;
+				HGLRC uty_hglrc = wglGetCurrentContext();
+				HDC uty_hdc = wglGetCurrentDC();
 
-				//SdiSetCurrentDC();
-				//SdiSetCurrentGLRC();
 				SdiMakeCurrent();
 				SdiInputStop();
 				SdiAncCleanupInput();
@@ -766,13 +773,13 @@ extern "C"
 
 				SdiInputCleanupGL();
 				SdiInputUninitialize();
-				//SdiMakeUtyCurrent();
+				sdiError = (int)glGetError();
+				
+				wglMakeCurrent(uty_hdc, uty_hglrc);
 
 				break;
 			}
 		}
-
-		SdiLog() << "OnSdiInputRenderEvent" << std::endl;
 	}
 
 	// --------------------------------------------------------------------------

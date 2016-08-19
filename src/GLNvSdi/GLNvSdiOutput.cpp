@@ -162,6 +162,8 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiOutputInitialize()
 	{	
+		sdiError = (int)glGetError();
+
 		attr::duplicateFramesCount = 0;
 
 		// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
@@ -170,6 +172,8 @@ extern "C"
 			SdiLog() << "Unable to obtain system GPU topology" << std::endl;
 			return false;
 		}
+
+		sdiError = (int)glGetError();;
 
 		CNvSDIoutGpu* pOutGpu = CNvSDIoutGpuTopology::instance().getGpu(SdiGlobalOptions().gpu);
 		if(pOutGpu == NULL || (pOutGpu->isSDIoutput() == false))
@@ -579,7 +583,7 @@ extern "C"
 			{
 				SdiMakeCurrent();
 				SdiOutputPresentFrame();
-				
+				sdiError = (int)glGetError();
 				break;
 			}
 
@@ -593,6 +597,7 @@ extern "C"
 				{
 				}
 
+				sdiError = (int)glGetError();
 				break;
 			}
 
@@ -627,17 +632,27 @@ extern "C"
 				{
 				}
 
+				sdiError = (int)glGetError();
+
 				break;
 			}
 
 
 			case SdiRenderEvent::Shutdown:
 			{
+				HGLRC uty_hglrc = wglGetCurrentContext();
+				HDC uty_hdc = wglGetCurrentDC();
+				
+				
+				SdiMakeCurrent();
 				SdiOutputStop();
 				SdiOutputUnbindVideo();
 				SdiOutputCleanupGL();
 				SdiOutputCleanupDevices();
 				SdiOutputUninitialize();
+				sdiError = (int)glGetError();
+				
+				wglMakeCurrent(uty_hdc, uty_hglrc);
 
 				break;
 			}
