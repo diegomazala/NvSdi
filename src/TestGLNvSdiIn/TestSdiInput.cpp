@@ -53,9 +53,17 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	
 	SdiInWindow passthru;
 
+	HWND hWnd;
+	HGLRC hGLRC;
+	if(CreateDummyGLWindow(&hWnd,&hGLRC) == false)
+		return false;
 
 	if (!SdiInputInitialize())
 		return EXIT_FAILURE;
+
+	// We can kill the dummy window now
+	if(DestroyGLWindow(&hWnd,&hGLRC) == false)
+		return false;
 
 	const int ringBufferSizeInFrames = 2;
 	SdiInputSetGlobalOptions(ringBufferSizeInFrames);
