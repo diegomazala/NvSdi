@@ -22,7 +22,6 @@ public class SerializableEnum<T> where T : struct, System.IConvertible
 [System.Serializable]
 public enum SdiRenderEvent
 {
-    PreInitialize,
     Initialize,
     Setup,
     StartCapture,
@@ -136,10 +135,15 @@ public class GLNvSdiOptions
 }
 
 
-public class UtyGLNvSdi
+public class UtyGLNvSdi : MonoBehaviour
 {
     public const int LOG_MAX_SIZE = 512;
     public static System.Text.StringBuilder Log = null;
+
+    public const int MAX_COUNT = 8;
+
+    public GLNvSdiOptions options;
+
 
     [DllImport("GLNvSdi")]
     public static extern void SdiClearLog();
@@ -155,6 +159,9 @@ public class UtyGLNvSdi
 
         return UtyGLNvSdi.Log;
     }
+
+    [DllImport("GLNvSdi")]
+    public static extern int SdiError();
 
   
     [DllImport("GLNvSdi")]
@@ -194,7 +201,8 @@ public class UtyGLNvSdi
     public static extern void SdiSetUtyGLRC();
     [DllImport("GLNvSdi")]
     public static extern bool SdiMakeUtyCurrent();
-
+    [DllImport("GLNvSdi")]
+    public static extern int SdiGpuCount();
 
 
     [DllImport("GLNvSdi")]
@@ -364,7 +372,7 @@ public class UtyGLNvSdi
 #if !UNITY_EDITOR
             path += "../";
 #endif
-            return (new System.IO.DirectoryInfo(path)).FullName + @"Config/Sdi.xml";
+            return (new System.IO.DirectoryInfo(path)).FullName + @"Config/Sdi/Sdi.xml";
         }
     }
 }

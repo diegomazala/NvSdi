@@ -670,20 +670,19 @@ extern "C"
 
 				break;
 			}
-			case SdiRenderEvent::PreInitialize:
-			{
-				SdiSetCurrentDC();
-				SdiSetCurrentGLRC();
-				break;
-			}
+
 
 			case SdiRenderEvent::Initialize:
 			{
 				//SdiSetupLogFile();
+				SdiSetCurrentDC();
+				SdiSetCurrentGLRC();
 
 				if (!SdiInputInitialize())
 				{
 					SdiLog() << "SdiInputInitialize failed" << std::endl;
+					sdiError = (int)glGetError();
+					return;
 				}
 
 				const int ringBufferSizeInFrames = 2;
@@ -692,11 +691,15 @@ extern "C"
 				if (!SdiInputSetupDevices())
 				{
 					SdiLog() << "SdiInputSetupDevices failed" << std::endl;
+					sdiError = (int)glGetError();
+					return;
 				}
 
 				if (!SdiMakeCurrent())
 				{
 					SdiLog() << "SdiMakeCurrent failed" << std::endl;
+					sdiError = (int)glGetError();
+					return;
 				}
 
 				sdiError = (int)glGetError();
@@ -749,6 +752,9 @@ extern "C"
 					//return false;
 				}
 				sdiError = (int)glGetError();
+
+				SdiInputResetDroppedFramesCount();
+
 				break;
 			}
 

@@ -20,10 +20,8 @@ using System.Xml.Serialization;
 
 
 [AddComponentMenu("Diem/Video Out SDI - GLNvSdiOut")]
-public class GLNvSdiOut : MonoBehaviour
+public class GLNvSdiOut : UtyGLNvSdi
 {
-    public GLNvSdiOptions options;
-
     public Camera[] m_Camera = { null, null, null, null };
 
     private int m_TexWidth = 1920;	// HD=1920, SD=720
@@ -64,14 +62,6 @@ public class GLNvSdiOut : MonoBehaviour
 
     private IEnumerator SdiOutputCoroutine()
     {
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.PreInitialize);
-        yield return new WaitForEndOfFrame();
-
-        if (UtyGLNvSdi.SdiOutputGpuCount() < 1)
-        {
-            sdiEnabled = false;
-            yield return null;
-        }
 
         UtyGLNvSdi.SdiOutputSetGlobalOptions();
         UtyGLNvSdi.SdiOutputSetVideoFormat(
@@ -85,20 +75,27 @@ public class GLNvSdiOut : MonoBehaviour
         yield return new WaitForEndOfFrame();
 
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Setup);
+        yield return new WaitForEndOfFrame();
 
-        if (!SetupOutputTextures())
+
+        if (UtyGLNvSdi.SdiError() == 0)
         {
-            UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for output");
-        }
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Setup);
 
-        sdiEnabled = true;
+            if (!SetupOutputTextures())
+            {
+                UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for output");
+            }
 
-        while (true)
-        {
-            yield return new WaitForEndOfFrame();
-            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+            sdiEnabled = true;
+
+            while (true)
+            {
+                yield return new WaitForEndOfFrame();
+                GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+            }
         }
+       
     }
 
 

@@ -2,12 +2,8 @@ using UnityEngine;
 using System.Collections;
 
 [AddComponentMenu("Diem/Video In SDI - GLNvSdiIn")]
-public class GLNvSdiIn : MonoBehaviour 
+public class GLNvSdiIn : UtyGLNvSdi 
 {
-    public const int MAX_COUNT = 8;
-
-    public GLNvSdiOptions options;
-
     public Material[] sdiMaterials = { null, null, null, null, null, null, null, null };
 
     private RenderTexture[] sdiTexture = { null, null, null, null, null, null, null, null };
@@ -50,14 +46,6 @@ public class GLNvSdiIn : MonoBehaviour
     private IEnumerator SdiInputCoroutine()
     {
         yield return new WaitForEndOfFrame();
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.PreInitialize);
-        yield return new WaitForEndOfFrame();
-
-        if (UtyGLNvSdi.SdiInputGpuCount() < 1)
-        {
-            sdiEnabled = false;
-            yield return null;
-        }
 
         // Issue a plugin event with an integer identifier.
         // The plugin can distinguish between different based on this ID.

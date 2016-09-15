@@ -3,13 +3,8 @@ using System.Collections;
 using System.Runtime.InteropServices;
 
 [AddComponentMenu("Diem/Video IO SDI - GLNvSdiIO")]
-public class GLNvSdiIO : MonoBehaviour
+public class GLNvSdiIO : UtyGLNvSdi
 {
-    public int frameCount = 0;
-    public const int MAX_COUNT = 8;
-    
-    public GLNvSdiOptions options;
-
     public Material[] sdiMaterials = { null, null, null, null, null, null, null, null };
     public Material[] sdiCompositeMaterial = { null, null, null, null };
 
@@ -21,6 +16,10 @@ public class GLNvSdiIO : MonoBehaviour
     private GCHandle timeCodeHandle;
 
 
+    public void ShowGUI()
+    {
+        showGUI = !showGUI;
+    }
 
     public bool showGUI = false;
 
@@ -66,103 +65,73 @@ public class GLNvSdiIO : MonoBehaviour
 
     private IEnumerator SdiIOCoroutine()
     {
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.PreInitialize);
         yield return new WaitForEndOfFrame();
 
-        if (UtyGLNvSdi.SdiInputGpuCount() < 1 && UtyGLNvSdi.SdiOutputGpuCount() < 1)
-        {
-            sdiEnabled = false;
-            yield return null;
-        }
 
         //
-        // Input
+        // Input/Ouput Initialization
         //
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
-        yield return new WaitForEndOfFrame();
-
-        if (options.inputCaptureFields)
-            CreateSdiInputTextures(8, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight() / 2);
-        else
-            CreateSdiInputTextures(4, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight());
-
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Setup);
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.StartCapture);
-        yield return new WaitForEndOfFrame();
-
-        //
-        // Output
-        //
-        UtyGLNvSdi.SdiOutputSetGlobalOptions();
-        UtyGLNvSdi.SdiOutputSetVideoFormat(
-            options.videoFormat,
-            options.syncSource,
-            options.outputHorizontalDelay,
-            options.outputVerticalDelay,
-            options.outputDual,
-            options.outputFlipQueueLength);
-
-        yield return new WaitForEndOfFrame();
-
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Setup);
+        yield return new WaitForEndOfFrame();
 
 
-        int texWidth = 1920;
-        int texHeight = 1080;
-        bool interlaced = true;
-        float aspect = 1.0f;
-
-        UtyGLNvSdi.GetSizeFromVideoFormat(options.videoFormat, ref texWidth, ref texHeight, ref aspect, ref interlaced);
-        if (!SetupOutputTextures(texWidth, texHeight, aspect, interlaced, options.outputDual))
+        if (UtyGLNvSdi.SdiError() == 0)
         {
-            UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for input/output");
-        }
+            //
+            // Input Setup
+            //
+            if (options.inputCaptureFields)
+                CreateSdiInputTextures(8, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight() / 2);
+            else
+                CreateSdiInputTextures(4, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight());
 
-        sdiEnabled = true;
-
-#if false
-        yield return new WaitForEndOfFrame();
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
-        Debug.Log("capture " + UtyGLNvSdi.SdiError());
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
-        Debug.Log("present " + UtyGLNvSdi.SdiError());
-
-        yield return new WaitForEndOfFrame();
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
-        Debug.Log("capture " + UtyGLNvSdi.SdiError());
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
-        Debug.Log("present " + UtyGLNvSdi.SdiError());
-
-        yield return new WaitForEndOfFrame();
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
-        Debug.Log("capture " + UtyGLNvSdi.SdiError());
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
-        Debug.Log("present " + UtyGLNvSdi.SdiError());
-
-
-        yield return new WaitForEndOfFrame();
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
-        Debug.Log("shutdown output " + UtyGLNvSdi.SdiError());
-        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
-        Debug.Log("shutdown input " + UtyGLNvSdi.SdiError());
-        yield return new WaitForEndOfFrame();
-#endif
-
-
-        while (true)
-        {
-            // Wait until all frame rendering is done
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Setup);
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.StartCapture);
             yield return new WaitForEndOfFrame();
 
-            // Get status of the capture (GL_SUCCESS_NV, GL_FAILURE_NV, GL_PARTIAL_SUCCESS_NV)
-            //Debug.Log(UtyGLNvSdi.SdiInputCaptureStatus().ToString());
+            //
+            // Output Setup
+            //
+            UtyGLNvSdi.SdiOutputSetGlobalOptions();
+            UtyGLNvSdi.SdiOutputSetVideoFormat(
+                options.videoFormat,
+                options.syncSource,
+                options.outputHorizontalDelay,
+                options.outputVerticalDelay,
+                options.outputDual,
+                options.outputFlipQueueLength);
 
-            // Capture frame from device
-            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
-            // Present frame
-            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+            yield return new WaitForEndOfFrame();
 
+        
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.Setup);
+
+
+            int texWidth = 1920;
+            int texHeight = 1080;
+            bool interlaced = true;
+            float aspect = 1.0f;
+
+            UtyGLNvSdi.GetSizeFromVideoFormat(options.videoFormat, ref texWidth, ref texHeight, ref aspect, ref interlaced);
+            if (!SetupOutputTextures(texWidth, texHeight, aspect, interlaced, options.outputDual))
+            {
+                UnityEngine.Debug.LogError("GLNvSdi_Plugin could not setup sdi textures for input/output");
+            }
+
+            sdiEnabled = true;
+
+            while (true)
+            {
+                // Wait until all frame rendering is done
+                yield return new WaitForEndOfFrame();
+
+                // Capture frame from device
+                GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
+                // Present frame
+                GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+
+            }
         }
 
     }
@@ -308,101 +277,4 @@ public class GLNvSdiIO : MonoBehaviour
         }
     }
 
-
-
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.V))
-            showGUI = !showGUI;
-    }
-
-    private Rect windowRect = new Rect(10, 10, 250, 200);
-    private int windowId = 0;
-    void OnGUI()
-    {
-        if (!showGUI)
-            return;
-
-        if (windowId == 0)
-            Random.Range(1, 9999);
-        windowRect = GUILayout.Window(windowId, windowRect, BuildWindow, "Sdi [Key 'V']");
-    }
-
-
-    void BuildWindow(int windowId)
-    {
-        GUILayout.BeginHorizontal("box");
-        {
-            GUILayout.Label("Video Format: ");
-            GUILayout.Label(this.options.videoFormat.ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            GUILayout.Label("Sync Source: ");
-            GUILayout.Label(this.options.syncSource.ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            GUILayout.Label("Input Ring Buffer: ");
-            GUILayout.Label(this.options.inputRingBufferSize.ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            GUILayout.Label("Gvi Time: ");
-            GUILayout.Label(UtyGLNvSdi.SdiInputGviTime().ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            if (GUILayout.Button("Reset"))
-                UtyGLNvSdi.SdiInputResetDroppedFramesCount();
-            GUILayout.Label("Dropped Frames Count: ");
-            GUILayout.Label(UtyGLNvSdi.SdiInputDroppedFramesCount().ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            GUILayout.Label("Output Flip Queue Length: ");
-            GUILayout.Label(this.options.outputFlipQueueLength.ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            if (GUILayout.Button("Reset"))
-                UtyGLNvSdi.SdiOutputResetDuplicatedFramesCount();
-            GUILayout.Label("Duplicated Frames Count: ");
-            GUILayout.Label(UtyGLNvSdi.SdiOutputDuplicatedFramesCount().ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            GUILayout.Label("Dual Output: ");
-            GUILayout.Label(this.options.outputDual.ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            GUILayout.Label("Horizontal Delay: ");
-            GUILayout.Label(this.options.outputHorizontalDelay.ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal("box");
-        {
-            GUILayout.Label("Vertical Delay: ");
-            GUILayout.Label(this.options.outputVerticalDelay.ToString(), "box");
-        }
-        GUILayout.EndHorizontal();
-    }
 }

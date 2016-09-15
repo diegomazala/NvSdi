@@ -587,20 +587,13 @@ extern "C"
 				break;
 			}
 
-			case SdiRenderEvent::PreInitialize:
-			{
-				SdiSetCurrentDC();
-				SdiSetCurrentGLRC();
-				break;
-			}
-
 			case SdiRenderEvent::Initialize:
 			{
 				//SdiSetupLogFile();
+				SdiSetCurrentDC();
+				SdiSetCurrentGLRC();
 
-				if (!SdiOutputInitialize())
-				{
-				}
+				SdiOutputInitialize();
 
 				sdiError = (int)glGetError();
 				break;
@@ -613,31 +606,31 @@ extern "C"
 
 				if (!SdiOutputSetupDevices())
 				{
-					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
-					//return false;
+					sdiError = (int)glGetError();
+					return;
 				}
 
 				SdiMakeCurrent();
 
 				if (!SdiOutputSetupGL())
 				{
-					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
 					SdiOutputCleanupDevices();
-					//return false;
+					sdiError = (int)glGetError();
+					return;
 				}
 
 				if (!SdiOutputBindVideo())
 				{
-					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
 					SdiOutputCleanupDevices();
-					//return false;
+					sdiError = (int)glGetError();
+					return;
 				}
 
-				if (!SdiOutputStart())
-				{
-				}
+				SdiOutputStart();
 
 				sdiError = (int)glGetError();
+
+				SdiOutputResetDuplicatedFramesCount();
 
 				break;
 			}
