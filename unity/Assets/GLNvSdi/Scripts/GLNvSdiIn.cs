@@ -50,6 +50,14 @@ public class GLNvSdiIn : MonoBehaviour
     private IEnumerator SdiInputCoroutine()
     {
         yield return new WaitForEndOfFrame();
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.PreInitialize);
+        yield return new WaitForEndOfFrame();
+
+        if (UtyGLNvSdi.SdiInputGpuCount() < 1)
+        {
+            sdiEnabled = false;
+            yield return null;
+        }
 
         // Issue a plugin event with an integer identifier.
         // The plugin can distinguish between different based on this ID.

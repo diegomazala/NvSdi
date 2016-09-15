@@ -66,9 +66,10 @@ public class GLNvSdiIO : MonoBehaviour
 
     private IEnumerator SdiIOCoroutine()
     {
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.PreInitialize);
         yield return new WaitForEndOfFrame();
 
-        if (UtyGLNvSdi.SdiGpuCount() < 1)
+        if (UtyGLNvSdi.SdiInputGpuCount() < 1 && UtyGLNvSdi.SdiOutputGpuCount() < 1)
         {
             sdiEnabled = false;
             yield return null;

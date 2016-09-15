@@ -64,6 +64,15 @@ public class GLNvSdiOut : MonoBehaviour
 
     private IEnumerator SdiOutputCoroutine()
     {
+        GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.PreInitialize);
+        yield return new WaitForEndOfFrame();
+
+        if (UtyGLNvSdi.SdiOutputGpuCount() < 1)
+        {
+            sdiEnabled = false;
+            yield return null;
+        }
+
         UtyGLNvSdi.SdiOutputSetGlobalOptions();
         UtyGLNvSdi.SdiOutputSetVideoFormat(
             options.videoFormat,

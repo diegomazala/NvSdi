@@ -587,11 +587,16 @@ extern "C"
 				break;
 			}
 
+			case SdiRenderEvent::PreInitialize:
+			{
+				SdiSetCurrentDC();
+				SdiSetCurrentGLRC();
+				break;
+			}
+
 			case SdiRenderEvent::Initialize:
 			{
 				//SdiSetupLogFile();
-				SdiSetCurrentDC();
-				SdiSetCurrentGLRC();
 
 				if (!SdiOutputInitialize())
 				{

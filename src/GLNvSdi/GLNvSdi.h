@@ -5,6 +5,7 @@
 
 enum SdiRenderEvent
 {
+	PreInitialize,
 	Initialize,
 	Setup,
 	StartCapture,

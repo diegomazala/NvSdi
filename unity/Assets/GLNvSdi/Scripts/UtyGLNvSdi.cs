@@ -22,6 +22,7 @@ public class SerializableEnum<T> where T : struct, System.IConvertible
 [System.Serializable]
 public enum SdiRenderEvent
 {
+    PreInitialize,
     Initialize,
     Setup,
     StartCapture,
@@ -162,9 +163,6 @@ public class UtyGLNvSdi
     [DllImport("GLNvSdi")]
     public static extern void SdiSetupLogFile();
 
-    [DllImport("GLNvSdi")]
-    public static extern int SdiGpuCount();
-
 
     [DllImport("GLNvSdi")]
     public static extern bool SdiAncGetTimeCode(System.IntPtr timecode_int8, int video_index);
@@ -198,6 +196,9 @@ public class UtyGLNvSdi
     public static extern bool SdiMakeUtyCurrent();
 
 
+
+    [DllImport("GLNvSdi")]
+    public static extern int SdiOutputGpuCount();
     [DllImport("GLNvSdi")]
     public static extern bool SdiOutputInitialize();
     [DllImport("GLNvSdi")]
@@ -246,6 +247,8 @@ public class UtyGLNvSdi
     public static extern System.IntPtr GetSdiOutputRenderEventFunc();
 
 
+    [DllImport("GLNvSdi")]
+    public static extern int SdiInputGpuCount();
     [DllImport("GLNvSdi")]
     public static extern bool SdiInputInitialize();
     [DllImport("GLNvSdi")]
