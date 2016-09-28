@@ -10,6 +10,7 @@
     <ClCompile Include="..\src\TestGLNvSdiScreenshot\TestSdiInSdiInScreenshot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\NvSdiApi\glExtensions.h">
@@ -24,6 +25,7 @@
     <ClInclude Include="..\include\Image.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">

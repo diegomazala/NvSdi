@@ -11,17 +11,17 @@ extern "C"
 {
 	std::stringstream gSdiLog;
 	
-	HWND	gSdiWnd = NULL;
-	HGLRC	gSdiGLRC = NULL;
-	HDC		gSdiDC = NULL;
-	HDC		gSdiAffinityDC = NULL;
-	
+	static HWND		gSdiWnd = NULL;
+	static HGLRC	gSdiGLRC = NULL;
+	static HDC		gSdiDC = NULL;
+	static HDC		gSdiAffinityDC = NULL;
+	static HGLRC	gUtyGLRC = NULL;
+	static HDC		gUtyDC = NULL;
 	
 
-	SdiOptions gOptions;
+	static SdiOptions gOptions;
 
-	HGLRC	gUtyGLRC = NULL;
-	HDC		gUtyDC = NULL;
+	
 
 	namespace attr
 	{
@@ -91,6 +91,12 @@ extern "C"
 		return gSdiGLRC;
 	}
 
+	GLNVSDI_API void SdiCreateGLRC(HDC hdc)
+	{
+		//Create affinity-rendering context from affinity-DC
+		gSdiGLRC = wglCreateContext(hdc);
+	}
+
 	GLNVSDI_API void SdiSetDC(HDC hdc)
 	{
 		if (hdc == NULL)
@@ -120,6 +126,49 @@ extern "C"
 	}
 
 
+	GLNVSDI_API HDC SdiCreateAffinityDC()
+	{
+		HGPUNV  gpuMask[2];
+		gpuMask[0] = CNvGpuTopology::instance().getPrimaryGpu()->getAffinityHandle();
+		gpuMask[1] = NULL;
+
+		gSdiAffinityDC = wglCreateAffinityDCNV(gpuMask);
+		if (gSdiAffinityDC != NULL)
+		{
+			PIXELFORMATDESCRIPTOR pfd =							// pfd Tells Windows How We Want Things To Be
+			{
+				sizeof (PIXELFORMATDESCRIPTOR),					// Size Of This Pixel Format Descriptor
+				1,												// Version Number
+				PFD_DRAW_TO_WINDOW |							// Format Must Support Window
+				PFD_SUPPORT_OPENGL |							// Format Must Support OpenGL
+				PFD_DOUBLEBUFFER,								// Must Support Double Buffering
+				PFD_TYPE_RGBA,									// Request An RGBA Format
+				32,												// Select Our Color Depth
+				0, 0, 0, 0, 0, 0,								// Color Bits Ignored
+				1,												// Alpha Buffer
+				0,												// Shift Bit Ignored
+				0,												// No Accumulation Buffer
+				0, 0, 0, 0,										// Accumulation Bits Ignored
+				24,												// 24 Bit Z-Buffer (Depth Buffer)  
+				8,												// 8 Bit Stencil Buffer
+				0,												// No Auxiliary Buffer
+				PFD_MAIN_PLANE,									// Main Drawing Layer
+				0,												// Reserved
+				0, 0, 0											// Layer Masks Ignored
+			};
+
+			GLuint pf = ChoosePixelFormat(gSdiAffinityDC, &pfd);
+			HRESULT rslt = ::SetPixelFormat(gSdiAffinityDC, pf, &pfd);
+
+			return gSdiAffinityDC;
+		}
+		else
+		{
+			std::cout << "Unable to create GPU affinity DC" << std::endl;
+			return NULL;
+		}
+	}
+
 	GLNVSDI_API bool SdiMakeCurrent()
 	{
 		return wglMakeCurrent(SdiGetDC(), SdiGetGLRC()); 	
@@ -140,6 +189,10 @@ extern "C"
 	{
 		return wglMakeCurrent(gUtyDC, gUtyGLRC); 	
 	}
+
+	
+
+
 
 
 

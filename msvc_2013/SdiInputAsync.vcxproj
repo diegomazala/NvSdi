@@ -19,10 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{C3811B50-806B-4DD2-A8DD-44CD54FEAB7F}</ProjectGuid>
-    <RootNamespace>TestGLNvSdiScreenshot</RootNamespace>
+    <ProjectGuid>{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}</ProjectGuid>
+    <RootNamespace>SdiInputAsync</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>TestGLNvSdiScreenshot</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -94,7 +93,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include\FreeImage;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V7_5)\include;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -105,8 +104,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>FreeImage.lib;glu32.lib;opengl32.lib;nvapi.lib;WinAppGLd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\FreeImage\$(Platform);..\lib\WinAppGL\msvc_2013\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;cuda.lib;ANCapi.lib;nvapi.lib;WinAppGLd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\$(Platform);..\lib\WinAppGL\msvc_2013\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -117,7 +116,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include\FreeImage;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V7_5)\include;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
@@ -126,8 +125,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>FreeImage.lib;glu32.lib;opengl32.lib;nvapi.lib;WinAppGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\FreeImage\$(Platform);..\lib\WinAppGL\msvc_2013\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;cuda.lib;ANCapi.lib;nvapi.lib;WinAppGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\$(Platform);..\lib\WinAppGL\msvc_2013\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -144,7 +143,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include\FreeImage;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V7_5)\include;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -155,8 +154,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>FreeImage.lib;glu32.lib;opengl32.lib;nvapi64.lib;WinAppGLd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\FreeImage\$(Platform);..\lib\WinAppGL\msvc_2013\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;cuda.lib;ANCapi.lib;nvapi64.lib;WinAppGLd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\$(Platform);..\lib\WinAppGL\msvc_2013\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -170,7 +169,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include\FreeImage;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V7_5)\include;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
@@ -179,8 +178,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>FreeImage.lib;glu32.lib;opengl32.lib;nvapi64.lib;WinAppGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\FreeImage\$(Platform);..\lib\WinAppGL\msvc_2013\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;cuda.lib;ANCapi.lib;nvapi64.lib;WinAppGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\$(Platform);..\lib\WinAppGL\msvc_2013\$(Platform);..\lib\NvApi\$(Platform);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -192,17 +191,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\NvSdiApi\Console.cpp" />
     <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp" />
     <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp" />
-    <ClCompile Include="..\src\TestGLNvSdiScreenshot\SdiInSdiInScreenshot.cpp" />
-    <ClCompile Include="..\src\TestGLNvSdiScreenshot\TestSdiInSdiInScreenshot.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\nvSDIin.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\nvSDIutil.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\platform.cpp" />
+    <ClCompile Include="..\src\SdiInputAsync\DVP.cpp" />
+    <ClCompile Include="..\src\SdiInputAsync\error.cpp" />
+    <ClCompile Include="..\src\SdiInputAsync\SdiInputAsync.cpp" />
+    <ClCompile Include="..\src\SdiInputAsync\SdiInAsyncWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\Image.h" />
     <ClInclude Include="..\src\NvSdiApi\glExtensions.h" />
     <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h" />
-    <ClInclude Include="..\src\TestGLNvSdiScreenshot\SdiInScreenshot.h" />
     <ClInclude Include="..\src\GLCommon\OpenGL.h" />
+    <ClInclude Include="..\src\NvSdiApi\nvSDIin.h" />
+    <ClInclude Include="..\src\NvSdiApi\nvSDIutil.h" />
+    <ClInclude Include="..\src\NvSdiApi\platform.h" />
+    <ClInclude Include="..\src\SdiInputAsync\DVP.h" />
+    <ClInclude Include="..\src\SdiInputAsync\error.h" />
+    <ClInclude Include="..\src\SdiInputAsync\resource.h" />
+    <ClInclude Include="..\src\SdiInputAsync\SdiInAsyncWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="GLNvSdi.vcxproj">

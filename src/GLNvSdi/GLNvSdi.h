@@ -48,6 +48,7 @@ extern "C"
 	/// Set the opengl rendering context. If the parameter is null, get the current context
 	GLNVSDI_API void  SdiSetGLRC(HGLRC hglrc = NULL);
 	GLNVSDI_API void  SdiSetCurrentGLRC();
+	GLNVSDI_API void SdiCreateGLRC(HDC hdc);
 	
 	/// Return the rendering context that is being used for sdi.
 	GLNVSDI_API HGLRC SdiGetGLRC();
@@ -55,6 +56,7 @@ extern "C"
 
 	GLNVSDI_API void SdiSetAffinityDC(HDC hdc);
 	GLNVSDI_API HDC  SdiGetAffinityDC();
+	GLNVSDI_API HDC SdiCreateAffinityDC();
 
 
 	/// Set the device context. If the parameter is null, get the current context

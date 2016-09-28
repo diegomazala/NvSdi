@@ -153,3 +153,7 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+unity/Library/
+msvc_2013/tmp/
+unity/unity.CSharp.csproj
+unity/unity.sln

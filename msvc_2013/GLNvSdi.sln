@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestGLNvSdiComposite", "Tes
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestGLNvSdiScreenshot", "TestGLNvSdiScreenshot.vcxproj", "{C3811B50-806B-4DD2-A8DD-44CD54FEAB7F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SdiInputAsync", "SdiInputAsync.vcxproj", "{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -61,6 +63,14 @@ Global
 		{C3811B50-806B-4DD2-A8DD-44CD54FEAB7F}.Release|Win32.Build.0 = Release|Win32
 		{C3811B50-806B-4DD2-A8DD-44CD54FEAB7F}.Release|x64.ActiveCfg = Release|x64
 		{C3811B50-806B-4DD2-A8DD-44CD54FEAB7F}.Release|x64.Build.0 = Release|x64
+		{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}.Debug|Win32.Build.0 = Debug|Win32
+		{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}.Debug|x64.ActiveCfg = Debug|x64
+		{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}.Debug|x64.Build.0 = Debug|x64
+		{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}.Release|Win32.ActiveCfg = Release|Win32
+		{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}.Release|Win32.Build.0 = Release|Win32
+		{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}.Release|x64.ActiveCfg = Release|x64
+		{E21E9CBC-17A5-4B8E-B773-69CDB5E4134C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
