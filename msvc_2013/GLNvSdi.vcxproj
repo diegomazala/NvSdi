@@ -31,6 +31,8 @@
     <ClCompile Include="..\src\NvSdiApi\CommandLine.cpp" />
     <ClCompile Include="..\src\NvSdiApi\Console.cpp" />
     <ClCompile Include="..\src\NvSdiApi\digits.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\DVP.cpp" />
+    <ClCompile Include="..\src\NvSdiApi\error.cpp" />
     <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp" />
     <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp" />
     <ClCompile Include="..\src\NvSdiApi\nvSDIin.cpp" />
@@ -61,6 +63,8 @@
     <ClInclude Include="..\src\NvSdiApi\CommandLine.h" />
     <ClInclude Include="..\src\NvSdiApi\common.h" />
     <ClInclude Include="..\src\NvSdiApi\digits.h" />
+    <ClInclude Include="..\src\NvSdiApi\DVP.h" />
+    <ClInclude Include="..\src\NvSdiApi\error.h" />
     <ClInclude Include="..\src\NvSdiApi\fbo.h" />
     <ClInclude Include="..\src\NvSdiApi\glExtensions.h" />
     <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h" />
@@ -148,7 +152,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V7_5)\include;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLNVSDI_EXPORTS;WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -159,9 +163,9 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ANCapi.lib;glu32.lib;opengl32.lib;nvapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cuda.lib;ANCapi.lib;glu32.lib;opengl32.lib;nvapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>..\lib\NvApi\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\$(Platform);..\lib\NvApi\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -176,7 +180,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V7_5)\include;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>RENDERINGPLUGIN_EXPORTS;GLNVSDI_EXPORTS;WIN32;_DEBUG;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -186,9 +190,9 @@
       <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ANCapi.lib;glu32.lib;opengl32.lib;nvapi64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cuda.lib;ANCapi.lib;glu32.lib;opengl32.lib;nvapi64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>..\lib\NvApi\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\$(Platform);..\lib\NvApi\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -202,7 +206,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V7_5)\include;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLNVSDI_EXPORTS;WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
@@ -212,8 +216,8 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ANCapi.lib;glu32.lib;opengl32.lib;nvapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\NvApi\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cuda.lib;ANCapi.lib;glu32.lib;opengl32.lib;nvapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\$(Platform);..\lib\NvApi\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -230,7 +234,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V7_5)\include;..\include;..\include\NvApi;..\src\NvSdiApi;..\src\GLCommon;..\src\GLNvSdi;..\src\UnityPlugin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLNVSDI_EXPORTS;WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;USE_NVAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -240,8 +244,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ANCapi.lib;glu32.lib;opengl32.lib;nvapi64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib\NvApi\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cuda.lib;ANCapi.lib;glu32.lib;opengl32.lib;nvapi64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\$(Platform);..\lib\NvApi\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

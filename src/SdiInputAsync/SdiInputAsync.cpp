@@ -11,8 +11,8 @@ time_t start,stop;
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
 {
-	SdiInAsyncWindow multiCaptureAsync;
-	if (!multiCaptureAsync.IsSdiAvailable())
+	SdiInAsyncWindow sdiWindow;
+	if (!sdiWindow.IsSdiAvailable())
 		return EXIT_FAILURE;
 
 	WinApp lApp;
@@ -24,29 +24,27 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	lCreationParams.DepthBufferBits = 24;
 
 
-	if (!multiCaptureAsync.Create(lCreationParams, &lApp))        // Create Our Window
+	if (!sdiWindow.Create(lCreationParams, &lApp))        // Create Our Window
 	{
 		std::cerr << "ERROR: Cannot create the window application. Abort. " << std::endl;
 		return EXIT_FAILURE;							// Quit If Window Was Not Created
 	}
 
 
-	if (multiCaptureAsync.SetupSDIPipeline() == E_FAIL)
+	if (sdiWindow.SetupSDIPipeline() == E_FAIL)
 		return FALSE;
 
-	multiCaptureAsync.SetupGLPipe();
+	sdiWindow.SetupGLPipe();
 
-	if (multiCaptureAsync.StartSDIPipeline() == E_FAIL)
+	if (sdiWindow.StartSDIPipeline() == E_FAIL)
 		return FALSE;
 
 
 	lApp.InitSetup();
 	while (lApp.ProcessMainLoop())
 	{
-		multiCaptureAsync.DisplayVideo();
+		sdiWindow.DisplayVideo();
 	}
-
-	std::cout << "exit" << std::endl;
 
 	return EXIT_SUCCESS;
 }

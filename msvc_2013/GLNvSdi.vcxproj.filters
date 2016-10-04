@@ -123,6 +123,12 @@
     <ClInclude Include="..\src\GLNvSdi\GLNvSdiOutput.h">
       <Filter>GLNvSdi\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\DVP.h">
+      <Filter>GLNvSdi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NvSdiApi\error.h">
+      <Filter>GLNvSdi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\UnityPlugin\UnityPlugin.cpp">
@@ -187,6 +193,12 @@
     </ClCompile>
     <ClCompile Include="..\src\GLNvSdi\SdiPresentFrame.cpp">
       <Filter>GLNvSdi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\DVP.cpp">
+      <Filter>GLNvSdi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NvSdiApi\error.cpp">
+      <Filter>GLNvSdi</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

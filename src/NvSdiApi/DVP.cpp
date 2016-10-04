@@ -10,7 +10,6 @@
 
 
 #include "DVP.h"
-#include "SdiInAsyncWindow.h"
 #include "nvGPUutil.h"
 #include "nvSDIutil.h"
 #include "glExtensions.h"
