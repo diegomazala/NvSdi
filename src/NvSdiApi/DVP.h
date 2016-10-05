@@ -35,11 +35,10 @@
 #include <deque>
 #include <map>
 
-using namespace std;
 
 #undef USE_ALL_STREAMS
-#define NUM_VIDEO_STERAMS 4
-#define USE_ALL_STREAMS
+#define NUM_VIDEO_STREAMS 4
+//#define USE_ALL_STREAMS
 
 //=========================C_Frame============================================================
 //A struct to encapsulate all the captured data that will get passed around in the application

@@ -124,10 +124,10 @@
       <Filter>GLNvSdi\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\NvSdiApi\DVP.h">
-      <Filter>GLNvSdi</Filter>
+      <Filter>GLNvSdi\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\NvSdiApi\error.h">
-      <Filter>GLNvSdi</Filter>
+      <Filter>GLNvSdi\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -195,10 +195,10 @@
       <Filter>GLNvSdi\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\NvSdiApi\DVP.cpp">
-      <Filter>GLNvSdi</Filter>
+      <Filter>GLNvSdi\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\NvSdiApi\error.cpp">
-      <Filter>GLNvSdi</Filter>
+      <Filter>GLNvSdi\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,8 +1,8 @@
 
 #include "GLNvSdiInput.h"
 #include "glExtensions.h"
-
-
+#include "DVP.h"
+#include <cinttypes>
 
 extern "C"
 {
@@ -22,6 +22,16 @@ extern "C"
 		int droppedFramesCount = 0;
 
 		GLenum captureStatus = GL_FAILURE_NV;
+
+		static C_DVP		dvp;
+		static C_Frame*		framePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
+		static C_Frame*		prevFramePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
+		static GLuint		numDroppedFrames[NVAPI_MAX_VIO_DEVICES];
+		static GLuint		drawTimeQuery;
+		static GLuint64EXT	drawTimeStart;
+		static GLuint64EXT	drawTimeEnd;
+		static GLuint64EXT	timeElapsed;
+		
 	}
 
 
@@ -799,5 +809,424 @@ extern "C"
 		return OnSdiInputRenderEvent;
 	}
 
+
+
+	GLNVSDI_API bool DvpIsAvailable()
+	{
+		HWND hWnd;
+		HGLRC hGLRC;
+		if (CreateDummyGLWindow(&hWnd, &hGLRC) == false)
+			return false;
+
+		int numGPUs;
+		// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
+		numGPUs = CNvGpuTopology::instance().getNumGpu();
+
+		if (numGPUs <= 0)
+		{
+			MessageBox(NULL, "Unable to obtain system GPU topology", "Error", MB_OK);
+			return false;
+		}
+
+		int numCaptureDevices = CNvSDIinTopology::instance().getNumDevice();
+
+		if (numCaptureDevices <= 0)
+		{
+			MessageBox(NULL, "Unable to obtain system Capture topology", "Error", MB_OK);
+			return false;
+		}
+
+
+		if (attr::dvp.m_options.captureGPU >= numGPUs)
+		{
+			MessageBox(NULL, "Selected GPU is out of range", "Error", MB_OK);
+			return false;
+		}
+
+		// We can kill the dummy window now
+		if (DestroyGLWindow(&hWnd, &hGLRC) == false)
+			return false;
+
+		return true;
+	}
+
+
+
+	GLNVSDI_API bool DvpSetup()
+	{
+		//load the required OpenGL extensions:
+		if (!loadTimerQueryExtension() ||
+			!loadBufferObjectExtension() ||
+			!loadShaderObjectsExtension() ||
+			!loadFramebufferObjectExtension() ||
+			!loadCopyImageExtension() ||
+			!loadSwapIntervalExtension())
+		{
+			std::cout << "Could not load the required OpenGL extensions" << std::endl;
+			return false;
+		}
+
+		if (wglSwapIntervalEXT)
+			wglSwapIntervalEXT(0);
+
+
+		attr::dvp.SetupSDIPipeline();
+
+		attr::dvp.SetupSDIinGL(SdiGetDC(), SdiGetGLRC());
+
+		SdiMakeCurrent();
+
+		int videoWidth = attr::dvp.GetVideoWidth();
+		int videoHeight = attr::dvp.GetVideoHeight();
+
+		// To view the buffers we need to load an appropriate shader
+		attr::dvp.SetupDecodeProgram();
+		int activeDeviceCount = attr::dvp.GetActiveDeviceCount();
+		if (activeDeviceCount == 0)
+			return false;
+		//allocate the textures for display
+
+
+		for (UINT i = 0; i < activeDeviceCount; i++)
+		{
+			int numStreams = attr::dvp.GetNumStreamsPerFrame(i);
+#ifdef USE_ALL_STREAMS
+			numStreams = NUM_VIDEO_STREAMS;
+#endif		
+			glGenTextures(numStreams, &attr::dvp.m_DisplayTextures[i][0]);
+
+			for (UINT j = 0; j < numStreams; j++)
+			{
+				glBindTexture(GL_TEXTURE_RECTANGLE_NV, attr::dvp.m_DisplayTextures[i][j]);
+				assert(glGetError() == GL_NO_ERROR);
+				glTexParameterf(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				assert(glGetError() == GL_NO_ERROR);
+
+				glTexImage2D(GL_TEXTURE_RECTANGLE_NV, 0, GL_RGBA8, videoWidth, videoHeight,
+					0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				assert(glGetError() == GL_NO_ERROR);
+			}
+		}
+
+		//create the textures to go with the buffers and frame buffer objects to create the display textures
+		for (UINT j = 0; j < activeDeviceCount; j++)
+		{
+			int numStreams = attr::dvp.GetNumStreamsPerFrame(j);
+#ifdef USE_ALL_STREAMS	
+			numStreams = NUM_VIDEO_STREAMS;
+#endif		        
+			glGenTextures(numStreams, &attr::dvp.m_decodeTextures[j][0]);
+			assert(glGetError() == GL_NO_ERROR);
+			glGenFramebuffersEXT(numStreams, &attr::dvp.m_vidFbos[j][0]);
+			assert(glGetError() == GL_NO_ERROR);
+
+			for (unsigned int i = 0; i < numStreams; i++)
+			{
+				glBindTexture(GL_TEXTURE_RECTANGLE_ARB, attr::dvp.m_decodeTextures[j][i]);
+				assert(glGetError() == GL_NO_ERROR);
+				glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				assert(glGetError() == GL_NO_ERROR);
+
+
+				// Allocate storage for the decode texture.
+				glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8UI,
+					(GLsizei)(videoWidth*0.5), videoHeight, 0,
+					GL_RGBA_INTEGER_EXT, GL_UNSIGNED_BYTE, NULL);
+				assert(glGetError() == GL_NO_ERROR);
+				// Configure the decode->output FBO.
+				glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, attr::dvp.m_vidFbos[j][i]);
+				assert(glGetError() == GL_NO_ERROR);
+				glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+					GL_COLOR_ATTACHMENT0_EXT,
+					GL_TEXTURE_RECTANGLE_NV,
+					attr::dvp.m_DisplayTextures[j][i],
+					0);
+				assert(glGetError() == GL_NO_ERROR);
+
+				glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+			}
+
+		}
+
+		glGenQueries(1, &attr::drawTimeQuery);
+
+		return GL_TRUE;
+	}
+
+	GLNVSDI_API bool DvpCleanup()
+	{
+		attr::dvp.CleanupSDIPipeline();
+
+		attr::dvp.CleanupSDIinGL();
+
+		SdiMakeCurrent();
+
+		int activeDeviceCount = attr::dvp.GetActiveDeviceCount();
+		if (activeDeviceCount == 0)
+			return false;
+
+		for (UINT i = 0; i < activeDeviceCount; i++)
+		{
+			int numStreams = attr::dvp.GetNumStreamsPerFrame(i);
+#ifdef USE_ALL_STREAMS		
+			numStreams = NUM_VIDEO_STREAMS;
+#endif		  
+			glDeleteTextures(numStreams, &attr::dvp.m_DisplayTextures[i][0]);
+			glDeleteTextures(numStreams, &attr::dvp.m_decodeTextures[i][0]);
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+			glDeleteFramebuffersEXT(numStreams, &attr::dvp.m_vidFbos[i][0]);
+		}
+		attr::dvp.DestroyDecodeProgram();
+
+		glDeleteQueries(1, &attr::drawTimeQuery);
+		// Delete OpenGL rendering context.
+		wglMakeCurrent(NULL, NULL);
+		if (SdiGetGLRC())
+		{
+			wglDeleteContext(SdiGetGLRC());
+			SdiSetGLRC(NULL);
+		}
+
+		//ReleaseDC(this->hWnd, SdiGetDC());
+
+		wglDeleteDCNV(SdiGetAffinityDC());
+
+		return true;
+	}
+
+	GLNVSDI_API bool DvpStart()
+	{
+		return attr::dvp.StartSDIPipeline() == S_OK;
+	}
+
+
+	GLNVSDI_API bool DvpStop()
+	{
+		return attr::dvp.StopSDIPipeline() == S_OK;
+	}
+
+	GLNVSDI_API C_Frame* DvpUpdateFrame(int device_index)
+	{
+		attr::framePtr[device_index] = attr::dvp.GetFrame(device_index);
+#if 1
+		if (attr::framePtr[device_index] != nullptr)
+		{
+
+			if (attr::prevFramePtr[device_index] != nullptr)
+			{
+				attr::numDroppedFrames[device_index] +=
+					attr::framePtr[device_index]->sequenceNum - attr::prevFramePtr[device_index]->sequenceNum - 1;
+				
+				attr::dvp.ReleaseUsedFrame(device_index, attr::prevFramePtr[device_index]);
+			}
+
+			attr::prevFramePtr[device_index] = attr::framePtr[device_index];
+		}
+		else
+		{
+			if (attr::prevFramePtr[device_index] != nullptr)
+				attr::framePtr[device_index] = attr::prevFramePtr[device_index];
+		}
+#endif
+		return attr::framePtr[device_index];
+	}
+
+	GLNVSDI_API C_Frame* DvpPreviousFrame(int device_index)
+	{
+		return attr::prevFramePtr[device_index];
+	}
+
+	GLNVSDI_API GLuint64EXT DvpNumDroppedFrames(int device_index)
+	{
+		return attr::numDroppedFrames[device_index];
+	}
+
+	GLNVSDI_API int DvpActiveDeviceCount()
+	{
+		return attr::dvp.GetActiveDeviceCount();
+	}
+
+	GLNVSDI_API int DvpDeviceId(int device_index)
+	{
+		return attr::dvp.GetDeviceNumber(device_index);
+	}
+
+	GLNVSDI_API int DvpStreamsPerFrame(int device_index)
+	{
+		return attr::dvp.GetNumStreamsPerFrame(device_index);
+	}
+	
+	GLNVSDI_API NVVIOSIGNALFORMAT DvpSignalFormat()
+	{
+		return attr::dvp.GetSignalFormat();
+	}
+
+	GLNVSDI_API C_DVP* DvpPtr()
+	{
+		return &attr::dvp;
+	}
+
+	GLNVSDI_API int DvpWidth()
+	{
+		return attr::dvp.GetVideoWidth();
+	}
+
+	GLNVSDI_API int DvpHeight()
+	{
+		return attr::dvp.GetVideoHeight();
+	}
+
+	GLNVSDI_API void DvpBeginTimeQuery()
+	{
+		assert(glGetError() == GL_NO_ERROR);
+		glBeginQuery(GL_TIME_ELAPSED_EXT, attr::drawTimeQuery);
+		assert(glGetError() == GL_NO_ERROR);
+		glGetInteger64v(GL_CURRENT_TIME_NV, (GLint64 *)&attr::drawTimeStart);
+	}
+
+	GLNVSDI_API void DvpEndTimeQuery()
+	{
+		assert(glGetError() == GL_NO_ERROR);
+		glEndQuery(GL_TIME_ELAPSED_EXT);
+		assert(glGetError() == GL_NO_ERROR);
+		glGetQueryObjectui64vEXT(attr::drawTimeQuery, GL_QUERY_RESULT, &attr::timeElapsed);
+		glGetInteger64v(GL_CURRENT_TIME_NV, (GLint64 *)&attr::drawTimeEnd);
+	}
+
+	GLNVSDI_API GLuint64EXT DvpGpuTimeElapsed()
+	{
+		return attr::timeElapsed;
+	}
+
+	GLNVSDI_API GLuint64EXT DvpCpuTimeElapsed()
+	{
+		return attr::drawTimeEnd - attr::drawTimeStart;
+	}
+	
+	GLNVSDI_API GLuint64EXT DvpFrameNumber(int device_index)
+	{
+		//return (attr::dvp.GetFrame(device_index) != nullptr)
+		//	? attr::dvp.GetFrame(device_index)->sequenceNum
+		//	: 0;
+		return (attr::framePtr[device_index] != nullptr)
+			? attr::framePtr[device_index]->sequenceNum
+			: 0;
+	}
+
+	GLNVSDI_API GLuint64EXT DvpDroppedFrames(int device_index)
+	{
+		//return (attr::dvp.GetFrame(device_index) != nullptr)
+		//	? attr::dvp.GetFrame(device_index)->numDroppedFrames
+		//	: UINT64_MAX;
+		return (attr::framePtr[device_index] != nullptr)
+			? attr::framePtr[device_index]->numDroppedFrames
+			: UINT64_MAX;
+	}
+
+	GLNVSDI_API float DvpCaptureElapsedTime(int device_index)
+	{
+		return (attr::framePtr[device_index] != nullptr)
+			? attr::framePtr[device_index]->captureElapsedTime
+			: UINT32_MAX;
+	}
+
+	GLNVSDI_API float DvpUploadElapsedTime(int device_index)
+	{
+		return (attr::framePtr[device_index] != nullptr)
+			? attr::framePtr[device_index]->uploadElapsedTime
+			: UINT32_MAX;
+	}
+
+	GLNVSDI_API float DvpDownloadElapsedTime(int device_index)
+	{
+		return (attr::framePtr[device_index] != nullptr)
+			? attr::framePtr[device_index]->downloadElapsedTime
+			: UINT32_MAX;
+	}
+
+	GLNVSDI_API void DvpReleaseFrame(C_Frame* used_frame, int device_index)
+	{
+		attr::dvp.ReleaseUsedFrame(device_index, used_frame);
+	}
+
+	GLNVSDI_API GLuint DvpPixelBufferId(int device_index, int video_stream_index)
+	{
+		return (attr::framePtr[device_index] != nullptr)
+			? attr::framePtr[device_index]->getDstObject(video_stream_index)
+			: UINT_MAX;
+	}
+
+	GLNVSDI_API GLuint DvpDecodeTextureId(int device_index, int video_stream_index)
+	{
+		return attr::dvp.m_decodeTextures[device_index][video_stream_index];
+	}
+
+	GLNVSDI_API GLuint DvpDisplayTextureId(int device_index, int video_stream_index)
+	{
+		return attr::dvp.m_DisplayTextures[device_index][video_stream_index];
+	}
+
+
+	// Blit the frame to the texture
+	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int device_index, int video_stream_index)
+	{
+		if (attr::framePtr == nullptr)
+			return false;
+
+		int videoWidth = attr::dvp.GetVideoWidth();
+		int videoHeight = attr::dvp.GetVideoHeight();
+
+		// Blit the frame to the texture.
+		glBindBuffer(
+			GL_PIXEL_UNPACK_BUFFER_ARB, 
+			attr::framePtr[device_index]->getDstObject(video_stream_index));
+
+		glBindTexture(
+			GL_TEXTURE_RECTANGLE_ARB, 
+			attr::dvp.m_decodeTextures[device_index][video_stream_index]);
+
+		glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0,
+			0, 0, 
+			(GLsizei)(0.5*videoWidth),
+			videoHeight,
+			GL_RGBA_INTEGER_EXT, GL_UNSIGNED_BYTE, NULL);
+
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+
+		// Draw a textured quad to the FBO to do the chroma expansion
+		// and colorspace conversion.
+		glBindFramebufferEXT(
+			GL_FRAMEBUFFER_EXT, 
+			attr::dvp.m_vidFbos[device_index][video_stream_index]);
+
+		// if not set, use the default texture
+		if (target_texture_id < 1)
+			target_texture_id = attr::dvp.m_DisplayTextures[device_index][video_stream_index];
+
+		glFramebufferTexture2DEXT(
+			GL_FRAMEBUFFER_EXT,
+			GL_COLOR_ATTACHMENT0_EXT,
+			GL_TEXTURE_RECTANGLE_NV,
+			target_texture_id,
+			0);
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(attr::dvp.decodeProgram);
+
+		glBegin(GL_QUADS);
+		glVertex2f(0.0f, 0.0f);
+		glVertex2f(0.0f, (float)videoHeight);
+		glVertex2f((float)videoWidth, (float)videoHeight);
+		glVertex2f((float)videoWidth, 0.0f);
+		glEnd();
+
+		glUseProgram(0);
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, 0);
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+
+		return (glGetError() == GL_NO_ERROR);
+	}
 
 };	//extern "C"

@@ -1,4 +1,3 @@
-#if 1
 #include "GLNvSdi.h"
 #include "SdiInAsyncWindow.h"
 
@@ -12,7 +11,9 @@ time_t start,stop;
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
 {
 	SdiInAsyncWindow sdiWindow;
-	if (!sdiWindow.IsSdiAvailable())
+
+	//if (!sdiWindow.IsSdiAvailable())
+	if (!DvpIsAvailable())
 		return EXIT_FAILURE;
 
 	WinApp lApp;
@@ -23,6 +24,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	lCreationParams.ColorDepthBits = 32;
 	lCreationParams.DepthBufferBits = 24;
 
+	
 
 	if (!sdiWindow.Create(lCreationParams, &lApp))        // Create Our Window
 	{
@@ -31,22 +33,18 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 
 
-	if (sdiWindow.SetupSDIPipeline() == E_FAIL)
-		return FALSE;
+	if (!DvpSetup())
+		return EXIT_FAILURE;
 
-	sdiWindow.SetupGLPipe();
-
-	if (sdiWindow.StartSDIPipeline() == E_FAIL)
-		return FALSE;
+	if (!DvpStart())
+		return EXIT_FAILURE;
 
 
 	lApp.InitSetup();
 	while (lApp.ProcessMainLoop())
 	{
-		sdiWindow.DisplayVideo();
 	}
 
 	return EXIT_SUCCESS;
 }
 
-#endif

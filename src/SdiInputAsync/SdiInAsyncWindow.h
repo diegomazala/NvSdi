@@ -30,39 +30,14 @@ public:
 	SdiInAsyncWindow();
 	~SdiInAsyncWindow();
 
-	void DisplayVideo(int vid_w, int vid_h);
-
-	void CalcWindowSize(int vid_w, int vid_h, int stream_count, NVVIOSIGNALFORMAT signal_format, int& win_w, int& win_h);
-
-
 	void Render();
 	void OnKeyEvent(const KeyEvent* pEvent);
-
-
-
-	bool IsSdiAvailable();
-	HRESULT SetupSDIPipeline();
-	GLboolean SetupGLPipe();
-	HRESULT StartSDIPipeline();
-	HRESULT StopSDIPipeline();
-	GLboolean DisplayVideo();
-	GLboolean CleanupGL();
-	HRESULT CleanupSDIPipeline();
-	void Shutdown();
-	void ToggleShowStatistics(){ m_ShowStatistics = !m_ShowStatistics; }
-
-
-	HDC GetAffinityDC() { return m_AffinityDC; }
 
 protected:
 
 	bool InitGL();
 
-
-	C_DVP m_pipe;
-	GLuint m_drawTimeQuery;
-	HDC m_AffinityDC;
-	bool m_ShowStatistics;
+	bool showStatistics;
 };
 
 

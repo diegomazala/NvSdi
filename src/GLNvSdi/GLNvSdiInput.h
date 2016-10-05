@@ -3,7 +3,8 @@
 
 #include "GLNvSdi.h"
 
-
+class C_Frame;
+class C_DVP;
 
 extern "C"
 {
@@ -125,6 +126,48 @@ extern "C"
 
 	/// Function called by Unity through rendering events
 	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetSdiInputRenderEventFunc();
+
+
+	GLNVSDI_API bool DvpSetup();
+	GLNVSDI_API bool DvpCleanup();
+
+	GLNVSDI_API bool DvpStart();
+	GLNVSDI_API bool DvpStop();
+
+	GLNVSDI_API bool DvpIsAvailable();
+	GLNVSDI_API int  DvpActiveDeviceCount();
+	GLNVSDI_API int  DvpDeviceId(int device_index = 0);
+	GLNVSDI_API int  DvpStreamsPerFrame(int device_index = 0);
+	GLNVSDI_API NVVIOSIGNALFORMAT DvpSignalFormat();
+
+	GLNVSDI_API C_DVP* DvpPtr();
+
+	GLNVSDI_API int  DvpWidth();
+	GLNVSDI_API int  DvpHeight();
+
+	GLNVSDI_API void DvpBeginTimeQuery();
+	GLNVSDI_API void DvpEndTimeQuery();
+	GLNVSDI_API GLuint64EXT DvpGpuTimeElapsed();
+	GLNVSDI_API GLuint64EXT DvpCpuTimeElapsed();
+
+	GLNVSDI_API C_Frame* DvpUpdateFrame(int device_index = 0);
+	GLNVSDI_API C_Frame* DvpPreviousFrame(int device_index = 0);
+	
+	GLNVSDI_API GLuint64EXT DvpFrameNumber(int device_index = 0);
+	GLNVSDI_API GLuint64EXT DvpDroppedFrames(int device_index = 0);
+	GLNVSDI_API GLuint64EXT DvpNumDroppedFrames(int device_index = 0);
+
+	GLNVSDI_API float DvpCaptureElapsedTime(int device_index = 0);
+	GLNVSDI_API float DvpUploadElapsedTime(int device_index = 0);
+	GLNVSDI_API float DvpDownloadElapsedTime(int device_index = 0);
+
+	GLNVSDI_API void DvpReleaseFrame(C_Frame* used_frame, int device_index = 0);
+
+	GLNVSDI_API GLuint DvpPixelBufferId(int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API GLuint DvpDecodeTextureId(int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API GLuint DvpDisplayTextureId(int device_index = 0, int video_stream_index = 0);
+
+	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int device_index = 0, int video_stream_index = 0);
 };
 
 #endif	//__GL_NV_SDI_INPUT_H__
