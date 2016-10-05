@@ -86,7 +86,7 @@ NvU32  C_Frame::init(CNvSDIin *SDIin, HDC captureDC, HGLRC captureRC, CUcontext 
 	numStreamsPerFrame = SDIin->GetNumStreams();	
 
 #ifdef USE_ALL_STREAMS
-	numStreamsPerFrame = NUM_VIDEO_STREAMS;	
+	numStreamsPerFrame = NUM_VIDEO_STERAMS;	
 #endif		
 
 	srcDC = captureDC;
