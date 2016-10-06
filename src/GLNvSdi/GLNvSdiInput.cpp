@@ -6,7 +6,6 @@
 
 extern "C"
 {
-	
 	namespace attr
 	{
 		bool ownTextures = false;
@@ -27,13 +26,21 @@ extern "C"
 		static C_Frame*		framePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
 		static C_Frame*		prevFramePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
 		static GLuint		numDroppedFrames[NVAPI_MAX_VIO_DEVICES];
-		static GLuint		displayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
 		static GLuint		drawTimeQuery;
 		static GLuint64EXT	drawTimeStart;
 		static GLuint64EXT	drawTimeEnd;
 		static GLuint64EXT	timeElapsed;
-		static bool			dvpIsAvailable;
+		static bool			dvpOk;
 		
+		//
+		static gl::Texture2D displayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
+		//
+		static gl::TextureRectNV decodeTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
+		// The raw SDI data from the captured buffer
+		// needs to be copied to a texture, so that
+		// the data can be read by a shader and
+		// processed for display in OpenGL. For 
+		// example the shader may do 422->444 expansion	
 	}
 
 
@@ -669,7 +676,6 @@ extern "C"
 		{
 			case SdiRenderEvent::CaptureFrame:
 			{
-#if 0
 				if (SdiInputCaptureVideo() != GL_FAILURE_NV)
 				{
 					SdiAncCapture();
@@ -680,17 +686,6 @@ extern "C"
 				}
 
 				sdiError = (int)glGetError();
-#else
-				C_Frame *prevFrame[NVAPI_MAX_VIO_DEVICES] = { nullptr };
-				const int activeDeviceCount = DvpActiveDeviceCount();
-				for (int i = 0; i < activeDeviceCount; i++)
-				{
-					if (DvpUpdateFrame(i) != nullptr)
-						DvpBlitTexture(attr::inputTextures[i].Id());
-				}
-
-				sdiError = (int)glGetError();
-#endif
 
 				break;
 			}
@@ -698,7 +693,7 @@ extern "C"
 
 			case SdiRenderEvent::Initialize:
 			{
-#if 0
+
 				//SdiSetupLogFile();
 				SdiSetCurrentDC();
 				SdiSetCurrentGLRC();
@@ -728,21 +723,12 @@ extern "C"
 				}
 
 				sdiError = (int)glGetError();
-#else
-				SdiSetCurrentDC();
-				SdiSetCurrentGLRC();
-
-				DvpCheckAvailability();
-				
-				sdiError = (int)glGetError();
-#endif
 
 				break;
 			}
 
 			case SdiRenderEvent::Setup:
 			{
-#if 0
 				sdiError = (int)glGetError();
 
 				if (!SdiInputSetupGL())
@@ -775,19 +761,12 @@ extern "C"
 				}
 
 				sdiError = (int)glGetError();
-#else
-
-				attr::dvpIsAvailable = DvpSetup();
-
-				sdiError = (int)glGetError();
-#endif
 
 				break;
 			}
 
 			case SdiRenderEvent::StartCapture:
 			{
-#if 0
 				if (!SdiInputStart())
 				{
 					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
@@ -796,25 +775,15 @@ extern "C"
 				sdiError = (int)glGetError();
 
 				SdiInputResetDroppedFramesCount();
-#else
-				attr::dvpIsAvailable = DvpStart();
-				sdiError = (int)glGetError();
-#endif
 				break;
 			}
 
 			case SdiRenderEvent::StopCapture:
 			{
-#if 0
 				SdiMakeCurrent();
 				SdiInputStop();
 				SdiAncCleanupInput();
 				sdiError = (int)glGetError();
-#else
-				SdiMakeCurrent();
-				bool ok = DvpStop();
-				sdiError = (int)glGetError();
-#endif
 				break;
 			}
 
@@ -824,7 +793,6 @@ extern "C"
 				HDC uty_hdc = wglGetCurrentDC();
 				SdiMakeCurrent();
 
-#if 0
 				SdiInputStop();
 				SdiAncCleanupInput();
 
@@ -835,10 +803,7 @@ extern "C"
 
 				SdiInputCleanupGL();
 				SdiInputUninitialize();
-#else
-				bool ok = DvpStop();
-				ok = DvpCleanup();
-#endif
+
 				sdiError = (int)glGetError();
 				wglMakeCurrent(uty_hdc, uty_hglrc);
 
@@ -855,15 +820,14 @@ extern "C"
 	}
 
 
-
-	GLNVSDI_API bool DvpIsAvailable()
+	GLNVSDI_API bool DvpIsOk()
 	{
-		return attr::dvpIsAvailable;
+		return attr::dvpOk;
 	}
 
 	GLNVSDI_API bool DvpCheckAvailability()
 	{
-		attr::dvpIsAvailable = false;
+		attr::dvpOk = false;
 
 		int numGPUs;
 		// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
@@ -890,11 +854,11 @@ extern "C"
 			return false;
 		}
 
-		attr::dvpIsAvailable = true;
+		attr::dvpOk = true;
 		return true;
 	}
 
-	GLNVSDI_API bool DvpSetup()
+	GLNVSDI_API bool DvpPreSetup()
 	{
 		//load the required OpenGL extensions:
 		if (!loadTimerQueryExtension() ||
@@ -915,46 +879,32 @@ extern "C"
 		if (attr::dvp.SetupSDIPipeline() != S_OK)
 			return false;
 
-		attr::dvp.SetupSDIinGL(SdiGetDC(), SdiGetGLRC());
+		return (glGetError() == GL_NO_ERROR);
+	}
 
-		SdiMakeCurrent();
-
+	GLNVSDI_API bool DvpSetup()
+	{
 		int videoWidth = attr::dvp.GetVideoWidth();
 		int videoHeight = attr::dvp.GetVideoHeight();
 
-		if (!DvpCreateDisplayTextures())
+		// check if DvpPreSetup has been called previously
+		if (videoWidth < 1 || videoHeight < 1)
 			return false;
 
+		attr::dvp.SetupSDIinGL(SdiGetDC(), SdiGetGLRC());
+
+		SdiMakeCurrent();
 
 		// To view the buffers we need to load an appropriate shader
 		attr::dvp.SetupDecodeProgram();
 		int activeDeviceCount = attr::dvp.GetActiveDeviceCount();
 		if (activeDeviceCount == 0)
 			return false;
+
 		//allocate the textures for display
+		if (!DvpCreateDisplayTextures(videoWidth, videoHeight))
+			return false;
 
-
-		for (UINT i = 0; i < activeDeviceCount; i++)
-		{
-			int numStreams = attr::dvp.GetNumStreamsPerFrame(i);
-#ifdef USE_ALL_STREAMS
-			numStreams = NUM_VIDEO_STREAMS;
-#endif		
-			glGenTextures(numStreams, &attr::dvp.m_DisplayTextures[i][0]);
-
-			for (UINT j = 0; j < numStreams; j++)
-			{
-				//glBindTexture(GL_TEXTURE_RECTANGLE_NV, attr::dvp.m_DisplayTextures[i][j]);
-				glBindTexture(GL_TEXTURE_RECTANGLE_NV, DvpDisplayTextureId(i, j));
-				assert(glGetError() == GL_NO_ERROR);
-				glTexParameterf(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				assert(glGetError() == GL_NO_ERROR);
-
-				glTexImage2D(GL_TEXTURE_RECTANGLE_NV, 0, GL_RGBA8, videoWidth, videoHeight,
-					0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-				assert(glGetError() == GL_NO_ERROR);
-			}
-		}
 
 		//create the textures to go with the buffers and frame buffer objects to create the display textures
 		for (UINT j = 0; j < activeDeviceCount; j++)
@@ -963,36 +913,38 @@ extern "C"
 #ifdef USE_ALL_STREAMS	
 			numStreams = NUM_VIDEO_STREAMS;
 #endif		        
-			glGenTextures(numStreams, &attr::dvp.m_decodeTextures[j][0]);
-			assert(glGetError() == GL_NO_ERROR);
+
 			glGenFramebuffersEXT(numStreams, &attr::dvp.m_vidFbos[j][0]);
 			assert(glGetError() == GL_NO_ERROR);
 
 			for (unsigned int i = 0; i < numStreams; i++)
 			{
-				glBindTexture(GL_TEXTURE_RECTANGLE_ARB, attr::dvp.m_decodeTextures[j][i]);
-				assert(glGetError() == GL_NO_ERROR);
-				glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				assert(glGetError() == GL_NO_ERROR);
 
-
+				attr::decodeTextures[j][i].Create();
+				attr::decodeTextures[j][i].Bind();
+				attr::decodeTextures[j][i].SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				attr::decodeTextures[j][i].SetParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				
 				// Allocate storage for the decode texture.
-				glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8UI,
-					(GLsizei)(videoWidth*0.5), videoHeight, 0,
-					GL_RGBA_INTEGER_EXT, GL_UNSIGNED_BYTE, NULL);
+				glTexImage2D(attr::decodeTextures[j][i].Type(), 
+					0, GL_RGBA8UI,
+					(GLsizei)(videoWidth*0.5), videoHeight, 
+					0, GL_RGBA_INTEGER_EXT, 
+					GL_UNSIGNED_BYTE, NULL);
+
 				assert(glGetError() == GL_NO_ERROR);
+
 				// Configure the decode->output FBO.
 				glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, attr::dvp.m_vidFbos[j][i]);
 				assert(glGetError() == GL_NO_ERROR);
 				
 				glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
 					GL_COLOR_ATTACHMENT0_EXT,
-					GL_TEXTURE_RECTANGLE_NV,
-					//attr::dvp.m_DisplayTextures[j][i],
-					DvpDisplayTextureId(i, j),
+					attr::displayTextures[j][i].Type(),
+					attr::displayTextures[j][i].Id(),
 					0);
 				assert(glGetError() == GL_NO_ERROR);
+
 
 				glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 			}
@@ -1023,8 +975,8 @@ extern "C"
 			numStreams = NUM_VIDEO_STREAMS;
 #endif		  
 			//glDeleteTextures(numStreams, &attr::dvp.m_DisplayTextures[i][0]);
-			
-			glDeleteTextures(numStreams, &attr::dvp.m_decodeTextures[i][0]);
+			//glDeleteTextures(numStreams, &attr::dvp.m_decodeTextures[i][0]);
+
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 			glDeleteFramebuffersEXT(numStreams, &attr::dvp.m_vidFbos[i][0]);
 		}
@@ -1048,26 +1000,25 @@ extern "C"
 		if (SdiGetDC() != nullptr)
 			SdiSetDC(nullptr);
 
-		return true;
+		return (glGetError() == GL_NO_ERROR);
 	}
 
 	GLNVSDI_API bool DvpStart()
 	{
-		return attr::dvp.StartSDIPipeline() == S_OK;
+		return (attr::dvp.StartSDIPipeline() == S_OK);
 	}
 
 	GLNVSDI_API bool DvpStop()
 	{
-		return attr::dvp.StopSDIPipeline() == S_OK;
+		return (attr::dvp.StopSDIPipeline() == S_OK);
 	}
 
 	GLNVSDI_API C_Frame* DvpUpdateFrame(int device_index)
 	{
 		attr::framePtr[device_index] = attr::dvp.GetFrame(device_index);
-#if 1
+
 		if (attr::framePtr[device_index] != nullptr)
 		{
-
 			if (attr::prevFramePtr[device_index] != nullptr)
 			{
 				attr::numDroppedFrames[device_index] +=
@@ -1075,7 +1026,6 @@ extern "C"
 				
 				attr::dvp.ReleaseUsedFrame(device_index, attr::prevFramePtr[device_index]);
 			}
-
 			attr::prevFramePtr[device_index] = attr::framePtr[device_index];
 		}
 		else
@@ -1083,7 +1033,12 @@ extern "C"
 			if (attr::prevFramePtr[device_index] != nullptr)
 				attr::framePtr[device_index] = attr::prevFramePtr[device_index];
 		}
-#endif
+
+		return attr::framePtr[device_index];
+	}
+
+	GLNVSDI_API C_Frame* DvpFrame(int device_index)
+	{
 		return attr::framePtr[device_index];
 	}
 
@@ -1214,23 +1169,21 @@ extern "C"
 
 	GLNVSDI_API GLuint DvpDecodeTextureId(int device_index, int video_stream_index)
 	{
-		return attr::dvp.m_decodeTextures[device_index][video_stream_index];
+		return attr::decodeTextures[device_index][video_stream_index].Id();
 	}
 
 	GLNVSDI_API GLuint DvpDisplayTextureId(int device_index, int video_stream_index)
 	{
-		//return attr::dvp.m_DisplayTextures[device_index][video_stream_index];
-		return attr::displayTextures[device_index][video_stream_index];
+		return attr::displayTextures[device_index][video_stream_index].Id();
 	}
 
-
-
-	GLNVSDI_API bool DvpCreateDisplayTextures()
+	GLNVSDI_API gl::Texture* DvpDisplayTexture(int device_index, int video_stream_index)
 	{
-		GLenum target_texture = GL_TEXTURE_RECTANGLE_NV;
+		return &attr::displayTextures[device_index][video_stream_index];
+	}
 
-		const int videoWidth = DvpWidth();
-		const int videoHeight = DvpHeight();
+	GLNVSDI_API bool DvpCreateDisplayTextures(int videoWidth, int videoHeight)
+	{
 		const int activeDeviceCount = DvpActiveDeviceCount();
 
 		for (UINT i = 0; i < activeDeviceCount; i++)
@@ -1239,18 +1192,12 @@ extern "C"
 #ifdef USE_ALL_STREAMS
 			numStreams = NUM_VIDEO_STREAMS;
 #endif		
-			glGenTextures(numStreams, &attr::displayTextures[i][0]);
-
 			for (UINT j = 0; j < numStreams; j++)
 			{
-				glBindTexture(target_texture, attr::displayTextures[i][j]);
-				assert(glGetError() == GL_NO_ERROR);
-				glTexParameterf(target_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				assert(glGetError() == GL_NO_ERROR);
-
-				glTexImage2D(target_texture,
-				0, GL_RGBA8, videoWidth, videoHeight,
-					0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				attr::displayTextures[i][j].Create();
+				attr::displayTextures[i][j].Bind();
+				attr::displayTextures[i][j].SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				attr::displayTextures[i][j].BuildNull(videoWidth, videoHeight);
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
@@ -1260,12 +1207,10 @@ extern "C"
 
 
 	// Blit the frame to the texture
-	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int device_index, int video_stream_index)
+	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int target_texture_type, int device_index, int video_stream_index)
 	{
-		if (attr::framePtr == nullptr)
+		if (attr::framePtr[device_index] == nullptr)
 			return false;
-
-		glEnable(GL_TEXTURE_RECTANGLE_NV);
 
 		// First blit the buffer object into a texture and chroma expand
 		GLint rowLength = attr::framePtr[device_index]->getPitch() / 4;
@@ -1279,11 +1224,9 @@ extern "C"
 			GL_PIXEL_UNPACK_BUFFER_ARB, 
 			attr::framePtr[device_index]->getDstObject(video_stream_index));
 
-		glBindTexture(
-			GL_TEXTURE_RECTANGLE_ARB, 
-			attr::dvp.m_decodeTextures[device_index][video_stream_index]);
+		attr::decodeTextures[device_index][video_stream_index].Bind();
 
-		glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 
+		glTexSubImage2D(attr::decodeTextures[device_index][video_stream_index].Type(),
 			0, 0, 0, 
 			(GLsizei)(0.5*videoWidth),
 			videoHeight,
@@ -1299,12 +1242,12 @@ extern "C"
 
 		// if not set, use the default texture
 		if (target_texture_id < 1)
-			target_texture_id = attr::displayTextures[device_index][video_stream_index];
+			target_texture_id = attr::displayTextures[device_index][video_stream_index].Id();
 
 		glFramebufferTexture2DEXT(
 			GL_FRAMEBUFFER_EXT,
 			GL_COLOR_ATTACHMENT0_EXT,
-			GL_TEXTURE_RECTANGLE_NV,
+			target_texture_type,
 			target_texture_id,
 			0);
 
@@ -1320,10 +1263,122 @@ extern "C"
 		glEnd();
 
 		glUseProgram(0);
-		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, 0);
+		//glBindTexture(GL_TEXTURE_RECTANGLE_NV, 0);
+		attr::decodeTextures[device_index][video_stream_index].Unbind();
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 		return (glGetError() == GL_NO_ERROR);
 	}
+
+	GLNVSDI_API bool DvpBlitTextures(int device_index)
+	{
+		const int videoWidth = DvpWidth();
+		const int videoHeight = DvpHeight();
+
+		attr::displayTextures[device_index][0].Enable();
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0.0, videoWidth, 0.0, videoHeight, -1.0, 1.0);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		glViewport(0, 0, videoWidth, videoHeight);
+		int numStreams = DvpStreamsPerFrame(device_index);
+
+#ifdef USE_ALL_STREAMS
+		numStreams = NUM_VIDEO_STREAMS;
+#endif		
+
+		assert(glGetError() == GL_NO_ERROR);
+
+		for (int j = 0; j < numStreams; j++)
+		{
+			DvpBlitTexture(
+				attr::displayTextures[device_index][j].Id(), 
+				attr::displayTextures[device_index][j].Type(),
+				device_index, j);
+		}
+
+		assert(glGetError() == GL_NO_ERROR);
+
+		return (glGetError() == GL_NO_ERROR);
+	}
+
+	
+	static void UNITY_INTERFACE_API OnDvpRenderEvent(int render_event_id)
+	{
+		switch (static_cast<SdiRenderEvent>(render_event_id))
+		{
+			case SdiRenderEvent::CaptureFrame:
+			{
+				C_Frame *prevFrame[NVAPI_MAX_VIO_DEVICES] = { nullptr };
+				const int activeDeviceCount = DvpActiveDeviceCount();
+				for (int i = 0; i < activeDeviceCount; i++)
+				{
+					DvpUpdateFrame(i);
+					DvpBlitTextures(i);
+				}
+
+				attr::dvpOk = (glGetError() == GL_NO_ERROR);
+				break;
+			}
+
+
+			case SdiRenderEvent::Initialize:
+			{
+				SdiSetCurrentDC();
+				SdiSetCurrentGLRC();
+
+				attr::dvpOk = DvpCheckAvailability();
+				break;
+			}
+
+			case SdiRenderEvent::PreSetup:
+			{
+				attr::dvpOk = DvpPreSetup();
+				break;
+			}
+			case SdiRenderEvent::Setup:
+			{
+				attr::dvpOk = DvpSetup();
+				break;
+			}
+
+			case SdiRenderEvent::StartCapture:
+			{
+				attr::dvpOk = DvpStart();
+				break;
+			}
+
+			case SdiRenderEvent::StopCapture:
+			{
+				SdiMakeCurrent();
+				attr::dvpOk = DvpStop();
+				break;
+			}
+
+			case SdiRenderEvent::Shutdown:
+			{
+				HGLRC uty_hglrc = wglGetCurrentContext();
+				HDC uty_hdc = wglGetCurrentDC();
+				SdiMakeCurrent();
+
+				attr::dvpOk = DvpCleanup();
+
+				wglMakeCurrent(uty_hdc, uty_hglrc);
+
+				break;
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	// GetRenderEventFunc, an example function we export which is used to get a rendering event callback function.
+	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetDvpRenderEventFunc()
+	{
+		return OnDvpRenderEvent;
+	}
+
 
 };	//extern "C"

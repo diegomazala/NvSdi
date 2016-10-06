@@ -6,6 +6,9 @@
 class C_Frame;
 class C_DVP;
 
+#define DVP_TEXTURE_TYPE GL_TEXTURE_RECTANGLE_NV
+//#define DVP_TEXTURE_TYPE GL_TEXTURE_2D
+
 extern "C"
 {
 	
@@ -17,7 +20,6 @@ extern "C"
 	GLNVSDI_API void SdiInputSetGlobalOptions(int ringBufferSizeInFrames);
 
 	
-
 	/// Return video input width
 	GLNVSDI_API int SdiInputWidth();
 
@@ -128,13 +130,14 @@ extern "C"
 	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetSdiInputRenderEventFunc();
 
 
+	GLNVSDI_API bool DvpPreSetup();
 	GLNVSDI_API bool DvpSetup();
 	GLNVSDI_API bool DvpCleanup();
 
 	GLNVSDI_API bool DvpStart();
 	GLNVSDI_API bool DvpStop();
 
-	GLNVSDI_API bool DvpIsAvailable();
+	GLNVSDI_API bool DvpIsOk();
 	GLNVSDI_API bool DvpCheckAvailability();
 	GLNVSDI_API int  DvpActiveDeviceCount();
 	GLNVSDI_API int  DvpDeviceId(int device_index = 0);
@@ -152,6 +155,7 @@ extern "C"
 	GLNVSDI_API GLuint64EXT DvpCpuTimeElapsed();
 
 	GLNVSDI_API C_Frame* DvpUpdateFrame(int device_index = 0);
+	GLNVSDI_API C_Frame* DvpFrame(int device_index = 0);
 	GLNVSDI_API C_Frame* DvpPreviousFrame(int device_index = 0);
 	
 	GLNVSDI_API GLuint64EXT DvpFrameNumber(int device_index = 0);
@@ -167,9 +171,15 @@ extern "C"
 	GLNVSDI_API GLuint DvpPixelBufferId(int device_index = 0, int video_stream_index = 0);
 	GLNVSDI_API GLuint DvpDecodeTextureId(int device_index = 0, int video_stream_index = 0);
 	GLNVSDI_API GLuint DvpDisplayTextureId(int device_index = 0, int video_stream_index = 0);
+	/// Return the a pointer to a video input texture
+	GLNVSDI_API gl::Texture* DvpDisplayTexture(int device_index = 0, int video_stream_index = 0);
 
-	GLNVSDI_API bool DvpCreateDisplayTextures();
-	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API bool DvpCreateDisplayTextures(int width, int height);
+	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int target_texture_type, int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API bool DvpBlitTextures(int device_index = 0);
+
+	/// Function called by Unity through rendering events
+	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetDvpRenderEventFunc();
 };
 
 #endif	//__GL_NV_SDI_INPUT_H__

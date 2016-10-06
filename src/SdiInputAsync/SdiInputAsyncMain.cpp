@@ -12,6 +12,13 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 {
 	SdiInAsyncWindow sdiWindow;
 
+	//
+	// Get the pointer to the funtion which manager the render events
+	// This is an attempt to reproduce the same mechanism used by Unity
+	//
+	UnityRenderingEvent(*DvpRenderEventFunc)(void);
+	DvpRenderEventFunc = &GetDvpRenderEventFunc;
+	
 
 	//
 	// Check if sdi is available
@@ -21,7 +28,9 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		HGLRC hGLRC;
 		if (CreateDummyGLWindow(&hWnd, &hGLRC) == false)
 		{
-			if (!DvpCheckAvailability())
+			DvpRenderEventFunc()(SdiRenderEvent::Initialize);
+
+			if (!DvpIsOk())
 				return EXIT_FAILURE;
 
 			// We can kill the dummy window now
@@ -46,21 +55,23 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 
 
-	if (!DvpSetup())
-		return EXIT_FAILURE;
+	DvpRenderEventFunc()(SdiRenderEvent::PreSetup);
+	DvpRenderEventFunc()(SdiRenderEvent::Setup);
+	DvpRenderEventFunc()(SdiRenderEvent::StartCapture);
 
-	if (!DvpCreateDisplayTextures())
+	if (!DvpIsOk())
 		return EXIT_FAILURE;
-
-	if (!DvpStart())
-		return EXIT_FAILURE;
-
 
 
 	lApp.InitSetup();
 	while (lApp.ProcessMainLoop())
 	{
+		DvpRenderEventFunc()(SdiRenderEvent::CaptureFrame);
 	}
+
+	
+	DvpRenderEventFunc()(SdiRenderEvent::StopCapture);
+	//DvpRenderEventFunc()(SdiRenderEvent::Shutdown);
 
 	return EXIT_SUCCESS;
 }

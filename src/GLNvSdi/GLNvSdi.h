@@ -6,6 +6,7 @@
 enum SdiRenderEvent
 {
 	Initialize,
+	PreSetup,
 	Setup,
 	StartCapture,
 	StopCapture,
@@ -13,6 +14,7 @@ enum SdiRenderEvent
 	PresentFrame,
 	Shutdown
 };
+
 
 
 #include "UnityPlugin.h"

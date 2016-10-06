@@ -137,7 +137,6 @@ void SdiInAsyncWindow::Render()
 	float rectH = this->Height() / (float)activeDeviceCount;
 
 
-	static C_Frame *prevFrame[NVAPI_MAX_VIO_DEVICES];
 	static GLuint numDroppedFrames[NVAPI_MAX_VIO_DEVICES];
 	GLfloat left = 0, top = 0;
 	int videoWidth = DvpWidth();
@@ -155,6 +154,8 @@ void SdiInAsyncWindow::Render()
 	float captureElapsedTime = 0;
 	float totalUploadTime = 0, 
 		totalDownloadTime = 0;
+
+
 	for (int i = 0; i < activeDeviceCount; i++)
 	{
 		left = 0;
@@ -164,22 +165,20 @@ void SdiInAsyncWindow::Render()
 		//
 		// Capture statistics
 		//
-		C_Frame *frame = DvpUpdateFrame(i);
+		C_Frame *frame = DvpFrame(i);
 
-		prevFrame[i] = DvpPreviousFrame(i);
 		if (frame == nullptr)
 		{
 			draw_time_update = false;
 		}
 
-		if (prevFrame[i] == nullptr)
+		if (DvpPreviousFrame(i) == nullptr)
 			continue;
 		else
 		{
 			numDroppedFrames[i] = DvpNumDroppedFrames(i);
+			draw_time_update = true;
 		}
-
-
 
 		ComputeScaledVideoDimensions(rectW, rectH,
 			videoWidth, videoHeight,
@@ -187,63 +186,37 @@ void SdiInAsyncWindow::Render()
 			&l_scaledVideoHeight);
 
 
-
 		glColor3f(1.0f, 1.0f, 1.0f);
 
-		glEnable(GL_TEXTURE_RECTANGLE_NV);
-
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0.0, videoWidth, 0.0, videoHeight, -1.0, 1.0);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-
-		glViewport(0, 0, videoWidth, videoHeight);
 		int numStreams = DvpStreamsPerFrame(i);
 
-
-#ifdef USE_ALL_STREAMS
-		numStreams = NUM_VIDEO_STREAMS;
-#endif		
-
-		for (int j = 0; j < numStreams; j++)
-		{
-			assert(DvpBlitTexture(DvpDisplayTextureId(i, j), i, j));
-		}
+		if (!DvpBlitTextures(i))
+			std::cout << "Error: Could not blit texture" << std::endl;
 
 		// Draw contents of each video texture
 		// Reset view parameters
 
-		glViewport(0, 0, this->Width(), this->Height());
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
+		DvpDisplayTexture(i, 0)->Enable();
+
 		for (int j = 0; j < numStreams; j++)
 		{
 			// Set viewport .
-			glViewport(left, top, rectW, rectH);
+			glViewport(0, 0, rectW, rectH);
+			
+			// Bind texture object video stream i
+			DvpDisplayTexture(i, j)->Bind();
 
-			left += rectW;
+			((gl::Texture2D*)DvpDisplayTexture(i, j))->Plot(
+				Width(), Height(), 
+				videoWidth, videoHeight);
 
-
-			// Bind texture object  video stream i
-
-			glBindTexture(GL_TEXTURE_RECTANGLE_NV, DvpDisplayTextureId(i, j));
-
-			glBegin(GL_QUADS);
-			glTexCoord2f(0.0, 0.0); glVertex2f(-l_scaledVideoWidth, -l_scaledVideoHeight);
-			glTexCoord2f(0.0, (GLfloat)videoHeight); glVertex2f(-l_scaledVideoWidth, l_scaledVideoHeight);
-			glTexCoord2f((GLfloat)videoWidth, (GLfloat)videoHeight); glVertex2f(l_scaledVideoWidth, l_scaledVideoHeight);
-			glTexCoord2f((GLfloat)videoWidth, 0.0); glVertex2f(l_scaledVideoWidth, -l_scaledVideoHeight);
-			glEnd();
-
-			glBindTexture(GL_TEXTURE_RECTANGLE_NV, NULL);
+			DvpDisplayTexture(i, j)->Unbind();
 			assert(glGetError() == GL_NO_ERROR);
 		}
 
-		glDisable(GL_TEXTURE_RECTANGLE_NV);
+		DvpDisplayTexture(i, 0)->Disable();
+
+
 		//Draw 2D stuff like #of dropped frames,sequence number and so on.	
 		if (showStatistics)
 		{
@@ -309,7 +282,8 @@ void SdiInAsyncWindow::Render()
 		cpuDrawTime = DvpCpuTimeElapsed() * 0.000000001;
 		//gpuDrawTime = DvpGpuTimeElapsedMs();
 		//cpuDrawTime = DvpCpuTimeElapsedMs();
-		sprintf(buf, "MultiCaptureAsync | Draw Time %.5f %.5f | Capture Time %.5f | Upload Time %.5f | Download Time %.5f ", gpuDrawTime, cpuDrawTime, captureElapsedTime, totalUploadTime, totalDownloadTime);
+		sprintf(buf, "MultiCaptureAsync | Draw Time %.5f %.5f | Capture Time %.5f | Upload Time %.5f | Download Time %.5f ", 
+			gpuDrawTime, cpuDrawTime, DvpCaptureElapsedTime(), DvpUploadElapsedTime(), DvpDownloadElapsedTime());
 		SetWindowText(this->hWnd, buf);
 	}
 
