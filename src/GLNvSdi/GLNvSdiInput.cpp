@@ -27,10 +27,12 @@ extern "C"
 		static C_Frame*		framePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
 		static C_Frame*		prevFramePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
 		static GLuint		numDroppedFrames[NVAPI_MAX_VIO_DEVICES];
+		static GLuint		displayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
 		static GLuint		drawTimeQuery;
 		static GLuint64EXT	drawTimeStart;
 		static GLuint64EXT	drawTimeEnd;
 		static GLuint64EXT	timeElapsed;
+		static bool			dvpIsAvailable;
 		
 	}
 
@@ -667,6 +669,7 @@ extern "C"
 		{
 			case SdiRenderEvent::CaptureFrame:
 			{
+#if 0
 				if (SdiInputCaptureVideo() != GL_FAILURE_NV)
 				{
 					SdiAncCapture();
@@ -677,6 +680,17 @@ extern "C"
 				}
 
 				sdiError = (int)glGetError();
+#else
+				C_Frame *prevFrame[NVAPI_MAX_VIO_DEVICES] = { nullptr };
+				const int activeDeviceCount = DvpActiveDeviceCount();
+				for (int i = 0; i < activeDeviceCount; i++)
+				{
+					if (DvpUpdateFrame(i) != nullptr)
+						DvpBlitTexture(attr::inputTextures[i].Id());
+				}
+
+				sdiError = (int)glGetError();
+#endif
 
 				break;
 			}
@@ -684,6 +698,7 @@ extern "C"
 
 			case SdiRenderEvent::Initialize:
 			{
+#if 0
 				//SdiSetupLogFile();
 				SdiSetCurrentDC();
 				SdiSetCurrentGLRC();
@@ -713,12 +728,21 @@ extern "C"
 				}
 
 				sdiError = (int)glGetError();
+#else
+				SdiSetCurrentDC();
+				SdiSetCurrentGLRC();
+
+				DvpCheckAvailability();
+				
+				sdiError = (int)glGetError();
+#endif
 
 				break;
 			}
 
 			case SdiRenderEvent::Setup:
 			{
+#if 0
 				sdiError = (int)glGetError();
 
 				if (!SdiInputSetupGL())
@@ -751,11 +775,19 @@ extern "C"
 				}
 
 				sdiError = (int)glGetError();
+#else
+
+				attr::dvpIsAvailable = DvpSetup();
+
+				sdiError = (int)glGetError();
+#endif
+
 				break;
 			}
 
 			case SdiRenderEvent::StartCapture:
 			{
+#if 0
 				if (!SdiInputStart())
 				{
 					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
@@ -764,16 +796,25 @@ extern "C"
 				sdiError = (int)glGetError();
 
 				SdiInputResetDroppedFramesCount();
-
+#else
+				attr::dvpIsAvailable = DvpStart();
+				sdiError = (int)glGetError();
+#endif
 				break;
 			}
 
 			case SdiRenderEvent::StopCapture:
 			{
+#if 0
 				SdiMakeCurrent();
 				SdiInputStop();
 				SdiAncCleanupInput();
 				sdiError = (int)glGetError();
+#else
+				SdiMakeCurrent();
+				bool ok = DvpStop();
+				sdiError = (int)glGetError();
+#endif
 				break;
 			}
 
@@ -781,8 +822,9 @@ extern "C"
 			{
 				HGLRC uty_hglrc = wglGetCurrentContext();
 				HDC uty_hdc = wglGetCurrentDC();
-
 				SdiMakeCurrent();
+
+#if 0
 				SdiInputStop();
 				SdiAncCleanupInput();
 
@@ -793,8 +835,11 @@ extern "C"
 
 				SdiInputCleanupGL();
 				SdiInputUninitialize();
+#else
+				bool ok = DvpStop();
+				ok = DvpCleanup();
+#endif
 				sdiError = (int)glGetError();
-				
 				wglMakeCurrent(uty_hdc, uty_hglrc);
 
 				break;
@@ -813,10 +858,12 @@ extern "C"
 
 	GLNVSDI_API bool DvpIsAvailable()
 	{
-		HWND hWnd;
-		HGLRC hGLRC;
-		if (CreateDummyGLWindow(&hWnd, &hGLRC) == false)
-			return false;
+		return attr::dvpIsAvailable;
+	}
+
+	GLNVSDI_API bool DvpCheckAvailability()
+	{
+		attr::dvpIsAvailable = false;
 
 		int numGPUs;
 		// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
@@ -843,14 +890,9 @@ extern "C"
 			return false;
 		}
 
-		// We can kill the dummy window now
-		if (DestroyGLWindow(&hWnd, &hGLRC) == false)
-			return false;
-
+		attr::dvpIsAvailable = true;
 		return true;
 	}
-
-
 
 	GLNVSDI_API bool DvpSetup()
 	{
@@ -870,7 +912,8 @@ extern "C"
 			wglSwapIntervalEXT(0);
 
 
-		attr::dvp.SetupSDIPipeline();
+		if (attr::dvp.SetupSDIPipeline() != S_OK)
+			return false;
 
 		attr::dvp.SetupSDIinGL(SdiGetDC(), SdiGetGLRC());
 
@@ -878,6 +921,10 @@ extern "C"
 
 		int videoWidth = attr::dvp.GetVideoWidth();
 		int videoHeight = attr::dvp.GetVideoHeight();
+
+		if (!DvpCreateDisplayTextures())
+			return false;
+
 
 		// To view the buffers we need to load an appropriate shader
 		attr::dvp.SetupDecodeProgram();
@@ -897,7 +944,8 @@ extern "C"
 
 			for (UINT j = 0; j < numStreams; j++)
 			{
-				glBindTexture(GL_TEXTURE_RECTANGLE_NV, attr::dvp.m_DisplayTextures[i][j]);
+				//glBindTexture(GL_TEXTURE_RECTANGLE_NV, attr::dvp.m_DisplayTextures[i][j]);
+				glBindTexture(GL_TEXTURE_RECTANGLE_NV, DvpDisplayTextureId(i, j));
 				assert(glGetError() == GL_NO_ERROR);
 				glTexParameterf(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				assert(glGetError() == GL_NO_ERROR);
@@ -937,10 +985,12 @@ extern "C"
 				// Configure the decode->output FBO.
 				glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, attr::dvp.m_vidFbos[j][i]);
 				assert(glGetError() == GL_NO_ERROR);
+				
 				glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
 					GL_COLOR_ATTACHMENT0_EXT,
 					GL_TEXTURE_RECTANGLE_NV,
-					attr::dvp.m_DisplayTextures[j][i],
+					//attr::dvp.m_DisplayTextures[j][i],
+					DvpDisplayTextureId(i, j),
 					0);
 				assert(glGetError() == GL_NO_ERROR);
 
@@ -951,7 +1001,7 @@ extern "C"
 
 		glGenQueries(1, &attr::drawTimeQuery);
 
-		return GL_TRUE;
+		return (glGetError() == GL_NO_ERROR);
 	}
 
 	GLNVSDI_API bool DvpCleanup()
@@ -972,7 +1022,8 @@ extern "C"
 #ifdef USE_ALL_STREAMS		
 			numStreams = NUM_VIDEO_STREAMS;
 #endif		  
-			glDeleteTextures(numStreams, &attr::dvp.m_DisplayTextures[i][0]);
+			//glDeleteTextures(numStreams, &attr::dvp.m_DisplayTextures[i][0]);
+			
 			glDeleteTextures(numStreams, &attr::dvp.m_decodeTextures[i][0]);
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 			glDeleteFramebuffersEXT(numStreams, &attr::dvp.m_vidFbos[i][0]);
@@ -982,15 +1033,20 @@ extern "C"
 		glDeleteQueries(1, &attr::drawTimeQuery);
 		// Delete OpenGL rendering context.
 		wglMakeCurrent(NULL, NULL);
+
 		if (SdiGetGLRC())
 		{
-			wglDeleteContext(SdiGetGLRC());
+			//wglDeleteContext(SdiGetGLRC());
 			SdiSetGLRC(NULL);
 		}
 
 		//ReleaseDC(this->hWnd, SdiGetDC());
 
-		wglDeleteDCNV(SdiGetAffinityDC());
+		if (SdiGetAffinityDC() != nullptr)
+			wglDeleteDCNV(SdiGetAffinityDC());
+
+		if (SdiGetDC() != nullptr)
+			SdiSetDC(nullptr);
 
 		return true;
 	}
@@ -999,7 +1055,6 @@ extern "C"
 	{
 		return attr::dvp.StartSDIPipeline() == S_OK;
 	}
-
 
 	GLNVSDI_API bool DvpStop()
 	{
@@ -1164,7 +1219,43 @@ extern "C"
 
 	GLNVSDI_API GLuint DvpDisplayTextureId(int device_index, int video_stream_index)
 	{
-		return attr::dvp.m_DisplayTextures[device_index][video_stream_index];
+		//return attr::dvp.m_DisplayTextures[device_index][video_stream_index];
+		return attr::displayTextures[device_index][video_stream_index];
+	}
+
+
+
+	GLNVSDI_API bool DvpCreateDisplayTextures()
+	{
+		GLenum target_texture = GL_TEXTURE_RECTANGLE_NV;
+
+		const int videoWidth = DvpWidth();
+		const int videoHeight = DvpHeight();
+		const int activeDeviceCount = DvpActiveDeviceCount();
+
+		for (UINT i = 0; i < activeDeviceCount; i++)
+		{
+			int numStreams = DvpStreamsPerFrame(i);
+#ifdef USE_ALL_STREAMS
+			numStreams = NUM_VIDEO_STREAMS;
+#endif		
+			glGenTextures(numStreams, &attr::displayTextures[i][0]);
+
+			for (UINT j = 0; j < numStreams; j++)
+			{
+				glBindTexture(target_texture, attr::displayTextures[i][j]);
+				assert(glGetError() == GL_NO_ERROR);
+				glTexParameterf(target_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				assert(glGetError() == GL_NO_ERROR);
+
+				glTexImage2D(target_texture,
+				0, GL_RGBA8, videoWidth, videoHeight,
+					0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				assert(glGetError() == GL_NO_ERROR);
+			}
+		}
+
+		return (glGetError() == GL_NO_ERROR);
 	}
 
 
@@ -1174,8 +1265,14 @@ extern "C"
 		if (attr::framePtr == nullptr)
 			return false;
 
-		int videoWidth = attr::dvp.GetVideoWidth();
-		int videoHeight = attr::dvp.GetVideoHeight();
+		glEnable(GL_TEXTURE_RECTANGLE_NV);
+
+		// First blit the buffer object into a texture and chroma expand
+		GLint rowLength = attr::framePtr[device_index]->getPitch() / 4;
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, rowLength);
+
+		const int videoWidth = attr::dvp.GetVideoWidth();
+		const int videoHeight = attr::dvp.GetVideoHeight();
 
 		// Blit the frame to the texture.
 		glBindBuffer(
@@ -1186,8 +1283,8 @@ extern "C"
 			GL_TEXTURE_RECTANGLE_ARB, 
 			attr::dvp.m_decodeTextures[device_index][video_stream_index]);
 
-		glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0,
-			0, 0, 
+		glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 
+			0, 0, 0, 
 			(GLsizei)(0.5*videoWidth),
 			videoHeight,
 			GL_RGBA_INTEGER_EXT, GL_UNSIGNED_BYTE, NULL);
@@ -1202,7 +1299,7 @@ extern "C"
 
 		// if not set, use the default texture
 		if (target_texture_id < 1)
-			target_texture_id = attr::dvp.m_DisplayTextures[device_index][video_stream_index];
+			target_texture_id = attr::displayTextures[device_index][video_stream_index];
 
 		glFramebufferTexture2DEXT(
 			GL_FRAMEBUFFER_EXT,

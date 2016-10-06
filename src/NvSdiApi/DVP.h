@@ -200,6 +200,7 @@ public:
 
 
 	GLuint m_DisplayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
+
 	GLuint m_decodeTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];  // The raw SDI data from the captured buffer
 	// needs to be copied to a texture, so that
 	// the data can be read by a shader and

@@ -32,10 +32,12 @@ public:
 
 	void Render();
 	void OnKeyEvent(const KeyEvent* pEvent);
+	
 
 protected:
 
 	bool InitGL();
+	
 
 	bool showStatistics;
 };

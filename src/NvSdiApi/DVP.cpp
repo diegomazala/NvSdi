@@ -726,10 +726,10 @@ GLboolean C_DVP::setupGL()
 	   printf("Error: wglCreateAffinityDCNV error code: %d\n",error);
        return GL_FALSE;
     }
-    else
-    {
-        printf("wglCreateAffinityDCNV succeeded\n");
-    }
+    //else
+    //{
+    //    printf("wglCreateAffinityDCNV succeeded\n");
+    //}
 
 	PIXELFORMATDESCRIPTOR pfd =							// pfd Tells Windows How We Want Things To Be
 	{
@@ -794,7 +794,6 @@ GLboolean C_DVP::cleanupGL()
 
 	for(int i = 0; i < m_activeDeviceCount; i++)
 	{	
-
 		m_SDIin[i].UnbindDevice();
 	}
 	// Delete OpenGL rendering context.

@@ -135,6 +135,7 @@ extern "C"
 	GLNVSDI_API bool DvpStop();
 
 	GLNVSDI_API bool DvpIsAvailable();
+	GLNVSDI_API bool DvpCheckAvailability();
 	GLNVSDI_API int  DvpActiveDeviceCount();
 	GLNVSDI_API int  DvpDeviceId(int device_index = 0);
 	GLNVSDI_API int  DvpStreamsPerFrame(int device_index = 0);
@@ -167,6 +168,7 @@ extern "C"
 	GLNVSDI_API GLuint DvpDecodeTextureId(int device_index = 0, int video_stream_index = 0);
 	GLNVSDI_API GLuint DvpDisplayTextureId(int device_index = 0, int video_stream_index = 0);
 
+	GLNVSDI_API bool DvpCreateDisplayTextures();
 	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int device_index = 0, int video_stream_index = 0);
 };
 

@@ -51,32 +51,27 @@ SdiInAsyncWindow::~SdiInAsyncWindow()
 
 }
 
-
 bool SdiInAsyncWindow::InitGL()
 {
 	MakeCurrent();
 	SdiSetDC(GetDC());
+	SdiSetGLRC(GetGLRC());
 
 	// Create window device context and rendering context.
 	showStatistics = true;
 
 	// Creating Affinity DC 
-	HDC affinityDC = SdiCreateAffinityDC();
+	//HDC affinityDC = SdiCreateAffinityDC();
 	//HDC affinityDC = this->GetDC();
-	SdiCreateGLRC(affinityDC);
+	//SdiCreateGLRC(affinityDC);
 
 	// Make window rendering context current.
 	//wglMakeCurrent(hDC, l_hRC);
-	SdiMakeCurrent();
+	//SdiMakeCurrent();
 
 
-	//load the required OpenGL extensions:
-	if (!loadTimerQueryExtension() ||
-		!loadBufferObjectExtension() ||
-		!loadShaderObjectsExtension() ||
-		!loadFramebufferObjectExtension() ||
-		!loadCopyImageExtension() ||
-		!loadSwapIntervalExtension())
+	// load the required OpenGL extensions:
+	if (!loadSwapIntervalExtension())
 	{
 		std::cout << "Could not load the required OpenGL extensions" << std::endl;
 		return false;
@@ -84,6 +79,7 @@ bool SdiInAsyncWindow::InitGL()
 
 	if (wglSwapIntervalEXT)
 		wglSwapIntervalEXT(0);
+
 
 	// Create bitmap font display list
 	SelectObject(SdiGetDC(), GetStockObject(SYSTEM_FONT));
@@ -107,14 +103,13 @@ bool SdiInAsyncWindow::InitGL()
 
 void SdiInAsyncWindow::Render()
 {
+	MakeCurrent();
 
 	//
 	// Draw texture contents to graphics window.
 	//
 	size_t len;
 	char buf[512];
-
-	SdiMakeCurrent();
 
 	assert(glGetError() == GL_NO_ERROR);
 	
@@ -205,9 +200,7 @@ void SdiInAsyncWindow::Render()
 
 		glViewport(0, 0, videoWidth, videoHeight);
 		int numStreams = DvpStreamsPerFrame(i);
-		// First blit the buffer object into a texture and chroma expand
-		GLint rowLength = frame->getPitch() / 4;
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, rowLength);
+
 
 #ifdef USE_ALL_STREAMS
 		numStreams = NUM_VIDEO_STREAMS;
@@ -215,7 +208,7 @@ void SdiInAsyncWindow::Render()
 
 		for (int j = 0; j < numStreams; j++)
 		{
-			assert(DvpBlitTexture(i, j));
+			assert(DvpBlitTexture(DvpDisplayTextureId(i, j), i, j));
 		}
 
 		// Draw contents of each video texture

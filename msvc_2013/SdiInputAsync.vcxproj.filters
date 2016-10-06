@@ -18,66 +18,36 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp">
+    <ClCompile Include="..\src\SdiInputAsync\SdiInAsyncWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SdiInputAsync\SdiInputAsyncMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\SdiInputAsync\SdiInputAsync.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\NvSdiApi\nvSDIin.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\NvSdiApi\nvSDIutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\NvSdiApi\Console.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\NvSdiApi\platform.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\SdiInputAsync\SdiInAsyncWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\NvSdiApi\DVP.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\NvSdiApi\error.cpp">
+    <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\NvSdiApi\glExtensions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\GLCommon\OpenGL.h">
       <Filter>GLCommon</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\SdiInputAsync\SdiInAsyncWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\SdiInputAsync\resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\NvSdiApi\nvSDIin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\NvSdiApi\nvSDIutil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\NvSdiApi\platform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\SdiInputAsync\SdiInAsyncWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\NvSdiApi\DVP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\NvSdiApi\error.h">
+    <ClInclude Include="..\src\NvSdiApi\glExtensions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -12,9 +12,22 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 {
 	SdiInAsyncWindow sdiWindow;
 
-	//if (!sdiWindow.IsSdiAvailable())
-	if (!DvpIsAvailable())
-		return EXIT_FAILURE;
+
+	//
+	// Check if sdi is available
+	//
+	{
+		HWND hWnd;
+		HGLRC hGLRC;
+		if (CreateDummyGLWindow(&hWnd, &hGLRC) == false)
+		{
+			if (!DvpCheckAvailability())
+				return EXIT_FAILURE;
+
+			// We can kill the dummy window now
+			DestroyGLWindow(&hWnd, &hGLRC);
+		}
+	}
 
 	WinApp lApp;
 	CreationParameters lCreationParams;
@@ -36,8 +49,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	if (!DvpSetup())
 		return EXIT_FAILURE;
 
+	if (!DvpCreateDisplayTextures())
+		return EXIT_FAILURE;
+
 	if (!DvpStart())
 		return EXIT_FAILURE;
+
 
 
 	lApp.InitSetup();
