@@ -23,6 +23,7 @@ public class SerializableEnum<T> where T : struct, System.IConvertible
 public enum SdiRenderEvent
 {
     Initialize,
+    PreSetup,
     Setup,
     StartCapture,
     StopCapture,
@@ -141,6 +142,8 @@ public class UtyGLNvSdi : MonoBehaviour
     public static System.Text.StringBuilder Log = null;
 
     public const int MAX_COUNT = 8;
+    public const int NVAPI_MAX_VIO_DEVICES = 8;
+    public const int MAX_VIDEO_STREAMS = 8;
 
     public GLNvSdiOptions options;
 
@@ -316,8 +319,38 @@ public class UtyGLNvSdi : MonoBehaviour
 
 
 
-    public static void GetSizeFromVideoFormat(SdiVideoFormat video_format, ref int rWidth, ref int rHeight, 
-                                                                        ref float rAspect, ref bool rIsInterlaced)
+    [DllImport("GLNvSdi")]
+    public static extern bool DvpIsOk();
+    [DllImport("GLNvSdi")]
+    public static extern int DvpWidth();
+    [DllImport("GLNvSdi")]
+    public static extern int DvpHeight();
+    [DllImport("GLNvSdi")]
+    public static extern int DvpActiveDeviceCount();
+    [DllImport("GLNvSdi")]
+    public static extern int DvpStreamsPerFrame(int device_index = 0);
+    [DllImport("GLNvSdi")]
+    public static extern ulong DvpFrameNumber(int device_index = 0);
+    [DllImport("GLNvSdi")]
+    public static extern ulong DvpDroppedFrames(int device_index = 0);
+    [DllImport("GLNvSdi")]
+    public static extern float DvpCaptureElapsedTime(int device_index = 0);
+    [DllImport("GLNvSdi")]
+    public static extern float DvpUploadElapsedTime(int device_index = 0);
+    [DllImport("GLNvSdi")]
+    public static extern float DvpDownloadElapsedTime(int device_index = 0);
+    [DllImport("GLNvSdi")]
+    public static extern void DvpSetDisplayTexturePtr(System.IntPtr texture, int device_index = 0, int video_stream_index = 0);
+    [DllImport("GLNvSdi")]
+    public static extern System.IntPtr GetDvpRenderEventFunc();
+
+
+    public static void GetSizeFromVideoFormat(
+        SdiVideoFormat video_format, 
+        ref int rWidth, 
+        ref int rHeight, 
+        ref float rAspect, 
+        ref bool rIsInterlaced)
     {
         if (video_format <= SdiVideoFormat.HD_1080I_60_00)
         {

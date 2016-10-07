@@ -41,7 +41,7 @@ protected:
 	
 
 	bool showStatistics;
-	gl::Quad quad;
+	gl::TextureBlit texBlit;
 };
 
 

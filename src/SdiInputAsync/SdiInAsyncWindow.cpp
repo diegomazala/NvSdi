@@ -95,6 +95,8 @@ bool SdiInAsyncWindow::InitGL()
 	glDisable(GL_TEXTURE_1D);
 	glDisable(GL_TEXTURE_2D);
 
+	texBlit.CreateVbo();
+
 	return true;
 }
 
@@ -204,7 +206,7 @@ void SdiInAsyncWindow::Render()
 			// Bind texture object video stream i
 			DvpDisplayTexture(i, j)->Bind();
 
-			quad.Render(Width(), Height());
+			texBlit.BlitDefault(Width(), Height());
 
 			DvpDisplayTexture(i, j)->Unbind();
 			assert(glGetError() == GL_NO_ERROR);

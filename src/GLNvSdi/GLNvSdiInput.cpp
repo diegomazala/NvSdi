@@ -33,6 +33,7 @@ extern "C"
 		static bool			dvpOk;
 		static bool			ownDisplayTextures = false;
 		
+		static gl::TextureBlit texBlit;
 		//
 		static gl::Texture2D displayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
 		//
@@ -960,6 +961,8 @@ extern "C"
 
 		glGenQueries(1, &attr::drawTimeQuery);
 
+		attr::texBlit.CreateVbo();
+
 		return (glGetError() == GL_NO_ERROR);
 	}
 
@@ -996,6 +999,10 @@ extern "C"
 		attr::dvp.DestroyDecodeProgram();
 
 		glDeleteQueries(1, &attr::drawTimeQuery);
+
+
+		attr::texBlit.DestroyVbo();
+
 		// Delete OpenGL rendering context.
 		wglMakeCurrent(NULL, NULL);
 
@@ -1239,25 +1246,28 @@ extern "C"
 		if (attr::framePtr[device_index] == nullptr)
 			return false;
 
-		// First blit the buffer object into a texture and chroma expand
-		GLint rowLength = attr::framePtr[device_index]->getPitch() / 4;
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, rowLength);
-
 		const int videoWidth = attr::dvp.GetVideoWidth();
 		const int videoHeight = attr::dvp.GetVideoHeight();
+
+				// First blit the buffer object into a texture and chroma expand
+		GLint rowLength = attr::framePtr[device_index]->getPitch() / 4;
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, rowLength);
 
 		// Blit the frame to the texture.
 		glBindBuffer(
 			GL_PIXEL_UNPACK_BUFFER_ARB, 
 			attr::framePtr[device_index]->getDstObject(video_stream_index));
 
-		attr::decodeTextures[device_index][video_stream_index].Bind();
-
-		glTexSubImage2D(attr::decodeTextures[device_index][video_stream_index].Type(),
+		glTexSubImage2D(
+			attr::decodeTextures[device_index][video_stream_index].Type(),
 			0, 0, 0, 
 			(GLsizei)(0.5*videoWidth),
 			videoHeight,
-			GL_RGBA_INTEGER_EXT, GL_UNSIGNED_BYTE, NULL);
+			GL_RGBA_INTEGER_EXT, 
+			GL_UNSIGNED_BYTE, 
+			NULL);
+
+		assert(glGetError() == GL_NO_ERROR);
 
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
@@ -1278,21 +1288,16 @@ extern "C"
 			target_texture_id,
 			0);
 
+		assert(glGetError() == GL_NO_ERROR);
+
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(attr::dvp.decodeProgram);
+		attr::texBlit.Blit(attr::dvp.decodeProgram, target_texture_id, videoWidth, videoHeight);
+		assert(glGetError() == GL_NO_ERROR);
 
-		glBegin(GL_QUADS);
-		glVertex2f(0.0f, 0.0f);
-		glVertex2f(0.0f, (float)videoHeight);
-		glVertex2f((float)videoWidth, (float)videoHeight);
-		glVertex2f((float)videoWidth, 0.0f);
-		glEnd();
-
-		glUseProgram(0);
-		//glBindTexture(GL_TEXTURE_RECTANGLE_NV, 0);
-		attr::decodeTextures[device_index][video_stream_index].Unbind();
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+
+		assert(glGetError() == GL_NO_ERROR);
 
 		return (glGetError() == GL_NO_ERROR);
 	}
@@ -1301,36 +1306,32 @@ extern "C"
 	{
 		const int videoWidth = DvpWidth();
 		const int videoHeight = DvpHeight();
-
-		assert(glGetError() == GL_NO_ERROR);
-
-		//attr::displayTextures[device_index][0].Enable();
-
-		assert(glGetError() == GL_NO_ERROR);
-
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0.0, videoWidth, 0.0, videoHeight, -1.0, 1.0);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-
-		assert(glGetError() == GL_NO_ERROR);
+		const int numStreams = DvpStreamsPerFrame(device_index);
 
 		glViewport(0, 0, videoWidth, videoHeight);
 
-		assert(glGetError() == GL_NO_ERROR);
-
-		int numStreams = DvpStreamsPerFrame(device_index);
-
-		assert(glGetError() == GL_NO_ERROR);
 
 		for (int j = 0; j < numStreams; j++)
 		{
+			
+			assert(glGetError() == GL_NO_ERROR);
+			attr::displayTextures[device_index][j].Bind();
+			assert(glGetError() == GL_NO_ERROR);
+			
+
+			assert(glGetError() == GL_NO_ERROR);
+			attr::decodeTextures[device_index][j].Bind();
+			assert(glGetError() == GL_NO_ERROR);
+
 			DvpBlitTexture(
 				attr::displayTextures[device_index][j].Id(), 
 				attr::displayTextures[device_index][j].Type(),
 				device_index, j);
+
+			attr::decodeTextures[device_index][j].Unbind();
+			attr::displayTextures[device_index][j].Unbind();
 		}
+
 
 		assert(glGetError() == GL_NO_ERROR);
 

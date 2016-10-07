@@ -493,13 +493,14 @@ public:
 			const float windowSize[] = { window_width, window_height };
 			glUniform2fv(windowSizeLocation, 1, windowSize);
 		}
-		glDrawArrays(GL_QUADS, 0, 4);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 
-	void Blit(int shader_program, int window_width, int window_height)
+	void Blit(int shader_program, int texture_id, int window_width, int window_height)
 	{
 		glUseProgram(shader_program);
-		Blit(window_width, window_height);
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glUseProgram(0);
 	}
 
@@ -517,11 +518,12 @@ public:
 
 		const float v = 1.f * scale;
 
-		const float vertex_data[] = {
+		const float vertex_data[] = 
+		{
 			-v, -v, 0.f,
+			v, -v, 0.f,
 			-v, v, 0.f,
-			v, v, 0.f,
-			v, -v, 0.f
+			v, v, 0.f
 		};
 
 		glGenBuffers(1, &vbo);
@@ -556,11 +558,11 @@ public:
 
 		const char* fragment_shader =
 			"#version 400\n"
-			"uniform sampler2D inTex;"
+			"uniform sampler2D tex;"
 			"uniform vec2 windowSize;"
 			"out vec4 color;"
 			"void main() {"
-			"  color = texture(inTex, gl_FragCoord.xy/windowSize);"
+			"  color = texture(tex, gl_FragCoord.xy/windowSize);"
 			"}";
 
 		GLuint vs = glCreateShader(GL_VERTEX_SHADER);

@@ -1053,6 +1053,7 @@ const char *GLSL_8bit422toRGB =
 "    vec3 input = colorLookup(coord);\n"
 "\n"
 "    gl_FragColor = vec4(input, 1.0);\n"
+//"    gl_FragColor = vec4(coord.x / 960.f, coord.y / 540.f, 0, 1.0);\n"
 "}\n"
 "";
 
@@ -1076,19 +1077,41 @@ HRESULT C_DVP::CompileShader(GLuint shader, const char *shaderStr)
 }
 HRESULT C_DVP::SetupDecodeProgram()
 {
+	const char* vertex_shader =
+		"#version 400\n"
+		"in vec3 inVertex;"
+		"void main() {"
+		"  gl_Position = vec4(inVertex, 1.0);"
+		"}";
+	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vs, 1, &vertex_shader, NULL);
+	glCompileShader(vs);
+
+	assert(glGetError() == GL_NO_ERROR);
+
 	// Create the decode shader
 	decodeShader = glCreateShader(GL_FRAGMENT_SHADER);
-
+#if 0
 	if (CompileShader(decodeShader, GLSL_8bit422toRGB) == S_FALSE) {
 		fprintf(stderr, "Failed to load GLSL decode shader\n");
 		return false;
 	}
+#else
+	glShaderSource(decodeShader, 1, &GLSL_8bit422toRGB, NULL);
+	glCompileShader(decodeShader);
+	assert(glGetError() == GL_NO_ERROR);
+#endif
 
 	decodeProgram = glCreateProgram();
 
+	glAttachShader(decodeProgram, vs);
 	glAttachShader(decodeProgram, decodeShader);
 
+	assert(glGetError() == GL_NO_ERROR);
+
 	glLinkProgram(decodeProgram);
+
+	assert(glGetError() == GL_NO_ERROR);
 
 	GLint res;
 	glGetProgramiv(decodeProgram, GL_LINK_STATUS, &res);
