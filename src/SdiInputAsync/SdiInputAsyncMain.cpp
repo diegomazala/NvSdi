@@ -33,6 +33,9 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			if (!DvpIsOk())
 				return EXIT_FAILURE;
 
+			
+
+
 			// We can kill the dummy window now
 			DestroyGLWindow(&hWnd, &hGLRC);
 		}
@@ -56,12 +59,25 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 
 	DvpRenderEventFunc()(SdiRenderEvent::PreSetup);
+	
+	//allocate the textures for display
+	if (!DvpCreateDisplayTextures(DvpWidth(), DvpHeight()))
+		return false;
+
+	//for (int i = 0; i < DvpActiveDeviceCount(); ++i)
+	//{
+	//	for (int j = 0; j < DvpStreamsPerFrame(i); ++j)
+	//	{
+	//		gl::Texture2D* tex = DvpDisplayTexture(i, j);
+	//		DvpSetDisplayTexture(tex->Id(), tex->Type(), i, j);
+	//	}
+	//}
+
 	DvpRenderEventFunc()(SdiRenderEvent::Setup);
 	DvpRenderEventFunc()(SdiRenderEvent::StartCapture);
 
 	if (!DvpIsOk())
 		return EXIT_FAILURE;
-
 
 	lApp.InitSetup();
 	while (lApp.ProcessMainLoop())

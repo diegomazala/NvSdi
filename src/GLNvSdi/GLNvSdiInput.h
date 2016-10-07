@@ -172,7 +172,9 @@ extern "C"
 	GLNVSDI_API GLuint DvpDecodeTextureId(int device_index = 0, int video_stream_index = 0);
 	GLNVSDI_API GLuint DvpDisplayTextureId(int device_index = 0, int video_stream_index = 0);
 	/// Return the a pointer to a video input texture
-	GLNVSDI_API gl::Texture* DvpDisplayTexture(int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API gl::Texture2D* DvpDisplayTexture(int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API void DvpSetDisplayTexture(int target_texture_id, int target_texture_type, int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API void DvpSetDisplayTexturePtr(void* texturePtr, int device_index = 0, int video_stream_index = 0);
 
 	GLNVSDI_API bool DvpCreateDisplayTextures(int width, int height);
 	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int target_texture_type, int device_index = 0, int video_stream_index = 0);

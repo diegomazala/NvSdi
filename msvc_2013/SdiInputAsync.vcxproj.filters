@@ -33,6 +33,9 @@
     <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\GLCommon\OpenGLExt.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\GLCommon\OpenGL.h">
@@ -49,6 +52,12 @@
     </ClInclude>
     <ClInclude Include="..\src\NvSdiApi\glExtensions.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\OpenGLExt.h">
+      <Filter>GLCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLCommon\Texture.h">
+      <Filter>GLCommon</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

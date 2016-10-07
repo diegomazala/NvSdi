@@ -193,6 +193,6 @@ namespace glExt
 		hGLRC = NULL;
 	}
 }
-#endif 
+#endif
 
 #endif // __OPENGL_EXT_H__

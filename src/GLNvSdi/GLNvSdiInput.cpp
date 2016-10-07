@@ -31,6 +31,7 @@ extern "C"
 		static GLuint64EXT	drawTimeEnd;
 		static GLuint64EXT	timeElapsed;
 		static bool			dvpOk;
+		static bool			ownDisplayTextures = false;
 		
 		//
 		static gl::Texture2D displayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
@@ -901,32 +902,38 @@ extern "C"
 		if (activeDeviceCount == 0)
 			return false;
 
-		//allocate the textures for display
-		if (!DvpCreateDisplayTextures(videoWidth, videoHeight))
-			return false;
+		//
+		// Check if the textures have been created
+		//
+		if (attr::displayTextures[0][0].Id() < 1)
+		{
+			//allocate the textures for display
+			if (!DvpCreateDisplayTextures(videoWidth, videoHeight))
+				return false;
+		}
 
 
 		//create the textures to go with the buffers and frame buffer objects to create the display textures
-		for (UINT j = 0; j < activeDeviceCount; j++)
+		for (UINT d = 0; d < activeDeviceCount; d++)
 		{
-			int numStreams = attr::dvp.GetNumStreamsPerFrame(j);
+			int numStreams = attr::dvp.GetNumStreamsPerFrame(d);
 #ifdef USE_ALL_STREAMS	
 			numStreams = NUM_VIDEO_STREAMS;
 #endif		        
 
-			glGenFramebuffersEXT(numStreams, &attr::dvp.m_vidFbos[j][0]);
+			glGenFramebuffersEXT(numStreams, &attr::dvp.m_vidFbos[d][0]);
 			assert(glGetError() == GL_NO_ERROR);
 
-			for (unsigned int i = 0; i < numStreams; i++)
+			for (unsigned int s = 0; s < numStreams; s++)
 			{
 
-				attr::decodeTextures[j][i].Create();
-				attr::decodeTextures[j][i].Bind();
-				attr::decodeTextures[j][i].SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				attr::decodeTextures[j][i].SetParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				attr::decodeTextures[d][s].Create();
+				attr::decodeTextures[d][s].Bind();
+				attr::decodeTextures[d][s].SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				attr::decodeTextures[d][s].SetParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				
 				// Allocate storage for the decode texture.
-				glTexImage2D(attr::decodeTextures[j][i].Type(), 
+				glTexImage2D(attr::decodeTextures[d][s].Type(), 
 					0, GL_RGBA8UI,
 					(GLsizei)(videoWidth*0.5), videoHeight, 
 					0, GL_RGBA_INTEGER_EXT, 
@@ -935,13 +942,13 @@ extern "C"
 				assert(glGetError() == GL_NO_ERROR);
 
 				// Configure the decode->output FBO.
-				glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, attr::dvp.m_vidFbos[j][i]);
+				glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, attr::dvp.m_vidFbos[d][s]);
 				assert(glGetError() == GL_NO_ERROR);
 				
 				glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
 					GL_COLOR_ATTACHMENT0_EXT,
-					attr::displayTextures[j][i].Type(),
-					attr::displayTextures[j][i].Id(),
+					attr::displayTextures[d][s].Type(),
+					attr::displayTextures[d][s].Id(),
 					0);
 				assert(glGetError() == GL_NO_ERROR);
 
@@ -974,12 +981,18 @@ extern "C"
 #ifdef USE_ALL_STREAMS		
 			numStreams = NUM_VIDEO_STREAMS;
 #endif		  
-			//glDeleteTextures(numStreams, &attr::dvp.m_DisplayTextures[i][0]);
-			//glDeleteTextures(numStreams, &attr::dvp.m_decodeTextures[i][0]);
+			for (int j = 0; j < numStreams; ++j)
+			{
+				attr::decodeTextures[i][j].Destroy();
+
+				if (attr::ownDisplayTextures)
+					attr::displayTextures[i][j].Destroy();
+			}
 
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 			glDeleteFramebuffersEXT(numStreams, &attr::dvp.m_vidFbos[i][0]);
 		}
+		attr::ownDisplayTextures = false;
 		attr::dvp.DestroyDecodeProgram();
 
 		glDeleteQueries(1, &attr::drawTimeQuery);
@@ -1064,7 +1077,11 @@ extern "C"
 
 	GLNVSDI_API int DvpStreamsPerFrame(int device_index)
 	{
-		return attr::dvp.GetNumStreamsPerFrame(device_index);
+		#ifdef USE_ALL_STREAMS
+			return NUM_VIDEO_STREAMS;
+		#else
+			return attr::dvp.GetNumStreamsPerFrame(device_index);
+		#endif	
 	}
 	
 	GLNVSDI_API NVVIOSIGNALFORMAT DvpSignalFormat()
@@ -1177,21 +1194,31 @@ extern "C"
 		return attr::displayTextures[device_index][video_stream_index].Id();
 	}
 
-	GLNVSDI_API gl::Texture* DvpDisplayTexture(int device_index, int video_stream_index)
+	GLNVSDI_API gl::Texture2D* DvpDisplayTexture(int device_index, int video_stream_index)
 	{
 		return &attr::displayTextures[device_index][video_stream_index];
 	}
 
+	GLNVSDI_API void DvpSetDisplayTexture(int target_texture_id, int target_texture_type, int device_index, int video_stream_index)
+	{
+		attr::displayTextures[device_index][video_stream_index].SetId(target_texture_id);
+		attr::displayTextures[device_index][video_stream_index].SetType(target_texture_type);
+	}
+	GLNVSDI_API void DvpSetDisplayTexturePtr(void* texturePtr, int device_index, int video_stream_index)
+	{
+		GLuint gltex = (GLuint)(size_t)(texturePtr);
+		DvpSetDisplayTexture(gltex, GL_TEXTURE_2D, device_index, video_stream_index);
+	}
+
 	GLNVSDI_API bool DvpCreateDisplayTextures(int videoWidth, int videoHeight)
 	{
+		attr::ownDisplayTextures = true;
+
 		const int activeDeviceCount = DvpActiveDeviceCount();
 
 		for (UINT i = 0; i < activeDeviceCount; i++)
 		{
 			int numStreams = DvpStreamsPerFrame(i);
-#ifdef USE_ALL_STREAMS
-			numStreams = NUM_VIDEO_STREAMS;
-#endif		
 			for (UINT j = 0; j < numStreams; j++)
 			{
 				attr::displayTextures[i][j].Create();
@@ -1275,7 +1302,11 @@ extern "C"
 		const int videoWidth = DvpWidth();
 		const int videoHeight = DvpHeight();
 
-		attr::displayTextures[device_index][0].Enable();
+		assert(glGetError() == GL_NO_ERROR);
+
+		//attr::displayTextures[device_index][0].Enable();
+
+		assert(glGetError() == GL_NO_ERROR);
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -1283,12 +1314,13 @@ extern "C"
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 
-		glViewport(0, 0, videoWidth, videoHeight);
-		int numStreams = DvpStreamsPerFrame(device_index);
+		assert(glGetError() == GL_NO_ERROR);
 
-#ifdef USE_ALL_STREAMS
-		numStreams = NUM_VIDEO_STREAMS;
-#endif		
+		glViewport(0, 0, videoWidth, videoHeight);
+
+		assert(glGetError() == GL_NO_ERROR);
+
+		int numStreams = DvpStreamsPerFrame(device_index);
 
 		assert(glGetError() == GL_NO_ERROR);
 
@@ -1312,12 +1344,13 @@ extern "C"
 		{
 			case SdiRenderEvent::CaptureFrame:
 			{
+				SdiMakeCurrent();
 				C_Frame *prevFrame[NVAPI_MAX_VIO_DEVICES] = { nullptr };
 				const int activeDeviceCount = DvpActiveDeviceCount();
 				for (int i = 0; i < activeDeviceCount; i++)
 				{
-					DvpUpdateFrame(i);
-					DvpBlitTextures(i);
+					if (DvpUpdateFrame(i))
+						DvpBlitTextures(i);
 				}
 
 				attr::dvpOk = (glGetError() == GL_NO_ERROR);

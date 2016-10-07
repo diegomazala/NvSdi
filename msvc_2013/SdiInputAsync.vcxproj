@@ -191,6 +191,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\GLCommon\OpenGLExt.cpp" />
     <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp" />
     <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp" />
     <ClCompile Include="..\src\NvSdiApi\nvSDIutil.cpp" />
@@ -199,6 +200,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\GLCommon\OpenGL.h" />
+    <ClInclude Include="..\src\GLCommon\OpenGLExt.h" />
+    <ClInclude Include="..\src\GLCommon\Texture.h" />
     <ClInclude Include="..\src\NvSdiApi\glExtensions.h" />
     <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h" />
     <ClInclude Include="..\src\NvSdiApi\nvSDIutil.h" />

@@ -105,6 +105,7 @@ void SdiInAsyncWindow::Render()
 {
 	MakeCurrent();
 
+#if 1
 	//
 	// Draw texture contents to graphics window.
 	//
@@ -190,9 +191,6 @@ void SdiInAsyncWindow::Render()
 
 		int numStreams = DvpStreamsPerFrame(i);
 
-		if (!DvpBlitTextures(i))
-			std::cout << "Error: Could not blit texture" << std::endl;
-
 		// Draw contents of each video texture
 		// Reset view parameters
 
@@ -206,9 +204,7 @@ void SdiInAsyncWindow::Render()
 			// Bind texture object video stream i
 			DvpDisplayTexture(i, j)->Bind();
 
-			((gl::Texture2D*)DvpDisplayTexture(i, j))->Plot(
-				Width(), Height(), 
-				videoWidth, videoHeight);
+			quad.Render(Width(), Height());
 
 			DvpDisplayTexture(i, j)->Unbind();
 			assert(glGetError() == GL_NO_ERROR);
@@ -228,8 +224,7 @@ void SdiInAsyncWindow::Render()
 			glLoadIdentity();
 			glViewport(0, 0, this->Width(), this->Height());
 
-			// Draw video signal		
-			sprintf(buf, "Card:%d", DvpDeviceId(i));
+			sprintf(buf, "OpenGL :%s", (char*)glGetString(GL_VERSION));
 
 			len = strlen(buf);
 			glListBase(1000);
@@ -237,11 +232,19 @@ void SdiInAsyncWindow::Render()
 			glRasterPos2f(10, rectH*(i + 1) - 20);
 			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
 
+			sprintf(buf, "Card:%d", DvpDeviceId(i));
+
+			len = strlen(buf);
+			glListBase(1000);
+			glColor3f(1.0f, 1.0f, 0.0f);
+			glRasterPos2f(10, rectH*(i + 1) - 35);
+			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
+
 			// Draw video signal
 			len = strlen(SignalFormatToString(signalFormat).c_str());
 			glListBase(1000);
 			glColor3f(1.0f, 1.0f, 0.0f);
-			glRasterPos2f(10, rectH*(i + 1) - 35);
+			glRasterPos2f(10, rectH*(i + 1) - 50);
 			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, SignalFormatToString(signalFormat).c_str());
 
 			// Draw sequence number
@@ -249,7 +252,7 @@ void SdiInAsyncWindow::Render()
 			len = strlen(buf);
 			glListBase(1000);
 			glColor3f(1.0f, 1.0f, 0.0f);
-			glRasterPos2f(10, rectH*(i + 1) - 50);
+			glRasterPos2f(10, rectH*(i + 1) - 65);
 			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
 
 			// Draw dropped frames number
@@ -257,7 +260,7 @@ void SdiInAsyncWindow::Render()
 			len = strlen(buf);
 			glListBase(1000);
 			glColor3f(1.0f, 1.0f, 0.0f);
-			glRasterPos2f(10, rectH*(i + 1) - 65);
+			glRasterPos2f(10, rectH*(i + 1) - 80);
 			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
 
 			// Draw dropped frames number
@@ -265,7 +268,7 @@ void SdiInAsyncWindow::Render()
 			len = strlen(buf);
 			glListBase(1000);
 			glColor3f(1.0f, 1.0f, 0.0f);
-			glRasterPos2f(10, rectH*(i + 1) - 80);
+			glRasterPos2f(10, rectH*(i + 1) - 95);
 			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
 		}
 
@@ -288,6 +291,13 @@ void SdiInAsyncWindow::Render()
 	}
 
 	count++;
+
+#endif
+
+	//glViewport(0, 0, Width(), Height());
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//quad.Render(Width(), Height());
+	//assert(glGetError() == GL_NO_ERROR);
 }
 
 

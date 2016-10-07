@@ -22,6 +22,7 @@
 namespace gl
 {
 
+
 template<typename T>
 struct TRgba
 {
@@ -66,6 +67,11 @@ public:											// Methods
 		return mTarget;
 	}
 
+	void SetType(GLenum target)
+	{
+		mTarget = target;
+	}
+	
 	GLuint Id() const
 	{
 		return mId;
@@ -147,7 +153,7 @@ protected:										// Attributes
 
 
 	GLuint			mId;		///< Texture identification
-	const GLenum	mTarget;	///< Texture target (1D, 2D, 3D)
+	GLenum			mTarget;	///< Texture target (1D, 2D, 3D)
 	GLboolean		mValid;		///< Validation of texture		
 	GLboolean		mMipmapped;	///< Build the texture mipmapped
 };
@@ -426,6 +432,391 @@ public:
 
 };
 
+
+
+
+//////////////
+// TYPEDEFS //
+//////////////
+typedef BOOL(WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+typedef HGLRC(WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShareContext, const int *attribList);
+typedef BOOL(WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
+typedef void (APIENTRY * PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
+typedef void (APIENTRY * PFNGLBINDBUFFERPROC) (GLenum target, GLuint buffer);
+typedef void (APIENTRY * PFNGLBINDVERTEXARRAYPROC) (GLuint array);
+typedef void (APIENTRY * PFNGLBUFFERDATAPROC) (GLenum target, ptrdiff_t size, const GLvoid *data, GLenum usage);
+typedef void (APIENTRY * PFNGLCOMPILESHADERPROC) (GLuint shader);
+typedef GLuint(APIENTRY * PFNGLCREATEPROGRAMPROC) (void);
+typedef GLuint(APIENTRY * PFNGLCREATESHADERPROC) (GLenum type);
+typedef void (APIENTRY * PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint *buffers);
+typedef void (APIENTRY * PFNGLDELETEPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY * PFNGLDELETESHADERPROC) (GLuint shader);
+typedef void (APIENTRY * PFNGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint *arrays);
+typedef void (APIENTRY * PFNGLDETACHSHADERPROC) (GLuint program, GLuint shader);
+typedef void (APIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (GLuint index);
+typedef void (APIENTRY * PFNGLGENBUFFERSPROC) (GLsizei n, GLuint *buffers);
+typedef void (APIENTRY * PFNGLGENVERTEXARRAYSPROC) (GLsizei n, GLuint *arrays);
+typedef GLint(APIENTRY * PFNGLGETATTRIBLOCATIONPROC) (GLuint program, const char *name);
+typedef void (APIENTRY * PFNGLGETPROGRAMINFOLOGPROC) (GLuint program, GLsizei bufSize, GLsizei *length, char *infoLog);
+typedef void (APIENTRY * PFNGLGETPROGRAMIVPROC) (GLuint program, GLenum pname, GLint *params);
+typedef void (APIENTRY * PFNGLGETSHADERINFOLOGPROC) (GLuint shader, GLsizei bufSize, GLsizei *length, char *infoLog);
+typedef void (APIENTRY * PFNGLGETSHADERIVPROC) (GLuint shader, GLenum pname, GLint *params);
+typedef void (APIENTRY * PFNGLLINKPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const char* *string, const GLint *length);
+typedef void (APIENTRY * PFNGLUSEPROGRAMPROC) (GLuint program);
+typedef void (APIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer);
+typedef void (APIENTRY * PFNGLBINDATTRIBLOCATIONPROC) (GLuint program, GLuint index, const char *name);
+typedef GLint(APIENTRY * PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const char *name);
+typedef void (APIENTRY * PFNGLUNIFORMMATRIX4FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void (APIENTRY * PFNGLACTIVETEXTUREPROC) (GLenum texture);
+typedef void (APIENTRY * PFNGLUNIFORM1IPROC) (GLint location, GLint v0);
+typedef void (APIENTRY * PFNGLGENERATEMIPMAPPROC) (GLenum target);
+typedef void (APIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYPROC) (GLuint index);
+typedef void (APIENTRY * PFNGLUNIFORM2FVPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * PFNGLUNIFORM3FVPROC) (GLint location, GLsizei count, const GLfloat *value);
+typedef void (APIENTRY * PFNGLUNIFORM4FVPROC) (GLint location, GLsizei count, const GLfloat *value);
+
+
+
+class Quad
+{
+
+public:
+
+	Quad() :isCreated(false){}
+
+	void Render(int window_width, int window_height)
+	{
+		if (isCreated)
+		{
+			const float windowSize[] = { window_width, window_height };
+			glUseProgram(program);
+			glBindVertexArray(vao);
+			glUniform2fv(windowSizeLocation, 1, windowSize);
+			glDrawArrays(GL_QUADS, 0, 4);
+			glUseProgram(0);
+		}
+		else
+		{
+			Create();
+		}
+	}
+
+private:
+
+	GLuint program;
+	GLuint vao;
+	GLuint vbo;
+	GLint windowSizeLocation;
+	GLboolean isCreated;
+
+	
+	PFNGLATTACHSHADERPROC glAttachShader;
+	PFNGLBINDBUFFERPROC glBindBuffer;
+	PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
+	PFNGLBUFFERDATAPROC glBufferData;
+	PFNGLCOMPILESHADERPROC glCompileShader;
+	PFNGLCREATEPROGRAMPROC glCreateProgram;
+	PFNGLCREATESHADERPROC glCreateShader;
+	PFNGLDELETEBUFFERSPROC glDeleteBuffers;
+	PFNGLDELETEPROGRAMPROC glDeleteProgram;
+	PFNGLDELETESHADERPROC glDeleteShader;
+	PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+	PFNGLDETACHSHADERPROC glDetachShader;
+	PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
+	PFNGLGENBUFFERSPROC glGenBuffers;
+	PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
+	PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
+	PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+	PFNGLGETPROGRAMIVPROC glGetProgramiv;
+	PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+	PFNGLGETSHADERIVPROC glGetShaderiv;
+	PFNGLLINKPROGRAMPROC glLinkProgram;
+	PFNGLSHADERSOURCEPROC glShaderSource;
+	PFNGLUSEPROGRAMPROC glUseProgram;
+	PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+	PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
+	PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+	PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+	PFNGLACTIVETEXTUREPROC glActiveTexture;
+	PFNGLUNIFORM1IPROC glUniform1i;
+	PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
+	PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
+	PFNGLUNIFORM2FVPROC glUniform2fv;
+	PFNGLUNIFORM3FVPROC glUniform3fv;
+	PFNGLUNIFORM4FVPROC glUniform4fv;
+
+
+	void Create(float scale = 1.0f)
+	{
+		LoadExtensionList();
+
+		const float v = 1.f * scale;
+
+		const float vertex_data[] = {
+			-v, -v, 0.f,
+			-v, v, 0.f,
+			v, v, 0.f,
+			v, -v, 0.f
+		};
+
+		
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
+		
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+		const char* vertex_shader =
+			"#version 400\n"
+			"layout(location = 0) in vec3 inVertex;"
+			"void main() {"
+			"  gl_Position = vec4(inVertex, 1.0);"
+			"}";
+
+		const char* fragment_shader =
+			"#version 400\n"
+			"uniform sampler2D inTex;"
+			"uniform vec2 windowSize;"
+			"out vec4 color;"
+			"void main() {"
+			"  color = texture(inTex, gl_FragCoord.xy/windowSize);"
+			"}";
+
+		GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(vs, 1, &vertex_shader, NULL);
+		glCompileShader(vs);
+		GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(fs, 1, &fragment_shader, NULL);
+		glCompileShader(fs);
+
+		program = glCreateProgram();
+		glAttachShader(program, fs);
+		glAttachShader(program, vs);
+		glLinkProgram(program);
+
+		windowSizeLocation = glGetUniformLocation(program, "windowSize");
+		
+		isCreated = (glGetError() == GL_NO_ERROR);
+	}
+
+
+	
+
+
+	bool LoadExtensionList()
+	{
+		glAttachShader = (PFNGLATTACHSHADERPROC)wglGetProcAddress("glAttachShader");
+		if (!glAttachShader)
+		{
+			return false;
+		}
+
+		glBindBuffer = (PFNGLBINDBUFFERPROC)wglGetProcAddress("glBindBuffer");
+		if (!glBindBuffer)
+		{
+			return false;
+		}
+
+		glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
+		if (!glBindVertexArray)
+		{
+			return false;
+		}
+
+		glBufferData = (PFNGLBUFFERDATAPROC)wglGetProcAddress("glBufferData");
+		if (!glBufferData)
+		{
+			return false;
+		}
+
+		glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
+		if (!glCompileShader)
+		{
+			return false;
+		}
+
+		glCreateProgram = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
+		if (!glCreateProgram)
+		{
+			return false;
+		}
+
+		glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
+		if (!glCreateShader)
+		{
+			return false;
+		}
+
+		glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)wglGetProcAddress("glDeleteBuffers");
+		if (!glDeleteBuffers)
+		{
+			return false;
+		}
+
+		glDeleteProgram = (PFNGLDELETEPROGRAMPROC)wglGetProcAddress("glDeleteProgram");
+		if (!glDeleteProgram)
+		{
+			return false;
+		}
+
+		glDeleteShader = (PFNGLDELETESHADERPROC)wglGetProcAddress("glDeleteShader");
+		if (!glDeleteShader)
+		{
+			return false;
+		}
+
+		glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
+		if (!glDeleteVertexArrays)
+		{
+			return false;
+		}
+
+		glDetachShader = (PFNGLDETACHSHADERPROC)wglGetProcAddress("glDetachShader");
+		if (!glDetachShader)
+		{
+			return false;
+		}
+
+		glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
+		if (!glEnableVertexAttribArray)
+		{
+			return false;
+		}
+
+		glGenBuffers = (PFNGLGENBUFFERSPROC)wglGetProcAddress("glGenBuffers");
+		if (!glGenBuffers)
+		{
+			return false;
+		}
+
+		glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)wglGetProcAddress("glGenVertexArrays");
+		if (!glGenVertexArrays)
+		{
+			return false;
+		}
+
+		glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)wglGetProcAddress("glGetAttribLocation");
+		if (!glGetAttribLocation)
+		{
+			return false;
+		}
+
+		glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
+		if (!glGetProgramInfoLog)
+		{
+			return false;
+		}
+
+		glGetProgramiv = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
+		if (!glGetProgramiv)
+		{
+			return false;
+		}
+
+		glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
+		if (!glGetShaderInfoLog)
+		{
+			return false;
+		}
+
+		glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
+		if (!glGetShaderiv)
+		{
+			return false;
+		}
+
+		glLinkProgram = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
+		if (!glLinkProgram)
+		{
+			return false;
+		}
+
+		glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
+		if (!glShaderSource)
+		{
+			return false;
+		}
+
+		glUseProgram = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
+		if (!glUseProgram)
+		{
+			return false;
+		}
+
+		glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
+		if (!glVertexAttribPointer)
+		{
+			return false;
+		}
+
+		glBindAttribLocation = (PFNGLBINDATTRIBLOCATIONPROC)wglGetProcAddress("glBindAttribLocation");
+		if (!glBindAttribLocation)
+		{
+			return false;
+		}
+
+		glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)wglGetProcAddress("glGetUniformLocation");
+		if (!glGetUniformLocation)
+		{
+			return false;
+		}
+
+		glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)wglGetProcAddress("glUniformMatrix4fv");
+		if (!glUniformMatrix4fv)
+		{
+			return false;
+		}
+
+		glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
+		if (!glActiveTexture)
+		{
+			return false;
+		}
+
+		glUniform1i = (PFNGLUNIFORM1IPROC)wglGetProcAddress("glUniform1i");
+		if (!glUniform1i)
+		{
+			return false;
+		}
+
+		glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)wglGetProcAddress("glGenerateMipmap");
+		if (!glGenerateMipmap)
+		{
+			return false;
+		}
+
+		glDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glDisableVertexAttribArray");
+		if (!glDisableVertexAttribArray)
+		{
+			return false;
+		}
+
+		glUniform2fv = (PFNGLUNIFORM2FVPROC)wglGetProcAddress("glUniform2fv");
+		if (!glUniform2fv)
+		{
+			return false;
+		}
+
+		glUniform3fv = (PFNGLUNIFORM3FVPROC)wglGetProcAddress("glUniform3fv");
+		if (!glUniform3fv)
+		{
+			return false;
+		}
+
+		glUniform4fv = (PFNGLUNIFORM4FVPROC)wglGetProcAddress("glUniform4fv");
+		if (!glUniform4fv)
+		{
+			return false;
+		}
+
+		return true;
+	}
+};
 
 } // end namespace 
 

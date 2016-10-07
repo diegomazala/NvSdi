@@ -22,6 +22,7 @@
 #include "WinAppGL/GLWindow.h"
 
 #include "DVP.h"
+#include "Texture.h"
 
 class SdiInAsyncWindow : public GLWindow
 {
@@ -40,6 +41,7 @@ protected:
 	
 
 	bool showStatistics;
+	gl::Quad quad;
 };
 
 
