@@ -478,76 +478,40 @@ typedef void (APIENTRY * PFNGLUNIFORM4FVPROC) (GLint location, GLsizei count, co
 
 
 
-class Quad
+class TextureBlit
 {
 
 public:
 
-	Quad() :isCreated(false){}
+	TextureBlit() :isCreated(false){}
 
-	void Render(int window_width, int window_height)
+	void Blit(int window_width, int window_height)
 	{
-		if (isCreated)
+		glBindVertexArray(vao);
+		if (windowSizeLocation > -1)
 		{
 			const float windowSize[] = { window_width, window_height };
-			glUseProgram(program);
-			glBindVertexArray(vao);
 			glUniform2fv(windowSizeLocation, 1, windowSize);
-			glDrawArrays(GL_QUADS, 0, 4);
-			glUseProgram(0);
 		}
-		else
-		{
-			Create();
-		}
+		glDrawArrays(GL_QUADS, 0, 4);
 	}
 
-private:
+	void Blit(int shader_program, int window_width, int window_height)
+	{
+		glUseProgram(shader_program);
+		Blit(window_width, window_height);
+		glUseProgram(0);
+	}
 
-	GLuint program;
-	GLuint vao;
-	GLuint vbo;
-	GLint windowSizeLocation;
-	GLboolean isCreated;
-
-	
-	PFNGLATTACHSHADERPROC glAttachShader;
-	PFNGLBINDBUFFERPROC glBindBuffer;
-	PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
-	PFNGLBUFFERDATAPROC glBufferData;
-	PFNGLCOMPILESHADERPROC glCompileShader;
-	PFNGLCREATEPROGRAMPROC glCreateProgram;
-	PFNGLCREATESHADERPROC glCreateShader;
-	PFNGLDELETEBUFFERSPROC glDeleteBuffers;
-	PFNGLDELETEPROGRAMPROC glDeleteProgram;
-	PFNGLDELETESHADERPROC glDeleteShader;
-	PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
-	PFNGLDETACHSHADERPROC glDetachShader;
-	PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
-	PFNGLGENBUFFERSPROC glGenBuffers;
-	PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
-	PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
-	PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
-	PFNGLGETPROGRAMIVPROC glGetProgramiv;
-	PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
-	PFNGLGETSHADERIVPROC glGetShaderiv;
-	PFNGLLINKPROGRAMPROC glLinkProgram;
-	PFNGLSHADERSOURCEPROC glShaderSource;
-	PFNGLUSEPROGRAMPROC glUseProgram;
-	PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
-	PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
-	PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
-	PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
-	PFNGLACTIVETEXTUREPROC glActiveTexture;
-	PFNGLUNIFORM1IPROC glUniform1i;
-	PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
-	PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
-	PFNGLUNIFORM2FVPROC glUniform2fv;
-	PFNGLUNIFORM3FVPROC glUniform3fv;
-	PFNGLUNIFORM4FVPROC glUniform4fv;
+	void BlitDefault(int window_width, int window_height)
+	{
+		glUseProgram(program);
+		Blit(window_width, window_height);
+		glUseProgram(0);
+	}
 
 
-	void Create(float scale = 1.0f)
+	void CreateVbo(float scale = 1.0f)
 	{
 		LoadExtensionList();
 
@@ -560,17 +524,29 @@ private:
 			v, -v, 0.f
 		};
 
-		
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
-		
+
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
+		SetupDefaultShaderProgram();
+
+		isCreated = (glGetError() == GL_NO_ERROR);
+	}
+
+	void DestroyVbo()
+	{
+		glDeleteBuffers(1, &vbo);
+		glDeleteVertexArrays(1, &vao);
+	}
+
+	bool SetupDefaultShaderProgram()
+	{
 		const char* vertex_shader =
 			"#version 400\n"
 			"layout(location = 0) in vec3 inVertex;"
@@ -600,13 +576,29 @@ private:
 		glLinkProgram(program);
 
 		windowSizeLocation = glGetUniformLocation(program, "windowSize");
-		
-		isCreated = (glGetError() == GL_NO_ERROR);
+
+		return (glGetError() == GL_NO_ERROR) && (windowSizeLocation > -1);
+	}
+
+	GLuint SetupShaderProgram(const char* vertex_shader, const char* fragment_shader)
+	{
+		GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(vs, 1, &vertex_shader, NULL);
+		glCompileShader(vs);
+		GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(fs, 1, &fragment_shader, NULL);
+		glCompileShader(fs);
+
+		GLuint shader_program = glCreateProgram();
+		glAttachShader(shader_program, fs);
+		glAttachShader(shader_program, vs);
+		glLinkProgram(shader_program);
+
+		windowSizeLocation = glGetUniformLocation(program, "windowSize");
 	}
 
 
-	
-
+private:
 
 	bool LoadExtensionList()
 	{
@@ -816,6 +808,51 @@ private:
 
 		return true;
 	}
+
+
+
+	GLuint program;
+	GLuint vao;
+	GLuint vbo;
+	GLint windowSizeLocation;
+	GLboolean isCreated;
+
+	
+	PFNGLATTACHSHADERPROC glAttachShader;
+	PFNGLBINDBUFFERPROC glBindBuffer;
+	PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
+	PFNGLBUFFERDATAPROC glBufferData;
+	PFNGLCOMPILESHADERPROC glCompileShader;
+	PFNGLCREATEPROGRAMPROC glCreateProgram;
+	PFNGLCREATESHADERPROC glCreateShader;
+	PFNGLDELETEBUFFERSPROC glDeleteBuffers;
+	PFNGLDELETEPROGRAMPROC glDeleteProgram;
+	PFNGLDELETESHADERPROC glDeleteShader;
+	PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+	PFNGLDETACHSHADERPROC glDetachShader;
+	PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
+	PFNGLGENBUFFERSPROC glGenBuffers;
+	PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
+	PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
+	PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+	PFNGLGETPROGRAMIVPROC glGetProgramiv;
+	PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+	PFNGLGETSHADERIVPROC glGetShaderiv;
+	PFNGLLINKPROGRAMPROC glLinkProgram;
+	PFNGLSHADERSOURCEPROC glShaderSource;
+	PFNGLUSEPROGRAMPROC glUseProgram;
+	PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+	PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
+	PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+	PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+	PFNGLACTIVETEXTUREPROC glActiveTexture;
+	PFNGLUNIFORM1IPROC glUniform1i;
+	PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
+	PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
+	PFNGLUNIFORM2FVPROC glUniform2fv;
+	PFNGLUNIFORM3FVPROC glUniform3fv;
+	PFNGLUNIFORM4FVPROC glUniform4fv;
+
 };
 
 } // end namespace 
