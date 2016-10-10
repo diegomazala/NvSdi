@@ -1020,6 +1020,14 @@ extern "C"
 		if (SdiGetDC() != nullptr)
 			SdiSetDC(nullptr);
 
+
+		for (int i = 0; i < NVAPI_MAX_VIO_DEVICES; ++i)
+		{
+			attr::framePtr[i] = nullptr;
+			attr::prevFramePtr[i] = nullptr;
+		}
+
+
 		return (glGetError() == GL_NO_ERROR);
 	}
 
@@ -1074,6 +1082,7 @@ extern "C"
 
 	GLNVSDI_API int DvpActiveDeviceCount()
 	{
+		int activeDevices = attr::dvp.GetActiveDeviceCount();
 		return attr::dvp.GetActiveDeviceCount();
 	}
 
@@ -1258,6 +1267,10 @@ extern "C"
 			GL_PIXEL_UNPACK_BUFFER_ARB, 
 			attr::framePtr[device_index]->getDstObject(video_stream_index));
 
+		assert(glGetError() == GL_NO_ERROR);
+
+		GLuint id = attr::decodeTextures[device_index][video_stream_index].Id();
+
 		glTexSubImage2D(
 			attr::decodeTextures[device_index][video_stream_index].Type(),
 			0, 0, 0, 
@@ -1398,6 +1411,7 @@ extern "C"
 				HDC uty_hdc = wglGetCurrentDC();
 				SdiMakeCurrent();
 
+				attr::dvpOk = DvpStop();
 				attr::dvpOk = DvpCleanup();
 
 				wglMakeCurrent(uty_hdc, uty_hglrc);

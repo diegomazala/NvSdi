@@ -605,6 +605,7 @@ bool C_DVP::makeAllCaptureCtxNotCurrent()
 
 HRESULT C_DVP::SetupSDIPipeline()
 {	
+	m_activeDeviceCount = 0;
 	int numCaptureDevices = CNvSDIinTopology::instance().getNumDevice();
 	
 	for(int i = 0; i < numCaptureDevices; i++)
@@ -660,8 +661,9 @@ HRESULT C_DVP::CleanupSDIinGL()
 		m_CaptureRingBuffer[i]->deinit();
 		delete m_CaptureRingBuffer[i];	
 	}
+	cleanupGL();
 	cleanupCUDA();
-	cleanupGL();	
+	
 	return S_OK;
 }
 
@@ -1130,10 +1132,12 @@ HRESULT C_DVP::SetupDecodeProgram()
 				free(buf);
 			}
 		}
-		return false;
+		return S_FALSE;
 	}
 
 	assert(glGetError() == GL_NO_ERROR);
+
+	return S_OK;
 }
 HRESULT C_DVP::DestroyDecodeProgram()
 {

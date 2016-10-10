@@ -144,7 +144,7 @@ typedef class C_DVP
 {
 protected:
 	
-	CNvSDIin m_SDIin[NVAPI_MAX_VIO_DEVICES];
+	
 	
 	C_RingBuffer *m_CaptureRingBuffer[NVAPI_MAX_VIO_DEVICES];
 	HDC	m_hCaptureDC;								// Device context
@@ -173,6 +173,7 @@ protected:
 	bool makeAllRenderCtxNotCurrent();
 	
 public:
+	CNvSDIin m_SDIin[NVAPI_MAX_VIO_DEVICES];
 	Options m_options;
 	C_DVP();
 	~C_DVP();

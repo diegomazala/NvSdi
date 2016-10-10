@@ -142,8 +142,11 @@ public class UtyGLNvSdi : MonoBehaviour
     public static System.Text.StringBuilder Log = null;
 
     public const int MAX_COUNT = 8;
-    public const int NVAPI_MAX_VIO_DEVICES = 8;
+    public const int NVAPI_MAX_VIO_DEVICES = 8;    
     public const int MAX_VIDEO_STREAMS = 8;
+
+    public const int MAX_INPUT_DEVICES = 1; 
+    public const int MAX_INPUT_STREAMS = 4; 
 
     public GLNvSdiOptions options;
 
