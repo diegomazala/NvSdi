@@ -4,7 +4,7 @@ using System.Collections;
 [AddComponentMenu("Diem/Video In SDI - GLNvSdiIn")]
 public class GLNvDvpInput : UtyGLNvSdi 
 {
-    public Material[] sdiMaterials = { null, null, null, null, null, null, null, null };
+    public Material[] dvpMaterials = new Material[MAX_INPUT_DEVICES * MAX_INPUT_STREAMS];
 
     public RenderTexture[] dvpTexture = new RenderTexture[MAX_INPUT_DEVICES * MAX_INPUT_STREAMS];
 
@@ -99,8 +99,8 @@ public class GLNvDvpInput : UtyGLNvSdi
 
             UtyGLNvSdi.DvpSetDisplayTexturePtr(dvpTexture[i].GetNativeTexturePtr(), device_index, j);
 
-            if (sdiMaterials[i] != null)
-                sdiMaterials[i].mainTexture = dvpTexture[i];
+            if (dvpMaterials[i] != null)
+                dvpMaterials[i].mainTexture = dvpTexture[i];
         }
     }
 

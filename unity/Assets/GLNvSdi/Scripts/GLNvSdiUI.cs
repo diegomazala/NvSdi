@@ -35,7 +35,8 @@ public class GLNvSdiUI : MonoBehaviour
 
     void Update()
     {
-        droppedFramesIn.text = UtyGLNvSdi.SdiInputDroppedFramesCount().ToString();
+        //droppedFramesIn.text = UtyGLNvSdi.SdiInputDroppedFramesCount().ToString();
+        droppedFramesIn.text = UtyGLNvSdi.DvpDroppedFrames().ToString();
         droppedFramesOut.text = UtyGLNvSdi.SdiOutputDuplicatedFramesCount().ToString();
         gviTime.text = UtyGLNvSdi.SdiInputGviTime().ToString("0.0000");
     }

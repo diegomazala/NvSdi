@@ -16,12 +16,18 @@ public class KeyboardEventMap : MonoBehaviour
                 Event.Invoke();
         }
     }
-
+    public bool useCtrlKey = true;
     public KeyboardEvent[] Events;
 
 
     void Update()
     {
+        if (useCtrlKey)
+        {
+            if (!Input.GetKey(KeyCode.LeftControl))
+                return;
+        }
+
         for (int i = 0; i < Events.Length; ++i)
         {
             Events[i].InvokeIfTriggered();
