@@ -10,7 +10,7 @@ time_t start,stop;
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
 {
-	bool captureFields = false;
+	bool captureFields = true;
 	SdiIOAsyncWindow sdiWindow;
 
 	//
@@ -19,7 +19,11 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	//
 	UnityRenderingEvent(*DvpRenderEventFunc)(void);
 	DvpRenderEventFunc = &GetDvpRenderEventFunc;
+
+	UnityRenderingEvent(*SdiOutputRenderEventFunc)(void);
+	SdiOutputRenderEventFunc = &GetSdiOutputRenderEventFunc;
 	
+
 
 	//
 	// Check if sdi is available
@@ -130,7 +134,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	
 	DvpRenderEventFunc()(SdiRenderEvent::StopCapture);
-	//DvpRenderEventFunc()(SdiRenderEvent::Shutdown);
+	DvpRenderEventFunc()(SdiRenderEvent::Shutdown);
 
 	SdiOutputCleanupGL();
 	SdiAncCleanupOutput();
