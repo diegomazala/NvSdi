@@ -143,6 +143,7 @@ public:
 typedef class C_DVP
 {
 protected:
+public:
 	
 	
 	

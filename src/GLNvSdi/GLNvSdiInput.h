@@ -130,9 +130,9 @@ extern "C"
 	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetSdiInputRenderEventFunc();
 
 
-	GLNVSDI_API bool DvpPreSetup();
-	GLNVSDI_API bool DvpSetup();
-	GLNVSDI_API bool DvpCleanup();
+	//GLNVSDI_API bool DvpPreSetup();
+	//GLNVSDI_API bool DvpSetup();
+	//GLNVSDI_API bool DvpCleanup();
 
 	GLNVSDI_API bool DvpStart();
 	GLNVSDI_API bool DvpStop();
@@ -176,7 +176,7 @@ extern "C"
 	GLNVSDI_API void DvpSetDisplayTexture(int target_texture_id, int target_texture_type, int device_index = 0, int video_stream_index = 0);
 	GLNVSDI_API void DvpSetDisplayTexturePtr(void* texturePtr, int device_index = 0, int video_stream_index = 0);
 
-	GLNVSDI_API bool DvpCreateDisplayTextures(int width, int height);
+	GLNVSDI_API bool DvpInputCreateDisplayTextures(int width, int height);
 	GLNVSDI_API bool DvpBlitTexture(int target_texture_id, int target_texture_type, int device_index = 0, int video_stream_index = 0);
 	GLNVSDI_API bool DvpBlitTextures(int device_index = 0);
 

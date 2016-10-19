@@ -23,6 +23,7 @@ using System.Xml.Serialization;
 public class GLNvSdiOut : UtyGLNvSdi
 {
     public Camera[] m_Camera = { null, null, null, null };
+    public RenderTexture[] outputTexture = { null, null, null, null };
 
     private int m_TexWidth = 1920;	// HD=1920, SD=720
     private int m_TexHeight = 1080;	// HD=1080, SD=486
@@ -172,6 +173,7 @@ public class GLNvSdiOut : UtyGLNvSdi
                     }
 
                     UtyGLNvSdi.SdiOutputSetTexturePtr(i, sdiTex.sdiRenderTarget.GetNativeTexturePtr(), sdiTex.sdiRenderTarget.width, sdiTex.sdiRenderTarget.height);
+                    //UtyGLNvSdi.SdiOutputSetTexturePtr(i, outputTexture[i].GetNativeTexturePtr(), outputTexture[i].width, outputTexture[i].height);
                 }
                 else
                 {

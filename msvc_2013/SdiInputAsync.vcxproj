@@ -191,21 +191,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\DvpAsyncWindow\DvpAsyncWindow.cpp" />
+    <ClCompile Include="..\src\DvpAsyncWindow\SdiInputAsyncMain.cpp" />
     <ClCompile Include="..\src\GLCommon\OpenGLExt.cpp" />
     <ClCompile Include="..\src\NvSdiApi\glExtensions.cpp" />
     <ClCompile Include="..\src\NvSdiApi\nvGPUutil.cpp" />
     <ClCompile Include="..\src\NvSdiApi\nvSDIutil.cpp" />
-    <ClCompile Include="..\src\SdiInputAsync\SdiInAsyncWindow.cpp" />
-    <ClCompile Include="..\src\SdiInputAsync\SdiInputAsyncMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\DvpAsyncWindow\DvpAsyncWindow.h" />
     <ClInclude Include="..\src\GLCommon\OpenGL.h" />
     <ClInclude Include="..\src\GLCommon\OpenGLExt.h" />
     <ClInclude Include="..\src\GLCommon\Texture.h" />
     <ClInclude Include="..\src\NvSdiApi\glExtensions.h" />
     <ClInclude Include="..\src\NvSdiApi\nvGPUutil.h" />
     <ClInclude Include="..\src\NvSdiApi\nvSDIutil.h" />
-    <ClInclude Include="..\src\SdiInputAsync\SdiInAsyncWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="GLNvSdi.vcxproj">

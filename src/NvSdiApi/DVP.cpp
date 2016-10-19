@@ -777,13 +777,24 @@ GLboolean C_DVP::setupGL()
 
 	glDisable(GL_TEXTURE_1D);
 	glDisable(GL_TEXTURE_2D);
-
+	glEnable(GL_TEXTURE_2D);
 	
 	GLuint gpuVideoSlot = 1;
 	for(int i = 0; i < m_activeDeviceCount; i++)
 	{	
 		m_SDIin[i].BindDevice(gpuVideoSlot++,m_hCaptureDC);	
+
+
+		//for (int j = 0; j < m_SDIin[i].GetNumStreams(); j++)
+		//{
+		//	if (m_SDIin[i].BindVideoTexture(tex_id_0, j, GL_TEXTURE_2D, GL_FIELD_UPPER_NV) == E_FAIL)
+		//		return false;
+		//	if (m_SDIin[i].BindVideoTexture(tex_id_0, j, GL_TEXTURE_2D, GL_FIELD_LOWER_NV) == E_FAIL)
+		//		return false;
+		//}
 	}
+
+
 
 	wglMakeCurrent(NULL, NULL); 
 	return GL_TRUE;

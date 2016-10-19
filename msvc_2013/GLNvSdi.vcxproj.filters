@@ -129,6 +129,9 @@
     <ClInclude Include="..\src\NvSdiApi\error.h">
       <Filter>GLNvSdi\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\GLNvSdi\GLNvDvp.h">
+      <Filter>GLNvSdi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\UnityPlugin\UnityPlugin.cpp">
@@ -199,6 +202,9 @@
     </ClCompile>
     <ClCompile Include="..\src\NvSdiApi\error.cpp">
       <Filter>GLNvSdi\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLNvSdi\GLNvDvp.cpp">
+      <Filter>GLNvSdi</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

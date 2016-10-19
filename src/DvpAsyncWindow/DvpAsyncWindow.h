@@ -1,6 +1,6 @@
 
-#ifndef _SDI_IN_ASYNC_WINDOW_H_
-#define _SDI_IN_ASYNC_WINDOW_H_
+#ifndef _DVP_ASYNC_WINDOW_H_
+#define _DVP_ASYNC_WINDOW_H_
 
 #define WINVER 0x0500
 #define _WIN32_WINNT 0x0500
@@ -24,12 +24,12 @@
 #include "DVP.h"
 #include "Texture.h"
 
-class SdiInAsyncWindow : public GLWindow
+class DvpAsyncWindow : public GLWindow
 {
 public:
 
-	SdiInAsyncWindow();
-	~SdiInAsyncWindow();
+	DvpAsyncWindow();
+	~DvpAsyncWindow();
 
 	void Render();
 	void OnKeyEvent(const KeyEvent* pEvent);
@@ -45,4 +45,4 @@ protected:
 };
 
 
-#endif // _SDI_IN_ASYNC_WINDOW_H_
+#endif // _DVP_ASYNC_WINDOW_H_

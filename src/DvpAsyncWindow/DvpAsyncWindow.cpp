@@ -1,9 +1,9 @@
 
 
-#include "SdiIOAsyncWindow.h"
+#include "DvpAsyncWindow.h"
 #include "nvSDIutil.h"
 #include "glExtensions.h"
-#include "GLNvSdi.h"
+#include "GLNvDvp.h"
 #include "GLFont.h"
 
 GLFont gFont;
@@ -11,6 +11,29 @@ GLFont gFont;
 #define BLACK 0, 0, 0
 #define WHITE 1, 1, 1
 #define GRAY 0.3f, 0.3f, 0.3f
+
+static GLuint		drawTimeQuery;
+static GLuint64EXT	drawTimeStart;
+static GLuint64EXT	drawTimeEnd;
+static GLuint64EXT	timeElapsed;
+
+static void GLBeginTimeQuery()
+{
+	assert(glGetError() == GL_NO_ERROR);
+	glBeginQuery(GL_TIME_ELAPSED_EXT, drawTimeQuery);
+	assert(glGetError() == GL_NO_ERROR);
+	glGetInteger64v(GL_CURRENT_TIME_NV, (GLint64 *)&drawTimeStart);
+}
+
+static void GLEndTimeQuery()
+{
+	assert(glGetError() == GL_NO_ERROR);
+	glEndQuery(GL_TIME_ELAPSED_EXT);
+	assert(glGetError() == GL_NO_ERROR);
+	glGetQueryObjectui64vEXT(drawTimeQuery, GL_QUERY_RESULT, &timeElapsed);
+	glGetInteger64v(GL_CURRENT_TIME_NV, (GLint64 *)&drawTimeEnd);
+}
+
 
 //
 // Calculate scaled video dimensions that preserve aspect ratio
@@ -41,37 +64,30 @@ static void ComputeScaledVideoDimensions(unsigned int ww, unsigned int wh, unsig
 }
 
 
-SdiIOAsyncWindow::SdiIOAsyncWindow() : GLWindow()
+DvpAsyncWindow::DvpAsyncWindow() : GLWindow()
 {
 }
 
-SdiIOAsyncWindow::~SdiIOAsyncWindow()
+DvpAsyncWindow::~DvpAsyncWindow()
 {
 
 
 }
 
-bool SdiIOAsyncWindow::InitGL()
+bool DvpAsyncWindow::InitGL()
 {
 	MakeCurrent();
-	SdiSetDC(GetDC());
-	SdiSetGLRC(GetGLRC());
 
 	// Create window device context and rendering context.
 	showStatistics = true;
 
-	// Creating Affinity DC 
-	//HDC affinityDC = SdiCreateAffinityDC();
-	//HDC affinityDC = this->GetDC();
-	//SdiCreateGLRC(affinityDC);
+	HDC affinityDC = this->GetDC();
+	HGLRC rc = this->GetGLRC();
 
-	// Make window rendering context current.
-	//wglMakeCurrent(hDC, l_hRC);
-	//SdiMakeCurrent();
-
-
+	
 	// load the required OpenGL extensions:
-	if (!loadSwapIntervalExtension())
+	if (!loadSwapIntervalExtension() ||
+		!loadTimerQueryExtension())
 	{
 		std::cout << "Could not load the required OpenGL extensions" << std::endl;
 		return false;
@@ -82,10 +98,10 @@ bool SdiIOAsyncWindow::InitGL()
 
 
 	// Create bitmap font display list
-	SelectObject(SdiGetDC(), GetStockObject(SYSTEM_FONT));
-	SetDCBrushColor(SdiGetDC(), 0x0000ffff);  // 0x00bbggrr
+	SelectObject(hDC, GetStockObject(SYSTEM_FONT));
+	SetDCBrushColor(hDC, 0x0000ffff);  // 0x00bbggrr
 	glColor3f(1.0f, 0.0f, 0.0);
-	wglUseFontBitmaps(SdiGetDC(), 0, 255, 1000);
+	wglUseFontBitmaps(hDC, 0, 255, 1000);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
@@ -97,17 +113,18 @@ bool SdiIOAsyncWindow::InitGL()
 
 	texBlit.CreateVbo();
 
+	glGenQueries(1, &drawTimeQuery);
+
 	return true;
 }
 
 
 
 
-void SdiIOAsyncWindow::Render()
+void DvpAsyncWindow::Render()
 {
 	MakeCurrent();
 
-#if 1
 	//
 	// Draw texture contents to graphics window.
 	//
@@ -115,13 +132,13 @@ void SdiIOAsyncWindow::Render()
 	char buf[512];
 
 	assert(glGetError() == GL_NO_ERROR);
-	
+
 	// Set draw color
 	glColor3f(0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	assert(glGetError() == GL_NO_ERROR);
 
-	int activeDeviceCount = DvpActiveDeviceCount();
+	int activeDeviceCount = DvpInputActiveDeviceCount();
 	if (activeDeviceCount == 0)
 		return;
 
@@ -131,7 +148,7 @@ void SdiIOAsyncWindow::Render()
 	int maxNumStreams = 1;
 	for (int i = 0; i < activeDeviceCount; i++)
 	{
-		int numStreams = DvpStreamsPerFrame(i);
+		int numStreams = DvpInputStreamsPerFrame(i);
 		if (numStreams > maxNumStreams)
 			maxNumStreams = numStreams;
 	}
@@ -142,20 +159,20 @@ void SdiIOAsyncWindow::Render()
 
 	static GLuint numDroppedFrames[NVAPI_MAX_VIO_DEVICES];
 	GLfloat left = 0, top = 0;
-	int videoWidth = DvpWidth();
-	int videoHeight = DvpHeight();
+	int videoWidth = DvpInputWidth();
+	int videoHeight = DvpInputHeight();
 
-	NVVIOSIGNALFORMAT signalFormat = DvpSignalFormat();
+	NVVIOSIGNALFORMAT signalFormat = DvpInputSignalFormat();
 	static int count = 0;
 	static float gpuDrawTime;
 	static float cpuDrawTime;
 
-	DvpBeginTimeQuery();
-	
+	GLBeginTimeQuery();
+
 	int devcount = 0;
 	bool draw_time_update = false;
 	float captureElapsedTime = 0;
-	float totalUploadTime = 0, 
+	float totalUploadTime = 0,
 		totalDownloadTime = 0;
 
 
@@ -168,20 +185,24 @@ void SdiIOAsyncWindow::Render()
 		//
 		// Capture statistics
 		//
-		C_Frame *frame = DvpFrame(i);
+		C_Frame *frame = DvpInputFrame(i);
 
 		if (frame == nullptr)
 		{
 			draw_time_update = false;
 		}
 
-		if (DvpPreviousFrame(i) == nullptr)
+		if (DvpInputPreviousFrame(i) == nullptr)
 			continue;
 		else
 		{
-			numDroppedFrames[i] = DvpNumDroppedFrames(i);
+			numDroppedFrames[i] = DvpInputDroppedFrames(i);
 			draw_time_update = true;
 		}
+
+		captureElapsedTime = frame->captureElapsedTime;
+		totalUploadTime = frame->uploadElapsedTime;
+		totalDownloadTime = frame->downloadElapsedTime;
 
 		ComputeScaledVideoDimensions(rectW, rectH,
 			videoWidth, videoHeight,
@@ -191,28 +212,28 @@ void SdiIOAsyncWindow::Render()
 
 		glColor3f(1.0f, 1.0f, 1.0f);
 
-		int numStreams = DvpStreamsPerFrame(i);
+		int numStreams = DvpInputStreamsPerFrame(i);
 
 		// Draw contents of each video texture
 		// Reset view parameters
 
-		DvpDisplayTexture(i, 0)->Enable();
+		DvpInputDisplayTexture(i, 0)->Enable();
 
 		for (int j = 0; j < numStreams; j++)
 		{
 			// Set viewport .
 			glViewport(0, 0, rectW, rectH);
-			
+
 			// Bind texture object video stream i
-			DvpDisplayTexture(i, j)->Bind();
+			DvpInputDisplayTexture(i, j)->Bind();
 
 			texBlit.BlitDefault(Width(), Height());
 
-			DvpDisplayTexture(i, j)->Unbind();
+			DvpInputDisplayTexture(i, j)->Unbind();
 			assert(glGetError() == GL_NO_ERROR);
 		}
 
-		DvpDisplayTexture(i, 0)->Disable();
+		DvpInputDisplayTexture(i, 0)->Disable();
 
 
 		//Draw 2D stuff like #of dropped frames,sequence number and so on.	
@@ -234,13 +255,13 @@ void SdiIOAsyncWindow::Render()
 			glRasterPos2f(10, rectH*(i + 1) - 20);
 			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
 
-			sprintf(buf, "Card:%d", DvpDeviceId(i));
+			//sprintf(buf, "Card:%d", DvpInputPtr()->GetDeviceNumber(i));
 
-			len = strlen(buf);
-			glListBase(1000);
-			glColor3f(1.0f, 1.0f, 0.0f);
-			glRasterPos2f(10, rectH*(i + 1) - 35);
-			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
+			//len = strlen(buf);
+			//glListBase(1000);
+			//glColor3f(1.0f, 1.0f, 0.0f);
+			//glRasterPos2f(10, rectH*(i + 1) - 35);
+			//glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
 
 			// Draw video signal
 			len = strlen(SignalFormatToString(signalFormat).c_str());
@@ -275,7 +296,7 @@ void SdiIOAsyncWindow::Render()
 		}
 
 	}
-	DvpEndTimeQuery();
+	GLEndTimeQuery();
 
 
 	//::SwapBuffers(SdiGetDC());
@@ -283,28 +304,19 @@ void SdiIOAsyncWindow::Render()
 
 	if (count % 15 == 0 && draw_time_update)
 	{
-		gpuDrawTime = DvpGpuTimeElapsed() * 0.000000001;
-		cpuDrawTime = DvpCpuTimeElapsed() * 0.000000001;
-		//gpuDrawTime = DvpGpuTimeElapsedMs();
-		//cpuDrawTime = DvpCpuTimeElapsedMs();
-		sprintf(buf, "MultiCaptureAsync | Draw Time %.5f %.5f | Capture Time %.5f | Upload Time %.5f | Download Time %.5f ", 
-			gpuDrawTime, cpuDrawTime, DvpCaptureElapsedTime(), DvpUploadElapsedTime(), DvpDownloadElapsedTime());
+		gpuDrawTime = timeElapsed * 0.000000001;
+		cpuDrawTime = (drawTimeEnd - drawTimeStart) * 0.000000001;
+		sprintf(buf, "MultiCaptureAsync | Draw Time %.5f %.5f | Capture Time %.5f | Upload Time %.5f | Download Time %.5f ",
+			gpuDrawTime, cpuDrawTime, captureElapsedTime, totalUploadTime, totalDownloadTime);
 		SetWindowText(this->hWnd, buf);
 	}
 
 	count++;
-
-#endif
-
-	//glViewport(0, 0, Width(), Height());
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//quad.Render(Width(), Height());
-	//assert(glGetError() == GL_NO_ERROR);
 }
 
 
 
-void SdiIOAsyncWindow::OnKeyEvent(const KeyEvent* pEvent)
+void DvpAsyncWindow::OnKeyEvent(const KeyEvent* pEvent)
 {
 	if(!pEvent->PressedDown)
 		return;

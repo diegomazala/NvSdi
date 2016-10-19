@@ -146,7 +146,10 @@ public class UtyGLNvSdi : MonoBehaviour
     public const int MAX_VIDEO_STREAMS = 8;
 
     public const int MAX_INPUT_DEVICES = 1; 
-    public const int MAX_INPUT_STREAMS = 4; 
+    public const int MAX_INPUT_STREAMS = 4;
+
+    public const int MAX_OUTPUT_DEVICES = 1;
+    public const int MAX_OUTPUT_STREAMS = 4; 
 
     public GLNvSdiOptions options;
 

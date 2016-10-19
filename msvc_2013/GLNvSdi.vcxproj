@@ -22,6 +22,7 @@
     <ClCompile Include="..\src\GLCommon\ClockTime.cpp" />
     <ClCompile Include="..\src\GLCommon\GLFbo.cpp" />
     <ClCompile Include="..\src\GLCommon\Logger.cpp" />
+    <ClCompile Include="..\src\GLNvSdi\GLNvDvp.cpp" />
     <ClCompile Include="..\src\GLNvSdi\GLNvSdi.cpp" />
     <ClCompile Include="..\src\GLNvSdi\GLNvSdiInput.cpp" />
     <ClCompile Include="..\src\GLNvSdi\GLNvSdiOutput.cpp" />
@@ -54,6 +55,7 @@
     <ClInclude Include="..\src\GLCommon\OpenGL.h" />
     <ClInclude Include="..\src\GLCommon\Singleton.h" />
     <ClInclude Include="..\src\GLCommon\Texture.h" />
+    <ClInclude Include="..\src\GLNvSdi\GLNvDvp.h" />
     <ClInclude Include="..\src\GLNvSdi\GLNvSdi.h" />
     <ClInclude Include="..\src\GLNvSdi\GLNvSdiCore.h" />
     <ClInclude Include="..\src\GLNvSdi\GLNvSdiInput.h" />

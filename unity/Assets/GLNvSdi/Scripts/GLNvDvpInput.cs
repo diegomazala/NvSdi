@@ -91,16 +91,19 @@ public class GLNvDvpInput : UtyGLNvSdi
         {
             int i = device_index * MAX_INPUT_STREAMS + j;
 
-            dvpTexture[i] = new RenderTexture(texWidth, texHeight, 32, RenderTextureFormat.ARGB32);
-            dvpTexture[i].name = name + i.ToString();
-            dvpTexture[i].isPowerOfTwo = false;
-            dvpTexture[i].wrapMode = TextureWrapMode.Clamp;
-            dvpTexture[i].Create();
+            //dvpTexture[i] = new RenderTexture(texWidth, texHeight, 32, RenderTextureFormat.ARGB32);
+            //dvpTexture[i].name = name + i.ToString();
+            //dvpTexture[i].isPowerOfTwo = false;
+            //dvpTexture[i].wrapMode = TextureWrapMode.Clamp;
+            //dvpTexture[i].Create();
+
+            if (!dvpTexture[i].IsCreated())
+                dvpTexture[i].Create();
 
             UtyGLNvSdi.DvpSetDisplayTexturePtr(dvpTexture[i].GetNativeTexturePtr(), device_index, j);
 
-            if (dvpMaterials[i] != null)
-                dvpMaterials[i].mainTexture = dvpTexture[i];
+            //if (dvpMaterials[i] != null)
+            //    dvpMaterials[i].mainTexture = dvpTexture[i];
         }
     }
 
@@ -112,8 +115,8 @@ public class GLNvDvpInput : UtyGLNvSdi
         {
             if (dvpTexture[i] != null && dvpTexture[i].IsCreated())
             {
-                dvpTexture[i].Release();
-                dvpTexture[i] = null;
+                //dvpTexture[i].Release();
+                //dvpTexture[i] = null;
             }
         }
     }

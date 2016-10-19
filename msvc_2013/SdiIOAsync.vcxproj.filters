@@ -30,10 +30,10 @@
     <ClCompile Include="..\src\GLCommon\OpenGLExt.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\SdiIOAsync\SdiIOAsyncMain.cpp">
+    <ClCompile Include="..\src\DvpAsyncWindow\DvpAsyncWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\SdiIOAsync\SdiIOAsyncWindow.cpp">
+    <ClCompile Include="..\src\DvpAsyncWindow\SdiIOAsyncMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,7 +56,7 @@
     <ClInclude Include="..\src\GLCommon\Texture.h">
       <Filter>GLCommon</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\SdiIOAsync\SdiIOAsyncWindow.h">
+    <ClInclude Include="..\src\DvpAsyncWindow\DvpAsyncWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

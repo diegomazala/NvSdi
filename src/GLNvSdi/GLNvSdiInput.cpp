@@ -2,6 +2,7 @@
 #include "GLNvSdiInput.h"
 #include "glExtensions.h"
 #include "DVP.h"
+#include "GLNvDvp.h"
 #include <cinttypes>
 
 extern "C"
@@ -827,38 +828,38 @@ extern "C"
 		return attr::dvpOk;
 	}
 
-	GLNVSDI_API bool DvpCheckAvailability()
-	{
-		attr::dvpOk = false;
+	//GLNVSDI_API bool DvpCheckAvailability()
+	//{
+	//	attr::dvpOk = false;
 
-		int numGPUs;
-		// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
-		numGPUs = CNvGpuTopology::instance().getNumGpu();
+	//	int numGPUs;
+	//	// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
+	//	numGPUs = CNvGpuTopology::instance().getNumGpu();
 
-		if (numGPUs <= 0)
-		{
-			MessageBox(NULL, "Unable to obtain system GPU topology", "Error", MB_OK);
-			return false;
-		}
+	//	if (numGPUs <= 0)
+	//	{
+	//		MessageBox(NULL, "Unable to obtain system GPU topology", "Error", MB_OK);
+	//		return false;
+	//	}
 
-		int numCaptureDevices = CNvSDIinTopology::instance().getNumDevice();
+	//	int numCaptureDevices = CNvSDIinTopology::instance().getNumDevice();
 
-		if (numCaptureDevices <= 0)
-		{
-			MessageBox(NULL, "Unable to obtain system Capture topology", "Error", MB_OK);
-			return false;
-		}
+	//	if (numCaptureDevices <= 0)
+	//	{
+	//		MessageBox(NULL, "Unable to obtain system Capture topology", "Error", MB_OK);
+	//		return false;
+	//	}
 
 
-		if (attr::dvp.m_options.captureGPU >= numGPUs)
-		{
-			MessageBox(NULL, "Selected GPU is out of range", "Error", MB_OK);
-			return false;
-		}
+	//	if (attr::dvp.m_options.captureGPU >= numGPUs)
+	//	{
+	//		MessageBox(NULL, "Selected GPU is out of range", "Error", MB_OK);
+	//		return false;
+	//	}
 
-		attr::dvpOk = true;
-		return true;
-	}
+	//	attr::dvpOk = true;
+	//	return true;
+	//}
 
 	GLNVSDI_API bool DvpPreSetup()
 	{
@@ -895,7 +896,11 @@ extern "C"
 
 		attr::dvp.SetupSDIinGL(SdiGetDC(), SdiGetGLRC());
 
+
+
 		SdiMakeCurrent();
+
+		assert(glGetError() == GL_NO_ERROR);
 
 		// To view the buffers we need to load an appropriate shader
 		attr::dvp.SetupDecodeProgram();
@@ -903,13 +908,38 @@ extern "C"
 		if (activeDeviceCount == 0)
 			return false;
 
+
+		//wglMakeCurrent(attr::dvp.m_hCaptureDC, attr::dvp.m_hCaptureRC);
+
+		//GLuint gpuVideoSlot = 1;
+		//for (int i = 0; i < activeDeviceCount; i++)
+		//{
+		//	//m_SDIin[i].BindDevice(gpuVideoSlot++, m_hCaptureDC);
+
+
+		//	for (int j = 0; j < attr::dvp.m_SDIin[i].GetNumStreams(); j++)
+		//	{
+		//		glEnable(attr::displayTextures[i][j].Type());
+		//		attr::displayTextures[i][j].Bind();
+		//		if (attr::dvp.m_SDIin[i].BindVideoTexture(attr::displayTextures[i][j + 0].Id(), j, attr::displayTextures[i][j].Type(), GL_FIELD_UPPER_NV) == E_FAIL)
+		//			return false;
+		//		if (attr::dvp.m_SDIin[i].BindVideoTexture(attr::displayTextures[i][j + 1].Id(), j, attr::displayTextures[i][j].Type(), GL_FIELD_LOWER_NV) == E_FAIL)
+		//			return false;
+		//	}
+		//}
+
+
+		//SdiMakeCurrent();
+
+		//assert(glGetError() == GL_NO_ERROR);
+
 		//
 		// Check if the textures have been created
 		//
 		if (attr::displayTextures[0][0].Id() < 1)
 		{
 			//allocate the textures for display
-			if (!DvpCreateDisplayTextures(videoWidth, videoHeight))
+			if (!DvpInputCreateDisplayTextures(videoWidth, videoHeight))
 				return false;
 		}
 
@@ -1226,7 +1256,7 @@ extern "C"
 		DvpSetDisplayTexture(gltex, GL_TEXTURE_2D, device_index, video_stream_index);
 	}
 
-	GLNVSDI_API bool DvpCreateDisplayTextures(int videoWidth, int videoHeight)
+	GLNVSDI_API bool DvpInputCreateDisplayTextures(int videoWidth, int videoHeight)
 	{
 		attr::ownDisplayTextures = true;
 
