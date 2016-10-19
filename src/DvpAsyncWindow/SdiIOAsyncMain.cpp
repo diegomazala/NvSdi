@@ -45,7 +45,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DvpAsyncWindow sdiWindow;
 	{
 		CreationParameters creationParams;
-		creationParams.Title = "Sdi Input Window";
+		creationParams.Title = "Sdi Input/Output Window";
 		creationParams.WindowSize.Width = 960;
 		creationParams.WindowSize.Height = 540;
 		creationParams.ColorDepthBits = 32;
