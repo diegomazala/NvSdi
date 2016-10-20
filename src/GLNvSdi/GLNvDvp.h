@@ -57,8 +57,9 @@ extern "C"
 	GLNVSDI_API int  DvpInputHeight();
 	GLNVSDI_API bool DvpInputCreateTextures(int videoWidth, int videoHeight);
 	
-	GLNVSDI_API void DvpInputSetTexture(int index, GLuint id);
-	GLNVSDI_API void DvpInSetTexturePtr(int index, void* texturePtr, int w, int h);
+	GLNVSDI_API void DvpInputSetTexture(GLuint id, int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API void DvpInputSetTexturePtr(void* texturePtr, int device_index = 0, int video_stream_index = 0);
+	GLNVSDI_API gl::Texture2D* DvpInputDisplayTexture(int device_index = 0, int video_stream_index = 0);
 
 	GLNVSDI_API void DvpOutputSetTexture(int index, GLuint id);
 	GLNVSDI_API void DvpOutputSetTexturePtr(int index, void* texturePtr, int w, int h);
@@ -69,7 +70,7 @@ extern "C"
 	GLNVSDI_API uint64_t DvpInputDroppedFrames(int device_index = 0);
 	GLNVSDI_API NVVIOSIGNALFORMAT DvpInputSignalFormat();
 
-	GLNVSDI_API gl::Texture2D* DvpInputDisplayTexture(int device_index = 0, int video_stream_index = 0);
+	
 		
 	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetGLNvDvpRenderEventFunc();
 };

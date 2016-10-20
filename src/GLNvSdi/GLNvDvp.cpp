@@ -333,11 +333,6 @@ extern "C"
 		return global::dvp.GetSignalFormat();
 	}
 
-	GLNVSDI_API gl::Texture2D* DvpInputDisplayTexture(int device_index, int video_stream_index)
-	{
-		return &global::inputDisplayTextures[device_index][video_stream_index];
-	}
-
 
 	GLNVSDI_API bool DvpInputInitialize()
 	{
@@ -405,6 +400,26 @@ extern "C"
 
 		return (glGetError() == GL_NO_ERROR);
 	}
+
+
+	GLNVSDI_API void DvpInputSetTexture(GLuint id, int device_index, int video_stream_index)
+	{
+		global::inputDisplayTextures[device_index][video_stream_index].SetId(id);
+	}
+
+
+	GLNVSDI_API void DvpInputSetTexturePtr(void* texturePtr, int device_index, int video_stream_index)
+	{
+		GLuint gltex = (GLuint)(size_t)(texturePtr);
+		global::inputDisplayTextures[device_index][video_stream_index].SetId(gltex);
+	}
+
+
+	GLNVSDI_API gl::Texture2D* DvpInputDisplayTexture(int device_index, int video_stream_index)
+	{
+		return &global::inputDisplayTextures[device_index][video_stream_index];
+	}
+
 
 	GLNVSDI_API int DvpInputActiveDeviceCount()
 	{
