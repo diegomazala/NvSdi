@@ -65,7 +65,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 
 	//allocate the textures for display
-	if (!DvpCreateDisplayTextures(DvpInputWidth(), DvpInputHeight()))
+	if (!DvpInputCreateTextures(DvpInputWidth(), DvpInputHeight()))
 		return false;
 
 

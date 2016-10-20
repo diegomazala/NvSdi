@@ -55,7 +55,10 @@ extern "C"
 
 	GLNVSDI_API int  DvpInputWidth();
 	GLNVSDI_API int  DvpInputHeight();
-	GLNVSDI_API bool DvpCreateDisplayTextures(int videoWidth, int videoHeight);
+	GLNVSDI_API bool DvpInputCreateTextures(int videoWidth, int videoHeight);
+	
+	GLNVSDI_API void DvpInputSetTexture(int index, GLuint id);
+	GLNVSDI_API void DvpInSetTexturePtr(int index, void* texturePtr, int w, int h);
 
 	GLNVSDI_API void DvpOutputSetTexture(int index, GLuint id);
 	GLNVSDI_API void DvpOutputSetTexturePtr(int index, void* texturePtr, int w, int h);

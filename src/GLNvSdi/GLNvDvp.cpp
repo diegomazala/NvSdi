@@ -27,13 +27,13 @@ namespace global
 	static GLuint64EXT	drawTimeEnd;
 	static GLuint64EXT	timeElapsed;
 	static bool			dvpOk;
-	static bool			ownDisplayTextures = false;
+	static bool			ownInputinputDisplayTextures = false;
 
 	static gl::TextureBlit texBlit;
 	//
-	static gl::Texture2D displayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
+	static gl::Texture2D inputDisplayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
 	//
-	static gl::TextureRectNV decodeTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
+	static gl::TextureRectNV inputDecodeTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
 	// The raw SDI data from the captured buffer
 	// needs to be copied to a texture, so that
 	// the data can be read by a shader and
@@ -335,7 +335,7 @@ extern "C"
 
 	GLNVSDI_API gl::Texture2D* DvpInputDisplayTexture(int device_index, int video_stream_index)
 	{
-		return &global::displayTextures[device_index][video_stream_index];
+		return &global::inputDisplayTextures[device_index][video_stream_index];
 	}
 
 
@@ -384,9 +384,9 @@ extern "C"
 	}
 
 
-	GLNVSDI_API bool DvpCreateDisplayTextures(int videoWidth, int videoHeight)
+	GLNVSDI_API bool DvpInputCreateTextures(int videoWidth, int videoHeight)
 	{
-		global::ownDisplayTextures = true;
+		global::ownInputinputDisplayTextures = true;
 
 		const int activeDeviceCount = DvpInputActiveDeviceCount();
 
@@ -395,10 +395,10 @@ extern "C"
 			int numStreams = DvpInputStreamsPerFrame(i);
 			for (UINT j = 0; j < numStreams; j++)
 			{
-				global::displayTextures[i][j].Create();
-				global::displayTextures[i][j].Bind();
-				global::displayTextures[i][j].SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				global::displayTextures[i][j].BuildNull(videoWidth, videoHeight);
+				global::inputDisplayTextures[i][j].Create();
+				global::inputDisplayTextures[i][j].Bind();
+				global::inputDisplayTextures[i][j].SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				global::inputDisplayTextures[i][j].BuildNull(videoWidth, videoHeight);
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
@@ -447,10 +447,10 @@ extern "C"
 		//
 		// Check if the textures have been created
 		//
-		if (global::displayTextures[0][0].Id() < 1)
+		if (global::inputDisplayTextures[0][0].Id() < 1)
 		{
 			//allocate the textures for display
-			if (!DvpCreateDisplayTextures(videoWidth, videoHeight))
+			if (!DvpInputCreateTextures(videoWidth, videoHeight))
 				return false;
 		}
 
@@ -468,14 +468,14 @@ extern "C"
 
 			for (unsigned int s = 0; s < numStreams; s++)
 			{
-				global::decodeTextures[d][s].Create();
-				global::decodeTextures[d][s].Bind();
-				global::decodeTextures[d][s].SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				global::decodeTextures[d][s].SetParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				global::inputDecodeTextures[d][s].Create();
+				global::inputDecodeTextures[d][s].Bind();
+				global::inputDecodeTextures[d][s].SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				global::inputDecodeTextures[d][s].SetParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 				// Allocate storage for the decode texture.
 				glTexImage2D(
-					global::decodeTextures[d][s].Type(),
+					global::inputDecodeTextures[d][s].Type(),
 					0, GL_RGBA8UI,
 					(GLsizei)(videoWidth*0.5), videoHeight,
 					0, GL_RGBA_INTEGER_EXT,
@@ -490,8 +490,8 @@ extern "C"
 				glFramebufferTexture2DEXT(
 					GL_FRAMEBUFFER_EXT,
 					GL_COLOR_ATTACHMENT0_EXT,
-					global::displayTextures[d][s].Type(),
-					global::displayTextures[d][s].Id(),
+					global::inputDisplayTextures[d][s].Type(),
+					global::inputDisplayTextures[d][s].Id(),
 					0);
 				assert(glGetError() == GL_NO_ERROR);
 
@@ -528,16 +528,16 @@ extern "C"
 #endif		  
 			for (int j = 0; j < numStreams; ++j)
 			{
-				global::decodeTextures[i][j].Destroy();
+				global::inputDecodeTextures[i][j].Destroy();
 
-				if (global::ownDisplayTextures)
-					global::displayTextures[i][j].Destroy();
+				if (global::ownInputinputDisplayTextures)
+					global::inputDisplayTextures[i][j].Destroy();
 			}
 
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 			glDeleteFramebuffersEXT(numStreams, &global::dvp.m_vidFbos[i][0]);
 		}
-		global::ownDisplayTextures = false;
+		global::ownInputinputDisplayTextures = false;
 		global::dvp.DestroyDecodeProgram();
 
 		global::texBlit.DestroyVbo();
@@ -596,10 +596,10 @@ extern "C"
 
 		assert(glGetError() == GL_NO_ERROR);
 
-		GLuint id = global::decodeTextures[device_index][video_stream_index].Id();
+		GLuint id = global::inputDecodeTextures[device_index][video_stream_index].Id();
 
 		glTexSubImage2D(
-			global::decodeTextures[device_index][video_stream_index].Type(),
+			global::inputDecodeTextures[device_index][video_stream_index].Type(),
 			0, 0, 0,
 			(GLsizei)(0.5*videoWidth),
 			videoHeight,
@@ -619,7 +619,7 @@ extern "C"
 
 		// if not set, use the default texture
 		if (target_texture_id < 1)
-			target_texture_id = global::displayTextures[device_index][video_stream_index].Id();
+			target_texture_id = global::inputDisplayTextures[device_index][video_stream_index].Id();
 
 		glFramebufferTexture2DEXT(
 			GL_FRAMEBUFFER_EXT,
@@ -653,20 +653,20 @@ extern "C"
 		for (int j = 0; j < numStreams; j++)
 		{
 			assert(glGetError() == GL_NO_ERROR);
-			global::displayTextures[device_index][j].Bind();
+			global::inputDisplayTextures[device_index][j].Bind();
 			assert(glGetError() == GL_NO_ERROR);
 
 			assert(glGetError() == GL_NO_ERROR);
-			global::decodeTextures[device_index][j].Bind();
+			global::inputDecodeTextures[device_index][j].Bind();
 			assert(glGetError() == GL_NO_ERROR);
 
 			DvpInputBlitTexture(
-				global::displayTextures[device_index][j].Id(),
-				global::displayTextures[device_index][j].Type(),
+				global::inputDisplayTextures[device_index][j].Id(),
+				global::inputDisplayTextures[device_index][j].Type(),
 				device_index, j);
 
-			global::decodeTextures[device_index][j].Unbind();
-			global::displayTextures[device_index][j].Unbind();
+			global::inputDecodeTextures[device_index][j].Unbind();
+			global::inputDisplayTextures[device_index][j].Unbind();
 		}
 
 
@@ -872,10 +872,6 @@ extern "C"
 			if (global::dvpInputAvailable)
 				global::dvpOk = DvpInputInitialize();
 
-
-			/// TEMPORARY
-			global::dvpOk = DvpCreateDisplayTextures(DvpInputWidth(), DvpInputHeight());
-
 			DvpMakeExternalCurrent();
 			break;
 		}
@@ -895,13 +891,13 @@ extern "C"
 								
 				if (false) //(captureFields)
 				{
-					DvpOutputSetTexture(0, global::displayTextures[0][0].Id());
-					DvpOutputSetTexture(1, global::displayTextures[0][1].Id());
+					DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
+					DvpOutputSetTexture(1, global::inputDisplayTextures[0][1].Id());
 				}
 				else
 				{
-					DvpOutputSetTexture(0, global::displayTextures[0][0].Id());
-					DvpOutputSetTexture(1, global::displayTextures[0][0].Id());
+					DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
+					DvpOutputSetTexture(1, global::inputDisplayTextures[0][0].Id());
 				}
 			}
 
