@@ -71,10 +71,12 @@ extern "C"
 		bool dummy_window_created = false;
 
 		if (hGLRC == NULL)
+		{
 			dummy_window_created = CreateDummyGLWindow(&hWnd, &hGLRC);
 
-		if (!dummy_window_created)
-			return false;
+			if (!dummy_window_created)
+				return false;
+		}
 
 
 		int numGPUs;
@@ -257,8 +259,6 @@ extern "C"
 		// Make  SDI output GL context current.
 		wglMakeCurrent(global::affinityDC, global::affinityGLRC);
 		
-		std::cout << "Affinity Pixel Format " << PixelFormat << std::endl;
-
 		return true;
 	}
 		
@@ -277,7 +277,7 @@ extern "C"
 		}
 	}
 	
-	GLNVSDI_API void DvpGetAffintyContext(HDC& hDC, HGLRC& hGLRC)
+	GLNVSDI_API void DvpGetAffinityContext(HDC& hDC, HGLRC& hGLRC)
 	{
 		hDC = global::affinityDC;
 		hGLRC = global::affinityGLRC;
@@ -290,15 +290,21 @@ extern "C"
 		global::affinityGLRC = (_hGLRC != nullptr) ? _hGLRC : wglGetCurrentContext();
 	}
 
+
 	GLNVSDI_API void DvpSetExternalContext(HDC _hDC, HGLRC _hGLRC)
 	{
 		global::externalDC = (_hDC != nullptr) ? _hDC : wglGetCurrentDC();
 		global::externalGLRC = (_hGLRC != nullptr) ? _hGLRC : wglGetCurrentContext();
 	}
 
-	GLNVSDI_API bool DvpMakeCurrent()
+	GLNVSDI_API bool DvpMakeAffinityCurrent()
 	{
 		return wglMakeCurrent(global::affinityDC, global::affinityGLRC);
+	}
+
+	GLNVSDI_API bool DvpMakeExternalCurrent()
+	{
+		return wglMakeCurrent(global::externalDC, global::externalGLRC);
 	}
 
 
@@ -338,11 +344,10 @@ extern "C"
 #if 1
 		DvpCreateAffinityContext();		// create own context and share it
 #else
-		DvpSetExternalContext();		// get and use external context
 		DvpSetAffinityContext(global::externalDC, global::externalGLRC);
 #endif
 
-		DvpMakeCurrent();
+		DvpMakeAffinityCurrent();
 
 
 		//load the required OpenGL extensions:
@@ -429,7 +434,7 @@ extern "C"
 
 		global::dvp.SetupSDIinGL(global::affinityDC, global::affinityGLRC);
 
-		DvpMakeCurrent();
+		DvpMakeAffinityCurrent();
 
 		assert(glGetError() == GL_NO_ERROR);
 
@@ -509,7 +514,7 @@ extern "C"
 
 		global::dvp.CleanupSDIinGL();
 
-		DvpMakeCurrent();
+		DvpMakeAffinityCurrent();
 
 		int activeDeviceCount = global::dvp.GetActiveDeviceCount();
 		if (activeDeviceCount == 0)
@@ -741,7 +746,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API void DvpOutputCleanupGL()
 	{
-		DvpMakeCurrent();
+		DvpMakeAffinityCurrent();
 
 		//Bind the first device found that is connected to the output GPU
 		if (!wglBindVideoDeviceNV(global::affinityDC, 1, NULL, NULL))
@@ -825,7 +830,7 @@ extern "C"
 
 		case DvpRenderEvent::Update:
 		{
-			DvpMakeCurrent();
+			DvpMakeAffinityCurrent();
 
 			//
 			// Capture Frame
@@ -849,6 +854,8 @@ extern "C"
 
 			global::dvpOk = (glGetError() == GL_NO_ERROR);
 
+			DvpMakeExternalCurrent();
+
 			break;
 		}
 
@@ -865,15 +872,18 @@ extern "C"
 			if (global::dvpInputAvailable)
 				global::dvpOk = DvpInputInitialize();
 
+
+			/// TEMPORARY
+			global::dvpOk = DvpCreateDisplayTextures(DvpInputWidth(), DvpInputHeight());
+
+			DvpMakeExternalCurrent();
 			break;
 		}
 
 		case DvpRenderEvent::Setup:
 		{
-			DvpMakeCurrent();
-			if (!global::dvpOk)
-				return;
-
+			DvpMakeAffinityCurrent();
+			
 			if (global::dvpInputAvailable)
 				global::dvpOk = DvpInputSetup();
 
@@ -882,10 +892,7 @@ extern "C"
 			if (global::dvpOutputAvailable && global::dvpOk)
 			{
 				global::dvpOk = DvpOutputSetupGL();
-
-				if (!global::dvpOk)
-					return;
-
+								
 				if (false) //(captureFields)
 				{
 					DvpOutputSetTexture(0, global::displayTextures[0][0].Id());
@@ -901,12 +908,14 @@ extern "C"
 			if (global::dvpInputAvailable)
 				global::dvpOk = (global::dvp.StartSDIPipeline() == S_OK);
 
+			DvpMakeExternalCurrent();
+
 			break;
 		}
 
 		case DvpRenderEvent::Cleanup:
 		{
-			DvpMakeCurrent();
+			DvpMakeAffinityCurrent();
 
 			if (global::dvpInputAvailable)
 			{
@@ -919,6 +928,8 @@ extern "C"
 				DvpOutputCleanupGL();
 				global::sdiOut.Cleanup();
 			}
+
+			DvpMakeExternalCurrent();
 			break;
 		}
 
@@ -927,6 +938,7 @@ extern "C"
 			DvpDestroyAffinityContext();
 			global::affinityDC = nullptr;
 			global::affinityGLRC = nullptr;
+			DvpMakeExternalCurrent();
 			break;
 		}
 

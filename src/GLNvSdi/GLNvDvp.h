@@ -47,7 +47,8 @@ extern "C"
 	GLNVSDI_API void DvpGetAffinityContext(HDC& hDC, HGLRC& hGLRC);
 	GLNVSDI_API void DvpSetAffinityContext(HDC _hDC = nullptr, HGLRC _hGLRC = nullptr);
 	GLNVSDI_API void DvpSetExternalContext(HDC _hDC = nullptr, HGLRC _hGLRC = nullptr);
-	GLNVSDI_API bool DvpMakeCurrent();
+	GLNVSDI_API bool DvpMakeAffinityCurrent();
+	GLNVSDI_API bool DvpMakeExternalCurrent();
 
 	GLNVSDI_API int  DvpInputActiveDeviceCount();
 	GLNVSDI_API int  DvpInputStreamsPerFrame(int device_index = 0);
