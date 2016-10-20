@@ -23,9 +23,7 @@ enum class DvpRenderEvent
 	CheckAvalability,
 	Initialize,
 	Setup,
-//	StartCapture,
 	Update,
-//	StopCapture,
 	Cleanup,
 	Uninitialize
 };
@@ -33,6 +31,8 @@ enum class DvpRenderEvent
 
 extern "C"
 {
+	GLNVSDI_API bool DvpIsOk();
+
 	GLNVSDI_API bool DvpInputIsAvailable();
 	GLNVSDI_API bool DvpOutputIsAvailable();
 
@@ -42,7 +42,11 @@ extern "C"
 	GLNVSDI_API bool DvpCheckAvailability();
 	GLNVSDI_API void DvpSetGlobalOptions();
 
-	GLNVSDI_API void DvpSetContext(HDC _hDC = nullptr, HGLRC _hGLRC = nullptr);
+	GLNVSDI_API bool DvpCreateAffinityContext();
+	GLNVSDI_API void DvpDestroyAffinityContext();
+	GLNVSDI_API void DvpGetAffinityContext(HDC& hDC, HGLRC& hGLRC);
+	GLNVSDI_API void DvpSetAffinityContext(HDC _hDC = nullptr, HGLRC _hGLRC = nullptr);
+	GLNVSDI_API void DvpSetExternalContext(HDC _hDC = nullptr, HGLRC _hGLRC = nullptr);
 	GLNVSDI_API bool DvpMakeCurrent();
 
 	GLNVSDI_API int  DvpInputActiveDeviceCount();

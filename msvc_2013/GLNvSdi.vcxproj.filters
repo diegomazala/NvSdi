@@ -130,7 +130,7 @@
       <Filter>GLNvSdi\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\GLNvSdi\GLNvDvp.h">
-      <Filter>GLNvSdi</Filter>
+      <Filter>GLNvSdi\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -204,7 +204,7 @@
       <Filter>GLNvSdi\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\GLNvSdi\GLNvDvp.cpp">
-      <Filter>GLNvSdi</Filter>
+      <Filter>GLNvSdi\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

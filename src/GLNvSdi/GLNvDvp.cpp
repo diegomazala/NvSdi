@@ -5,50 +5,56 @@
 #include "SdiPresentFrame.h"
 #include <cinttypes>
 
+namespace global
+{
+	static bool			dvpInputAvailable = false;
+	static bool			dvpOutputAvailable = false;
+
+	static SdiOptions	dvpOptions;
+
+	//static HDC			hDC = nullptr;
+	//static HGLRC		hGLRC = nullptr;
+	static HDC			externalDC = nullptr;
+	static HGLRC		externalGLRC = nullptr;
+	static HDC			affinityDC = nullptr;
+	static HGLRC		affinityGLRC = nullptr;
+	static C_DVP		dvp;
+	static C_Frame*		framePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
+	static C_Frame*		prevFramePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
+	static GLuint		numDroppedFrames[NVAPI_MAX_VIO_DEVICES];
+	static GLuint		drawTimeQuery;
+	static GLuint64EXT	drawTimeStart;
+	static GLuint64EXT	drawTimeEnd;
+	static GLuint64EXT	timeElapsed;
+	static bool			dvpOk;
+	static bool			ownDisplayTextures = false;
+
+	static gl::TextureBlit texBlit;
+	//
+	static gl::Texture2D displayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
+	//
+	static gl::TextureRectNV decodeTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
+	// The raw SDI data from the captured buffer
+	// needs to be copied to a texture, so that
+	// the data can be read by a shader and
+	// processed for display in OpenGL. For 
+	// example the shader may do 422->444 expansion	
+
+	static CNvSDIout				sdiOut;						// SDI out object
+
+	static HVIDEOOUTPUTDEVICENV*	outVideoDevices = nullptr;
+	static SdiPresentFrame			presentFrame;
+	static const int				MaxOutputTextureCount = 4;
+	static gl::Texture2D			outTexture[MaxOutputTextureCount];
+
+	static int						duplicateFramesCount = 0;
+
+}
+
 extern "C"
 {
-	namespace global
-	{
-		static bool			dvpInputAvailable = false;
-		static bool			dvpOutputAvailable = false;
-
-		static SdiOptions	dvpOptions;
-
-		static HDC			hDC = nullptr;
-		static HGLRC		hGLRC = nullptr;
-		static C_DVP		dvp;
-		static C_Frame*		framePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
-		static C_Frame*		prevFramePtr[NVAPI_MAX_VIO_DEVICES] = { nullptr };
-		static GLuint		numDroppedFrames[NVAPI_MAX_VIO_DEVICES];
-		static GLuint		drawTimeQuery;
-		static GLuint64EXT	drawTimeStart;
-		static GLuint64EXT	drawTimeEnd;
-		static GLuint64EXT	timeElapsed;
-		static bool			dvpOk;
-		static bool			ownDisplayTextures = false;
-		
-		static gl::TextureBlit texBlit;
-		//
-		static gl::Texture2D displayTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
-		//
-		static gl::TextureRectNV decodeTextures[NVAPI_MAX_VIO_DEVICES][MAX_VIDEO_STREAMS];
-		// The raw SDI data from the captured buffer
-		// needs to be copied to a texture, so that
-		// the data can be read by a shader and
-		// processed for display in OpenGL. For 
-		// example the shader may do 422->444 expansion	
-
-		static CNvSDIout				sdiOut;						// SDI out object
-
-		static HVIDEOOUTPUTDEVICENV*	outVideoDevices = nullptr;
-		static SdiPresentFrame			presentFrame;
-		static const int				MaxOutputTextureCount = 4;
-		static gl::Texture2D			outTexture[MaxOutputTextureCount];
-
-		static int						duplicateFramesCount = 0;
-		
-	}
-
+	
+	GLNVSDI_API bool DvpIsOk()				{ return global::dvpOk; }
 	GLNVSDI_API bool DvpInputIsAvailable()	{ return global::dvpInputAvailable; }
 	GLNVSDI_API bool DvpOutputIsAvailable()	{ return global::dvpOutputAvailable; }
 
@@ -151,7 +157,7 @@ extern "C"
 		global::dvpOptions.syncSource = NVVIOSYNCSOURCE_COMPSYNC;
 		global::dvpOptions.videoFormat = NVVIOSIGNALFORMAT_1080I_59_94_SMPTE274;
 		global::dvpOptions.field = FALSE;
-		global::dvpOptions.flipQueueLength = 5;
+		global::dvpOptions.flipQueueLength = 3;
 		global::dvpOptions.fps = TRUE;
 		global::dvpOptions.frameLock = FALSE;
 		global::dvpOptions.fsaa = 1;
@@ -173,18 +179,129 @@ extern "C"
 		global::dvpOptions.gpu = 0;
 	}
 	
+	
 
-	GLNVSDI_API void DvpSetContext(HDC _hDC, HGLRC _hGLRC)
+	GLNVSDI_API bool DvpCreateAffinityContext()
 	{
-		global::hDC = (_hDC != nullptr) ? _hDC : wglGetCurrentDC();
-		global::hGLRC = (_hGLRC != nullptr) ? _hGLRC : wglGetCurrentContext();
+		// Make  SDI output GL context current.
+		wglMakeCurrent(NULL, NULL);
+
+		CNvSDIoutGpu* pOutGpu = CNvSDIoutGpuTopology::instance().getGpu(global::dvpOptions.gpu);
+		if (pOutGpu == nullptr)
+			return false;
+
+		//Create Affinity DC for SDI output
+		HGPUNV handles[2];
+		handles[0] = pOutGpu->getAffinityHandle();
+		handles[1] = nullptr;
+
+		global::affinityDC = wglCreateAffinityDCNV(handles);
+		if (global::affinityDC == nullptr)
+		{
+			int error = GetLastError();
+			std::cerr << "Error: wglCreateAffinityDCNV error code: " << error << std::endl;
+			return false;
+		}
+
+		int	PixelFormat;									// Holds The Results After Searching For A Match
+		// We need a pixel format descriptor.  A PFD tells how OpenGL draws
+		PIXELFORMATDESCRIPTOR pfd =							// pfd Tells Windows How We Want Things To Be
+		{
+			sizeof(PIXELFORMATDESCRIPTOR),					// Size Of This Pixel Format Descriptor
+			1,												// Version Number
+			PFD_DRAW_TO_WINDOW |							// Format Must Support Window
+			PFD_SUPPORT_OPENGL |							// Format Must Support OpenGL
+			PFD_DOUBLEBUFFER,								// Must Support Double Buffering
+			PFD_TYPE_RGBA,									// Request An RGBA Format
+			32,												// Select Our Color Depth
+			0, 0, 0, 0, 0, 0,								// Color Bits Ignored
+			1,												// Alpha Buffer
+			0,												// Shift Bit Ignored
+			0,												// No Accumulation Buffer
+			0, 0, 0, 0,										// Accumulation Bits Ignored
+			24,												// 24 Bit Z-Buffer (Depth Buffer)  
+			8,												// 8 Bit Stencil Buffer
+			0,												// No Auxiliary Buffer
+			PFD_MAIN_PLANE,									// Main Drawing Layer
+			0,												// Reserved
+			0, 0, 0											// Layer Masks Ignored
+		};
+
+		// get the appropriate pixel format
+		PixelFormat = ChoosePixelFormat(global::affinityDC, &pfd);
+		if (PixelFormat == 0) 
+		{
+			std::cerr << "ChoosePixelFormat() failed:  Cannot find format specified." << std::endl;
+			return false;
+		}
+
+		// set the pixel format 
+		if (SetPixelFormat(global::affinityDC, PixelFormat, &pfd) == FALSE) 
+		{
+			std::cerr << "SetPixelFormat() failed:  Cannot set format specified." << std::endl;
+			return false;
+		}
+
+		// Create rendering context from the affinity device context	
+		global::affinityGLRC = wglCreateContext(global::affinityDC);
+		
+
+		//if (!wglShareLists(global::affinityGLRC, global::externalGLRC))
+		if (!wglShareLists(global::externalGLRC, global::affinityGLRC))
+		{
+			std::cout << "Could not share OpenGL contexts: " << GetLastError() << std::endl;
+			return false;
+		}
+
+
+		// Make  SDI output GL context current.
+		wglMakeCurrent(global::affinityDC, global::affinityGLRC);
+		
+		std::cout << "Affinity Pixel Format " << PixelFormat << std::endl;
+
+		return true;
+	}
+		
+	GLNVSDI_API void DvpDestroyAffinityContext()
+	{
+		if (global::affinityDC != nullptr)
+		{
+			wglDeleteDCNV(global::affinityDC);
+			global::affinityDC = nullptr;
+		}
+
+		if (global::affinityGLRC != nullptr)
+		{
+			wglDeleteContext(global::affinityGLRC);
+			global::affinityGLRC = nullptr;
+		}
+	}
+	
+	GLNVSDI_API void DvpGetAffintyContext(HDC& hDC, HGLRC& hGLRC)
+	{
+		hDC = global::affinityDC;
+		hGLRC = global::affinityGLRC;
+	}
+
+
+	GLNVSDI_API void DvpSetAffinityContext(HDC _hDC, HGLRC _hGLRC)
+	{
+		global::affinityDC = (_hDC != nullptr) ? _hDC : wglGetCurrentDC();
+		global::affinityGLRC = (_hGLRC != nullptr) ? _hGLRC : wglGetCurrentContext();
+	}
+
+	GLNVSDI_API void DvpSetExternalContext(HDC _hDC, HGLRC _hGLRC)
+	{
+		global::externalDC = (_hDC != nullptr) ? _hDC : wglGetCurrentDC();
+		global::externalGLRC = (_hGLRC != nullptr) ? _hGLRC : wglGetCurrentContext();
 	}
 
 	GLNVSDI_API bool DvpMakeCurrent()
 	{
-		return wglMakeCurrent(global::hDC, global::hGLRC);
+		return wglMakeCurrent(global::affinityDC, global::affinityGLRC);
 	}
-	
+
+
 	GLNVSDI_API C_DVP* DvpInputPtr()
 	{
 		return &global::dvp;
@@ -215,9 +332,18 @@ extern "C"
 		return &global::displayTextures[device_index][video_stream_index];
 	}
 
+
 	GLNVSDI_API bool DvpInputInitialize()
 	{
-		DvpSetContext();
+#if 1
+		DvpCreateAffinityContext();		// create own context and share it
+#else
+		DvpSetExternalContext();		// get and use external context
+		DvpSetAffinityContext(global::externalDC, global::externalGLRC);
+#endif
+
+		DvpMakeCurrent();
+
 
 		//load the required OpenGL extensions:
 		if (!loadTimerQueryExtension() ||
@@ -301,7 +427,7 @@ extern "C"
 			return false;
 
 
-		global::dvp.SetupSDIinGL(global::hDC, global::hGLRC);
+		global::dvp.SetupSDIinGL(global::affinityDC, global::affinityGLRC);
 
 		DvpMakeCurrent();
 
@@ -573,7 +699,7 @@ extern "C"
 		// bind to the first one found
 
 		// Get list of available video devices.
-		int numDevices = wglEnumerateVideoDevicesNV(global::hDC, NULL);
+		int numDevices = wglEnumerateVideoDevicesNV(global::affinityDC, NULL);
 
 		if (numDevices <= 0)
 		{
@@ -589,7 +715,7 @@ extern "C"
 			return false;
 		}
 
-		if (numDevices != wglEnumerateVideoDevicesNV(global::hDC, global::outVideoDevices))
+		if (numDevices != wglEnumerateVideoDevicesNV(global::affinityDC, global::outVideoDevices))
 		{
 			free(global::outVideoDevices);
 			//SdiLog() << "Inconsistent results from wglEnumerateVideoDevicesNV()" << std::endl;
@@ -600,7 +726,7 @@ extern "C"
 
 
 		//Bind the first device found that is connected to the output GPU
-		if (!wglBindVideoDeviceNV(global::hDC, 1, global::outVideoDevices[0], NULL))
+		if (!wglBindVideoDeviceNV(global::affinityDC, 1, global::outVideoDevices[0], NULL))
 		{
 			//SdiLog() << "Failed to bind a videoDevice to slot 0." << std::endl;
 			return false;
@@ -618,7 +744,7 @@ extern "C"
 		DvpMakeCurrent();
 
 		//Bind the first device found that is connected to the output GPU
-		if (!wglBindVideoDeviceNV(global::hDC, 1, NULL, NULL))
+		if (!wglBindVideoDeviceNV(global::affinityDC, 1, NULL, NULL))
 		{
 			//SdiLog() << "Failed to bind a videoDevice to slot 0." << std::endl;
 			return;
@@ -718,6 +844,9 @@ extern "C"
 			if (global::dvpOutputAvailable)
 				DvpOutputPresentFrame();
 
+			if (global::affinityDC != global::externalDC)
+				::SwapBuffers(global::affinityDC);
+
 			global::dvpOk = (glGetError() == GL_NO_ERROR);
 
 			break;
@@ -731,6 +860,8 @@ extern "C"
 
 		case DvpRenderEvent::Initialize:
 		{
+			DvpSetExternalContext();
+			
 			if (global::dvpInputAvailable)
 				global::dvpOk = DvpInputInitialize();
 
@@ -739,6 +870,7 @@ extern "C"
 
 		case DvpRenderEvent::Setup:
 		{
+			DvpMakeCurrent();
 			if (!global::dvpOk)
 				return;
 
@@ -792,8 +924,9 @@ extern "C"
 
 		case DvpRenderEvent::Uninitialize:
 		{
-			global::hDC = nullptr;
-			global::hGLRC = nullptr;
+			DvpDestroyAffinityContext();
+			global::affinityDC = nullptr;
+			global::affinityGLRC = nullptr;
 			break;
 		}
 
