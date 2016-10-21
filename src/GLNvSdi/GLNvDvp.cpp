@@ -64,7 +64,7 @@ extern "C"
 	}
 
 
-	GLNVSDI_API bool DvpMakePrevCurrent()
+	GLNVSDI_API BOOL DvpMakePrevCurrent()
 	{
 		return wglMakeCurrent(global::prevDC, global::prevGLRC);
 	}
@@ -201,6 +201,27 @@ extern "C"
 		global::dvpOptions.gpu = 0;
 	}
 	
+	GLNVSDI_API void DvpSetOptions(DvpSyncSource syncSource, int inputBufferSize, int outputBufferSize, int hDelay, int vDelay)
+	{
+		global::dvpOptions.vDelay = vDelay;
+		global::dvpOptions.hDelay = hDelay;
+		global::dvpOptions.flipQueueLength = outputBufferSize;
+
+		if (syncSource == DvpSyncSource::SDI_SYNC)
+		{
+			global::dvpOptions.syncEnable = TRUE;
+			global::dvpOptions.syncSource = NVVIOSYNCSOURCE_SDISYNC;
+		}
+		else if (syncSource == DvpSyncSource::COMP_SYNC)
+		{
+			global::dvpOptions.syncEnable = TRUE;
+			global::dvpOptions.syncSource = NVVIOSYNCSOURCE_COMPSYNC;
+		}
+		else
+		{
+			global::dvpOptions.syncEnable = false;
+		}
+	}
 	
 
 	GLNVSDI_API bool DvpCreateAffinityContext()
@@ -316,12 +337,12 @@ extern "C"
 		global::externalGLRC = (_hGLRC != nullptr) ? _hGLRC : wglGetCurrentContext();
 	}
 
-	GLNVSDI_API bool DvpMakeAffinityCurrent()
+	GLNVSDI_API BOOL DvpMakeAffinityCurrent()
 	{
 		return wglMakeCurrent(global::affinityDC, global::affinityGLRC);
 	}
 
-	GLNVSDI_API bool DvpMakeExternalCurrent()
+	GLNVSDI_API BOOL DvpMakeExternalCurrent()
 	{
 		return wglMakeCurrent(global::externalDC, global::externalGLRC);
 	}
@@ -712,8 +733,15 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	/// Setup opengl dependencies for sdi capture
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API bool DvpOutputSetupGL()
+	GLNVSDI_API bool DvpOutputSetup()
 	{
+		// Setup the video device.
+		if (global::sdiOut.Init(&global::dvpOptions, CNvSDIoutGpuTopology::instance().getGpu(global::dvpOptions.gpu)) != S_OK)
+		{
+			//SdiLog() << "Unable to initialize video device. Check sync signal." << std::endl;
+			return false;
+		}
+
 		if (!loadPresentVideoExtension() 
 			|| !loadAffinityExtension()
 			|| !loadFramebufferObjectExtension() 
@@ -778,7 +806,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	/// Cleanup the opengl stuff used in sdi output
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API void DvpOutputCleanupGL()
+	GLNVSDI_API void DvpOutputCleanup()
 	{
 		DvpMakeAffinityCurrent();
 
@@ -793,6 +821,8 @@ extern "C"
 		free(global::outVideoDevices);
 
 		global::presentFrame.Uninitialize();
+
+		global::sdiOut.Cleanup();
 	}
 
 	GLNVSDI_API void DvpOutputSetTexture(int index, GLuint id)
@@ -976,7 +1006,7 @@ extern "C"
 
 			if (global::dvpOutputAvailable && global::dvpOk)
 			{
-				global::dvpOk = DvpOutputSetupGL();
+				global::dvpOk = DvpOutputSetup();
 								
 				// Check if output texture has been set externally. If not, set it
 				if (global::outTexture[0].Id() < 1)
@@ -1018,8 +1048,7 @@ extern "C"
 
 			if (global::dvpOutputAvailable)
 			{
-				DvpOutputCleanupGL();
-				global::sdiOut.Cleanup();
+				DvpOutputCleanup();
 			}
 
 			//DvpMakeExternalCurrent();

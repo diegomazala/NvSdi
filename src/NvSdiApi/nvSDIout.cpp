@@ -234,7 +234,7 @@ CNvSDIout::Init(Options *options, CNvSDIoutGpu *SDIoutGpu)
 			if (l_vioStatus.vioStatus.outStatus.syncFormat !=
 				l_vioConfig.vioConfig.outConfig.signalFormat) {
 				MessageBox(NULL, "Incoming sync does not match outgoing video signal.", "Error", MB_OK);
-				return E_FAIL;
+				//return E_FAIL;
 			}
 			l_vioConfig.vioConfig.outConfig.frameLockEnable = FALSE;	
 			l_vioConfig.fields |= NVVIOCONFIG_FRAMELOCKENABLE;
@@ -252,7 +252,7 @@ CNvSDIout::Init(Options *options, CNvSDIoutGpu *SDIoutGpu)
 				l_vioConfig.fields |= NVVIOCONFIG_FRAMELOCKENABLE;
 			} else {
 				MessageBox(NULL, "Incoming sync not compatible with outgoing video format.", "Error", MB_OK);
-				return E_FAIL;
+				//return E_FAIL;
 			}
 		}
 

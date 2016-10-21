@@ -31,6 +31,14 @@ enum class DvpRenderEvent
 };
 
 
+enum class DvpSyncSource
+{
+	SDI_SYNC,
+	COMP_SYNC,
+	NONE
+};
+
+
 extern "C"
 {
 	GLNVSDI_API bool DvpIsOk();
@@ -43,14 +51,15 @@ extern "C"
 
 	GLNVSDI_API bool DvpCheckAvailability();
 	GLNVSDI_API void DvpSetGlobalOptions();
+	GLNVSDI_API void DvpSetOptions(DvpSyncSource syncSource, int inputBufferSize, int outputBufferSize, int hDelay, int vDelay);
 
 	GLNVSDI_API bool DvpCreateAffinityContext();
 	GLNVSDI_API void DvpDestroyAffinityContext();
 	GLNVSDI_API void DvpGetAffinityContext(HDC& hDC, HGLRC& hGLRC);
 	GLNVSDI_API void DvpSetAffinityContext(HDC _hDC = nullptr, HGLRC _hGLRC = nullptr);
 	GLNVSDI_API void DvpSetExternalContext(HDC _hDC = nullptr, HGLRC _hGLRC = nullptr);
-	GLNVSDI_API bool DvpMakeAffinityCurrent();
-	GLNVSDI_API bool DvpMakeExternalCurrent();
+	GLNVSDI_API BOOL DvpMakeAffinityCurrent();
+	GLNVSDI_API BOOL DvpMakeExternalCurrent();
 
 	GLNVSDI_API int  DvpInputActiveDeviceCount();
 	GLNVSDI_API int  DvpInputStreamsPerFrame(int device_index = 0);
