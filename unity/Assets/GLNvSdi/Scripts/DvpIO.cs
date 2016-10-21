@@ -112,20 +112,30 @@ public class DvpIO : MonoBehaviour
                     int render_tex_index = i * streams + j;
                     if (!inputVideoTexture[render_tex_index].IsCreated())
                         inputVideoTexture[render_tex_index].Create();
-                            
+
                     Plugin.DvpInputSetTexturePtr(inputVideoTexture[render_tex_index].GetNativeTexturePtr(), i, j);
 
                     if (useInputAsBackground)
                     {
                         Plugin.DvpOutputSetTexturePtr(inputVideoTexture[render_tex_index].GetNativeTexturePtr(), j);
                     }
-                    else
-                    {
-                        if (!outputVideoTexture[j].IsCreated())
-                            outputVideoTexture[j].Create();
-                        Plugin.DvpOutputSetTexturePtr(outputVideoTexture[j].GetNativeTexturePtr(), j);
-                    }
+                    //else
+                    //{
+                    //    if (!outputVideoTexture[j].IsCreated())
+                    //        outputVideoTexture[j].Create();
+                    //    Plugin.DvpOutputSetTexturePtr(outputVideoTexture[j].GetNativeTexturePtr(), j);
+                    //}
                 }
+            }
+
+            //
+            // Setup textures output textures
+            // 
+            for (int i = 0; i < MaxOutputTextureCount; ++i)
+            {
+                if (!outputVideoTexture[i].IsCreated())
+                    outputVideoTexture[i].Create();
+                Plugin.DvpOutputSetTexturePtr(outputVideoTexture[0].GetNativeTexturePtr(), i);
             }
 
             // Setup sdi
