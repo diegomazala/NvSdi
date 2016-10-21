@@ -442,7 +442,7 @@ extern "C"
 		if (attr::sdiIn.BindDevice(gpuVideoSlot, SdiGetDC()) == E_FAIL) 
 			return false;
 
-		for(int i = 0; i < attr::sdiIn.GetNumStreams(); i++)
+		for (unsigned int i = 0; i < attr::sdiIn.GetNumStreams(); i++)
 		{
 			if (attr::sdiIn.BindVideoTexture(attr::inputTextures[i].Id(), i, attr::inputTextures[i].Type(), GL_FRAME_NV)  == E_FAIL)
 				return false;
@@ -454,7 +454,7 @@ extern "C"
 	/// Unbind textures and device for sdi input
 	GLNVSDI_API bool SdiInputUnbindVideoTextureFrame()
 	{
-		for(int i = 0; i < SdiInput()->GetNumStreams(); i++)
+		for(unsigned int i = 0; i < SdiInput()->GetNumStreams(); i++)
 		{
 			if (SdiInput()->UnbindVideoTexture(i, attr::inputTextures[i].Type(), GL_FRAME_NV) == E_FAIL)
 				return false;
@@ -474,7 +474,7 @@ extern "C"
 		if (attr::sdiIn.BindDevice(gpuVideoSlot, SdiGetDC()) == E_FAIL)
 			return false;
 
-		for(int i = 0; i < attr::sdiIn.GetNumStreams(); i++)
+		for (unsigned int i = 0; i < attr::sdiIn.GetNumStreams(); i++)
 		{
 			if (attr::sdiIn.BindVideoTexture(attr::inputTextures[i * 2 + 0].Id(), i, attr::inputTextures[i * 2 + 0].Type(), GL_FIELD_UPPER_NV) == E_FAIL)
 				return false;
@@ -488,7 +488,7 @@ extern "C"
 	/// Unbind textures and device for sdi input
 	GLNVSDI_API bool SdiInputUnbindVideoTextureField()
 	{
-		for(int i = 0; i < SdiInput()->GetNumStreams(); i++)
+		for (unsigned int i = 0; i < SdiInput()->GetNumStreams(); i++)
 		{
 			if (attr::sdiIn.UnbindVideoTexture(i, attr::inputTextures[i * 2 + 0].Type(), GL_FIELD_UPPER_NV) == E_FAIL)
 				return false;

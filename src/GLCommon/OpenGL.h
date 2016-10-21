@@ -131,7 +131,8 @@ static bool glCheckTexture(GLuint texId, GLenum texType, int& w, int& h)
 	{
 		glEnable(texType);
 		glBindTexture(texType, texId);
-		is_tex = glIsTexture(texId);
+		if (glIsTexture(texId))
+			is_tex = true;
 		glGetTexLevelParameteriv(texType, 0, GL_TEXTURE_WIDTH, &w);
 		glGetTexLevelParameteriv(texType, 0, GL_TEXTURE_HEIGHT, &h);
 		glGetTexLevelParameteriv(texType, 0, GL_TEXTURE_INTERNAL_FORMAT, &lInternalFormat);

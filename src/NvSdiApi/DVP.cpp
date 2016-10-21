@@ -171,7 +171,7 @@ NvU32  C_Frame::init(CNvSDIin *SDIin, HDC captureDC, HGLRC captureRC, CUcontext 
 	
 	glGenBuffers(numStreamsPerFrame, srcVideoObjects);	
 	
-	for (UINT i = 0; i < numStreamsPerFrame; i++) {	
+	for (int i = 0; i < numStreamsPerFrame; i++) {	
 		
 		SDIin->BindVideoFrameBuffer(srcVideoObjects[i],GL_YCBYCR8_422_NV,i);
 		videoPitch = SDIin->GetBufferObjectPitch(0);
@@ -187,12 +187,12 @@ NvU32  C_Frame::init(CNvSDIin *SDIin, HDC captureDC, HGLRC captureRC, CUcontext 
 	}
 
 	CUresult cerr;
-	for (unsigned int i = 0; i < numStreamsPerFrame; i++) {
+	for (int i = 0; i < numStreamsPerFrame; i++) {
 		cerr = cuGraphicsGLRegisterBuffer(&cuSrcVideoObjects[i],srcVideoObjects[i],CU_GRAPHICS_MAP_RESOURCE_FLAGS_NONE);
 		CheckError(cerr);	
 	}
 	
-	for (unsigned int i = 0; i < numStreamsPerFrame; i++) {
+	for (int i = 0; i < numStreamsPerFrame; i++) {
 		cerr = cuMemHostAlloc((void **)&hostVideoObject[i],videoPitch*videoHeight, CU_MEMHOSTALLOC_PORTABLE);//|CU_MEMHOSTALLOC_WRITECOMBINED);
 		CheckError(cerr);	
 	}
@@ -212,7 +212,7 @@ NvU32  C_Frame::init(CNvSDIin *SDIin, HDC captureDC, HGLRC captureRC, CUcontext 
 	glGenBuffers(numStreamsPerFrame, dstVideoObjects);
 	assert(glGetError() == GL_NO_ERROR);
 	
-	for (UINT i = 0; i < numStreamsPerFrame; i++) {	
+	for (int i = 0; i < numStreamsPerFrame; i++) {	
 
 		glBindBuffer(GL_VIDEO_BUFFER_NV, dstVideoObjects[i]);
 		assert(glGetError() == GL_NO_ERROR);
@@ -225,7 +225,7 @@ NvU32  C_Frame::init(CNvSDIin *SDIin, HDC captureDC, HGLRC captureRC, CUcontext 
 				
 	}	
 
-	for (unsigned int i = 0; i < numStreamsPerFrame; i++) {
+	for (int i = 0; i < numStreamsPerFrame; i++) {
 		cerr = cuGraphicsGLRegisterBuffer(&cuDstVideoObjects[i],dstVideoObjects[i],CU_GRAPHICS_MAP_RESOURCE_FLAGS_NONE);
 		CheckError(cerr);	
 	}
@@ -263,11 +263,11 @@ NvU32  C_Frame::deinit()
 	
 	makeAllSrcCtxCurrent();
 	CUresult cerr;
-	for (unsigned int i = 0; i < numStreamsPerFrame; i++) {
+	for (int i = 0; i < numStreamsPerFrame; i++) {
 		cerr = cuGraphicsUnregisterResource(cuSrcVideoObjects[i]);
 		CheckError(cerr);	
 	}
-	for (unsigned int i = 0; i < numStreamsPerFrame; i++) {
+	for (int i = 0; i < numStreamsPerFrame; i++) {
 		cerr = cuMemFreeHost(hostVideoObject[i]);
 		CheckError(cerr);	
 	}
@@ -306,7 +306,7 @@ NvU32  C_Frame::deinit()
 NvU32 C_Frame::bindSrcObjects()
 {	
 	
-	for(int i = 0; i < sdiIn->GetNumStreams();i++)
+	for (unsigned int i = 0; i < sdiIn->GetNumStreams(); i++)
 	{
 		sdiIn->BindVideoFrameBuffer(srcVideoObjects[i],GL_YCBYCR8_422_NV, i);
 	}
@@ -315,7 +315,7 @@ NvU32 C_Frame::bindSrcObjects()
 }
 NvU32 C_Frame::unbindSrcObjects()
 {
-	for(int i = 0; i < sdiIn->GetNumStreams();i++)
+	for(unsigned int i = 0; i < sdiIn->GetNumStreams();i++)
 	{
 		sdiIn->UnbindVideoFrameBuffer(i);		
 	}

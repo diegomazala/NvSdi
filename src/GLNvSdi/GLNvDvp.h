@@ -23,7 +23,9 @@ enum class DvpRenderEvent
 	CheckAvalability,
 	Initialize,
 	Setup,
+	UpdateInput,
 	Update,
+	UpdateOutput,
 	Cleanup,
 	Uninitialize
 };
@@ -62,7 +64,7 @@ extern "C"
 	GLNVSDI_API gl::Texture2D* DvpInputDisplayTexture(int device_index = 0, int video_stream_index = 0);
 
 	GLNVSDI_API void DvpOutputSetTexture(int index, GLuint id);
-	GLNVSDI_API void DvpOutputSetTexturePtr(int index, void* texturePtr, int w, int h);
+	GLNVSDI_API void DvpOutputSetTexturePtr(void* texturePtr, int index);
 
 	GLNVSDI_API C_DVP*	 DvpInputPtr();
 	GLNVSDI_API C_Frame* DvpInputFrame(int device_index = 0);

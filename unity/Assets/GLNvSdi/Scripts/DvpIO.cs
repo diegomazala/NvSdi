@@ -5,7 +5,12 @@ using System.Runtime.InteropServices;
 [AddComponentMenu("Diem/Video IO SDI - Dvp")]
 public class DvpIO : MonoBehaviour
 {
-    public RenderTexture[] inputVideoTexture = new RenderTexture[4];
+    private const int MaxOutputTextureCount = 4;
+
+    public bool useInputAsBackground = true;
+
+    public RenderTexture[] inputVideoTexture = new RenderTexture[MaxOutputTextureCount];
+    public RenderTexture[] outputVideoTexture = new RenderTexture[MaxOutputTextureCount];
 
     private IEnumerator IOCoroutine = null;
     private bool sdiEnabled = false;
@@ -17,7 +22,9 @@ public class DvpIO : MonoBehaviour
         CheckAvalability,
         Initialize,
         Setup,
+        UpdateInput,
         Update,
+        UpdateOutput,
         Cleanup,
         Uninitialize
     };
@@ -38,10 +45,23 @@ public class DvpIO : MonoBehaviour
         [DllImport("GLNvSdi")]
         public static extern void DvpInputSetTexturePtr(System.IntPtr texture, int device_index, int video_stream_index);
         [DllImport("GLNvSdi")]
+        public static extern void DvpOutputSetTexturePtr(System.IntPtr texture, int video_stream_index);
+        [DllImport("GLNvSdi")]
         public static extern System.IntPtr GetGLNvDvpRenderEventFunc();
     }
 
 
+    //void OnPreRender()
+    //{
+    //    if (sdiEnabled)
+    //        GL.IssuePluginEvent(Plugin.GetGLNvDvpRenderEventFunc(), (int)DvpRenderEvent.UpdateInput);
+    //}
+
+    //void OnPostRender()
+    //{
+    //    if (sdiEnabled)
+    //        GL.IssuePluginEvent(Plugin.GetGLNvDvpRenderEventFunc(), (int)DvpRenderEvent.UpdateOutput);
+    //}
 
     void OnEnable()
     {
@@ -80,7 +100,9 @@ public class DvpIO : MonoBehaviour
             GL.IssuePluginEvent(Plugin.GetGLNvDvpRenderEventFunc(), (int)DvpRenderEvent.Initialize);
             yield return new WaitForEndOfFrame();
 
-            // Setup textures
+            //
+            // Setup textures input/output textures
+            // 
             int devices = Plugin.DvpInputActiveDeviceCount();
             for (int i = 0; i < devices; ++i)
             {
@@ -92,6 +114,17 @@ public class DvpIO : MonoBehaviour
                         inputVideoTexture[render_tex_index].Create();
                             
                     Plugin.DvpInputSetTexturePtr(inputVideoTexture[render_tex_index].GetNativeTexturePtr(), i, j);
+
+                    if (useInputAsBackground)
+                    {
+                        Plugin.DvpOutputSetTexturePtr(inputVideoTexture[render_tex_index].GetNativeTexturePtr(), j);
+                    }
+                    else
+                    {
+                        if (!outputVideoTexture[j].IsCreated())
+                            outputVideoTexture[j].Create();
+                        Plugin.DvpOutputSetTexturePtr(outputVideoTexture[j].GetNativeTexturePtr(), j);
+                    }
                 }
             }
 
@@ -117,5 +150,21 @@ public class DvpIO : MonoBehaviour
 
     }
 
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Debug.Log("set input");
+            //
+            // Setup textures output textures
+            // 
+            for (int i = 0; i < MaxOutputTextureCount; ++i)
+            {
+                if (!outputVideoTexture[i].IsCreated())
+                    outputVideoTexture[i].Create();
+                Plugin.DvpOutputSetTexturePtr(outputVideoTexture[i].GetNativeTexturePtr(), i);
+            }
+        }
+    }
 
 }

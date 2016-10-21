@@ -45,7 +45,7 @@ static void PrintFPS(void)
 	float __fps = 0.0;
 
 	theTime = clk::GetTime();
-	t = clk::Sec(clk::GetTime());
+	t = (__int64)clk::Sec(clk::GetTime());
 
 	if (t0 < 0)
 		t0 = t;
@@ -54,7 +54,7 @@ static void PrintFPS(void)
 
 	if (t - t0 >= 5.0) 
 	{
-		float seconds = t - t0;
+		float seconds = (float)(t - t0);
 		__fps = frames / seconds;
 		std::cout << frames << " frames in " << seconds << " seconds = " << __fps << " fps" <<std::endl;
 		
@@ -83,7 +83,7 @@ static float CalcFPS(void)
 	frames++;
 
 	if (t - t0 >= 2.0) {
-		float seconds = t - t0;
+		float seconds = (float)(t - t0);
 		__fps = frames / seconds;
 		t0 = t;
 		frames = 0;

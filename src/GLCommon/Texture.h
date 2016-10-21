@@ -12,7 +12,8 @@
 #define __TEXTURE_H__
 
 
-#ifdef _WIN32#define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
 #endif
 
@@ -269,16 +270,16 @@ public:
 	void Plot(int win_width, int win_height, int tex_width, int tex_height)
 	{
 
-		int tx, ty;
+		float tx, ty;
 
 		if(this->Type() == GL_TEXTURE_2D)
 		{
-			tx = ty = 1;
+			tx = ty = 1.f;
 		}
 		else
 		{
-			tx = tex_width;
-			ty = tex_height;
+			tx = (float)tex_width;
+			ty = (float)tex_height;
 		}
 
 		glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -301,7 +302,7 @@ public:
 			glLoadIdentity();
 
 			// Draw image 
-			this->Draw(0, 0, 1, 1, 0, 0, tx, ty);
+			this->Draw(0.f, 0.f, 1.f, 1.f, 0.f, 0.f, tx, ty);
 		}	
 		glPopAttrib();
 	}
@@ -490,7 +491,7 @@ public:
 		glBindVertexArray(vao);
 		if (windowSizeLocation > -1)
 		{
-			const float windowSize[] = { window_width, window_height };
+			const float windowSize[] = { (float)window_width, (float)window_height };
 			glUniform2fv(windowSizeLocation, 1, windowSize);
 		}
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

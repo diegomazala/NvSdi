@@ -96,7 +96,7 @@ void SdiPresentFrame::PrePresentFrame()
  		mStats.latency = clk::GetIntervalMsec(sendTime[mStats.cur_query], presentTime);
  		mStats.presentationInterval = clk::GetIntervalMsec(lastPresentTime, presentTime);
  		mStats.sendInterval = clk::GetIntervalMsec(lastSendTime, sendTime[mStats.cur_query]);
-         mStats.bufsQueued = (((float)mStats.latency / mStats.presentationInterval) + 0.5);
+        mStats.bufsQueued = (((float)mStats.latency / mStats.presentationInterval) + 0.5f);
          
  		if(mPrintStats)
  		{

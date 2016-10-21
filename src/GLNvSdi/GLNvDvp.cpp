@@ -49,10 +49,26 @@ namespace global
 
 	static int						duplicateFramesCount = 0;
 
+
+	static HDC			prevDC = nullptr;
+	static HGLRC		prevGLRC = nullptr;
 }
 
 extern "C"
 {
+
+	GLNVSDI_API void DvpGetPrevContext()
+	{
+		global::prevDC = wglGetCurrentDC();
+		global::prevGLRC = wglGetCurrentContext();
+	}
+
+
+	GLNVSDI_API bool DvpMakePrevCurrent()
+	{
+		return wglMakeCurrent(global::prevDC, global::prevGLRC);
+	}
+
 	
 	GLNVSDI_API bool DvpIsOk()				{ return global::dvpOk; }
 	GLNVSDI_API bool DvpInputIsAvailable()	{ return global::dvpInputAvailable; }
@@ -66,16 +82,18 @@ extern "C"
 		global::dvpInputAvailable = false;
 		global::dvpOutputAvailable = false;
 
+		HDC prev_hdc = wglGetCurrentDC();
+		HGLRC prev_glrc = wglGetCurrentContext();
+
+		wglMakeCurrent(NULL, NULL);
+
 		HWND hWnd;
-		HGLRC hGLRC = wglGetCurrentContext();
-		bool dummy_window_created = false;
-
-		if (hGLRC == NULL)
+		HGLRC hGLRC;
+		bool dummy_window_created = CreateDummyGLWindow(&hWnd, &hGLRC);
+		if (!dummy_window_created)
 		{
-			dummy_window_created = CreateDummyGLWindow(&hWnd, &hGLRC);
-
-			if (!dummy_window_created)
-				return false;
+			wglMakeCurrent(prev_hdc, prev_glrc);
+			return false;
 		}
 
 
@@ -108,6 +126,7 @@ extern "C"
 			if (dummy_window_created)
 				DestroyGLWindow(&hWnd, &hGLRC);
 
+			wglMakeCurrent(prev_hdc, prev_glrc);
 			return true;
 		}
 		else
@@ -115,6 +134,7 @@ extern "C"
 			MessageBox(NULL, "Unable to obtain system GPU topology", "Error", MB_OK);
 			global::dvpInputAvailable = false;
 			global::dvpOutputAvailable = false;
+			wglMakeCurrent(prev_hdc, prev_glrc);
 			return false;
 		}
 	}
@@ -248,7 +268,6 @@ extern "C"
 		global::affinityGLRC = wglCreateContext(global::affinityDC);
 		
 
-		//if (!wglShareLists(global::affinityGLRC, global::externalGLRC))
 		if (!wglShareLists(global::externalGLRC, global::affinityGLRC))
 		{
 			std::cout << "Could not share OpenGL contexts: " << GetLastError() << std::endl;
@@ -385,10 +404,10 @@ extern "C"
 
 		const int activeDeviceCount = DvpInputActiveDeviceCount();
 
-		for (UINT i = 0; i < activeDeviceCount; i++)
+		for (int i = 0; i < activeDeviceCount; i++)
 		{
 			int numStreams = DvpInputStreamsPerFrame(i);
-			for (UINT j = 0; j < numStreams; j++)
+			for (int j = 0; j < numStreams; j++)
 			{
 				global::inputDisplayTextures[i][j].Create();
 				global::inputDisplayTextures[i][j].Bind();
@@ -471,7 +490,7 @@ extern "C"
 
 
 		//create the textures to go with the buffers and frame buffer objects to create the display textures
-		for (UINT d = 0; d < activeDeviceCount; d++)
+		for (int d = 0; d < activeDeviceCount; d++)
 		{
 			int numStreams = global::dvp.GetNumStreamsPerFrame(d);
 #ifdef USE_ALL_STREAMS	
@@ -481,7 +500,7 @@ extern "C"
 			glGenFramebuffersEXT(numStreams, &global::dvp.m_vidFbos[d][0]);
 			assert(glGetError() == GL_NO_ERROR);
 
-			for (unsigned int s = 0; s < numStreams; s++)
+			for (int s = 0; s < numStreams; s++)
 			{
 				global::inputDecodeTextures[d][s].Create();
 				global::inputDecodeTextures[d][s].Bind();
@@ -535,7 +554,7 @@ extern "C"
 		if (activeDeviceCount == 0)
 			return false;
 
-		for (UINT i = 0; i < activeDeviceCount; i++)
+		for (int i = 0; i < activeDeviceCount; i++)
 		{
 			int numStreams = global::dvp.GetNumStreamsPerFrame(i);
 #ifdef USE_ALL_STREAMS		
@@ -782,7 +801,7 @@ extern "C"
 	}
 
 
-	GLNVSDI_API void DvpOutputSetTexturePtr(int index, void* texturePtr, int w, int h)
+	GLNVSDI_API void DvpOutputSetTexturePtr(void* texturePtr, int index)
 	{
 		GLuint gltex = (GLuint)(size_t)(texturePtr);
 		global::outTexture[index].SetId(gltex);
@@ -843,8 +862,10 @@ extern "C"
 		switch (static_cast<DvpRenderEvent>(render_event_id))
 		{
 
-		case DvpRenderEvent::Update:
+		case DvpRenderEvent::UpdateInput:
 		{
+			DvpGetPrevContext();
+
 			DvpMakeAffinityCurrent();
 
 			//
@@ -860,7 +881,20 @@ extern "C"
 						DvpInputBlitTextures(i);
 				}
 			}
-						
+			global::dvpOk = (glGetError() == GL_NO_ERROR);
+			
+			DvpMakePrevCurrent();
+			//DvpMakeExternalCurrent();
+
+			break;
+		}
+
+		case DvpRenderEvent::UpdateOutput:
+		{
+			DvpGetPrevContext();
+
+			DvpMakeAffinityCurrent();
+
 			if (global::dvpOutputAvailable)
 				DvpOutputPresentFrame();
 
@@ -869,7 +903,42 @@ extern "C"
 
 			global::dvpOk = (glGetError() == GL_NO_ERROR);
 
-			DvpMakeExternalCurrent();
+			DvpMakePrevCurrent();
+			//DvpMakeExternalCurrent();
+
+			break;
+		}
+
+		case DvpRenderEvent::Update:
+		{
+			DvpGetPrevContext();
+
+			DvpMakeAffinityCurrent();
+
+			//
+			// Capture Frame
+			//
+			if (global::dvpInputAvailable)
+			{
+				C_Frame *prevFrame[NVAPI_MAX_VIO_DEVICES] = { nullptr };
+				const int activeDeviceCount = DvpInputActiveDeviceCount();
+				for (int i = 0; i < activeDeviceCount; i++)
+				{
+					if (DvpInputUpdateFrame(i))
+						DvpInputBlitTextures(i);
+				}
+			}
+
+			if (global::dvpOutputAvailable)
+				DvpOutputPresentFrame();
+
+			if (global::affinityDC != global::externalDC)
+				::SwapBuffers(global::affinityDC);
+
+			global::dvpOk = (glGetError() == GL_NO_ERROR);
+
+			DvpMakePrevCurrent();
+			//DvpMakeExternalCurrent();
 
 			break;
 		}
@@ -883,16 +952,21 @@ extern "C"
 		case DvpRenderEvent::Initialize:
 		{
 			DvpSetExternalContext();
-			
+		
+			DvpGetPrevContext();
+
 			if (global::dvpInputAvailable)
 				global::dvpOk = DvpInputInitialize();
 
-			DvpMakeExternalCurrent();
+			//DvpMakeExternalCurrent();
+			DvpMakePrevCurrent();
 			break;
 		}
 
 		case DvpRenderEvent::Setup:
 		{
+			DvpGetPrevContext();
+
 			DvpMakeAffinityCurrent();
 			
 			if (global::dvpInputAvailable)
@@ -904,28 +978,36 @@ extern "C"
 			{
 				global::dvpOk = DvpOutputSetupGL();
 								
-				if (false) //(captureFields)
+				// Check if output texture has been set externally. If not, set it
+				if (global::outTexture[0].Id() < 1)
 				{
-					DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
-					DvpOutputSetTexture(1, global::inputDisplayTextures[0][1].Id());
-				}
-				else
-				{
-					DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
-					DvpOutputSetTexture(1, global::inputDisplayTextures[0][0].Id());
+					if (false) //(captureFields)
+					{
+						DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
+						DvpOutputSetTexture(1, global::inputDisplayTextures[0][1].Id());
+					}
+					else
+					{
+						DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
+						DvpOutputSetTexture(1, global::inputDisplayTextures[0][0].Id());
+					}
 				}
 			}
 
 			if (global::dvpInputAvailable)
 				global::dvpOk = (global::dvp.StartSDIPipeline() == S_OK);
 
-			DvpMakeExternalCurrent();
+			
+			//DvpMakeExternalCurrent();
+			DvpMakePrevCurrent();
 
 			break;
 		}
 
 		case DvpRenderEvent::Cleanup:
 		{
+			DvpGetPrevContext();
+
 			DvpMakeAffinityCurrent();
 
 			if (global::dvpInputAvailable)
@@ -940,16 +1022,20 @@ extern "C"
 				global::sdiOut.Cleanup();
 			}
 
-			DvpMakeExternalCurrent();
+			//DvpMakeExternalCurrent();
+			DvpMakePrevCurrent();
 			break;
 		}
 
 		case DvpRenderEvent::Uninitialize:
 		{
+			DvpGetPrevContext();
+
 			DvpDestroyAffinityContext();
 			global::affinityDC = nullptr;
 			global::affinityGLRC = nullptr;
-			DvpMakeExternalCurrent();
+			//DvpMakeExternalCurrent();
+			DvpMakePrevCurrent();
 			break;
 		}
 
