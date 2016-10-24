@@ -279,7 +279,7 @@ void DvpAsyncWindow::Render()
 			glCallLists((GLsizei)len, GL_UNSIGNED_BYTE, buf);
 
 			// Draw dropped frames number
-			sprintf(buf, "dropped at capture:%d", frame->numDroppedFrames);
+			sprintf(buf, "dropped at capture: %d  %d", frame->numDroppedFrames, DvpInputDroppedFrames(i));
 			len = strlen(buf);
 			glListBase(1000);
 			glColor3f(1.0f, 1.0f, 0.0f);

@@ -365,12 +365,22 @@ extern "C"
 
 	GLNVSDI_API uint64_t DvpInputDroppedFrames(int device_index)
 	{
+		return (global::framePtr[device_index] != nullptr) ? global::framePtr[device_index]->numDroppedFrames : UINT64_MAX;
+	}
+
+	GLNVSDI_API uint64_t DvpDroppedFrames(int device_index)
+	{
 		return global::numDroppedFrames[device_index];
 	}
 
 	GLNVSDI_API NVVIOSIGNALFORMAT DvpInputSignalFormat()
 	{
 		return global::dvp.GetSignalFormat();
+	}
+
+	GLNVSDI_API DvpVideoFormat DvpInputVideoFormat()
+	{
+		return static_cast<DvpVideoFormat>(SdiOptions::GetVideoFormatFromNV(global::dvp.GetSignalFormat()));
 	}
 
 
@@ -883,6 +893,7 @@ extern "C"
 		
 		global::duplicateFramesCount += duplicated_frames;
 	}
+
 
 
 

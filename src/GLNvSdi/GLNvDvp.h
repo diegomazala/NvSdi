@@ -38,6 +38,21 @@ enum class DvpSyncSource
 	NONE
 };
 
+enum class DvpVideoFormat
+{
+	HD_1080P_29_97,
+	HD_1080P_30_00,
+	HD_1080I_59_94,
+	HD_1080I_60_00,
+	HD_720P_29_97,
+	HD_720P_30_00,
+	HD_720P_59_94,
+	HD_720P_60_00,
+	SD_487I_59_94
+};
+
+
+
 
 extern "C"
 {
@@ -79,9 +94,10 @@ extern "C"
 	GLNVSDI_API C_Frame* DvpInputFrame(int device_index = 0);
 	GLNVSDI_API C_Frame* DvpInputPreviousFrame(int device_index = 0);
 	GLNVSDI_API uint64_t DvpInputDroppedFrames(int device_index = 0);
+	GLNVSDI_API uint64_t DvpDroppedFrames(int device_index = 0);
 	GLNVSDI_API NVVIOSIGNALFORMAT DvpInputSignalFormat();
+	GLNVSDI_API DvpVideoFormat DvpInputVideoFormat();
 
-	
 		
 	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetGLNvDvpRenderEventFunc();
 };

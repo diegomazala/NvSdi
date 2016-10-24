@@ -26,6 +26,22 @@ public enum DvpSyncSource
 };
 
 
+
+[System.Serializable]
+public enum DvpVideoFormat
+{
+    HD_1080P_29_97,
+    HD_1080P_30_00,
+    HD_1080I_59_94,
+    HD_1080I_60_00,
+    HD_720P_29_97,
+    HD_720P_30_00,
+    HD_720P_59_94,
+    HD_720P_60_00,
+    SD_487I_59_94,
+    UNKNOWN
+};
+
 [AddComponentMenu("Diem/Video IO SDI - Dvp")]
 public class DvpIO : MonoBehaviour
 {
@@ -41,7 +57,7 @@ public class DvpIO : MonoBehaviour
     
    
 
-    private class Plugin
+    public class Plugin
     {
         [DllImport("GLNvSdi")]
         public static extern bool DvpIsOk();
@@ -59,6 +75,12 @@ public class DvpIO : MonoBehaviour
         public static extern void DvpInputSetTexturePtr(System.IntPtr texture, int device_index, int video_stream_index);
         [DllImport("GLNvSdi")]
         public static extern void DvpOutputSetTexturePtr(System.IntPtr texture, int video_stream_index);
+        [DllImport("GLNvSdi")]
+        public static extern uint DvpInputDroppedFrames(int device_index = 0);
+        [DllImport("GLNvSdi")]
+        public static extern uint DvpDroppedFrames(int device_index = 0);
+        [DllImport("GLNvSdi")]
+        public static extern DvpVideoFormat DvpInputVideoFormat();
         [DllImport("GLNvSdi")]
         public static extern System.IntPtr GetGLNvDvpRenderEventFunc();
     }
@@ -150,6 +172,8 @@ public class DvpIO : MonoBehaviour
             GL.IssuePluginEvent(Plugin.GetGLNvDvpRenderEventFunc(), (int)DvpRenderEvent.Setup);
             sdiEnabled = Plugin.DvpIsOk();
 
+            options.videoFormat = Plugin.DvpInputVideoFormat();
+
             if (!sdiEnabled)
                 Debug.LogError("Could not setup Dvp");
 
@@ -180,6 +204,7 @@ public class DvpIO : MonoBehaviour
 [System.Serializable]
 public class DvpOptions
 {
+    public DvpVideoFormat videoFormat;
     public DvpSyncSource syncSource;
     public int inputRingBufferSize;
     public int outputRingBufferSize;
@@ -189,6 +214,7 @@ public class DvpOptions
 
     public DvpOptions()
     {
+        videoFormat = DvpVideoFormat.UNKNOWN;
         syncSource = DvpSyncSource.NONE;
         inputRingBufferSize = 3;
         outputRingBufferSize = 3;
