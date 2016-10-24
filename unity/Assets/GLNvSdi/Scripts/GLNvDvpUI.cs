@@ -15,7 +15,7 @@ public class GLNvDvpUI : MonoBehaviour
     public UnityEngine.UI.Text vSync;
     public UnityEngine.UI.Text droppedFramesIn;
     public UnityEngine.UI.Text droppedFramesOut;
-    public UnityEngine.UI.Text gviTime;
+    public UnityEngine.UI.Text captureTime;
 
     void Start()
     {
@@ -27,14 +27,14 @@ public class GLNvDvpUI : MonoBehaviour
             return;
         }
 
-        OnReloadUI();
+        Invoke("OnReloadUI", 2);
     }
 
     void Update()
     {
         droppedFramesIn.text = DvpIO.Plugin.DvpInputDroppedFrames().ToString();
         droppedFramesOut.text = DvpIO.Plugin.DvpDroppedFrames().ToString();
-        //gviTime.text = UtyGLNvSdi.SdiInputGviTime().ToString("0.0000");
+        captureTime.text = DvpIO.Plugin.DvpInputCaptureElapsedTime().ToString("0.0000");
     }
 
 
@@ -59,7 +59,7 @@ public class GLNvDvpUI : MonoBehaviour
         vSync.text = dvp.options.outputVerticalDelay.ToString();
         droppedFramesIn.text = DvpIO.Plugin.DvpInputDroppedFrames().ToString();
         droppedFramesOut.text = DvpIO.Plugin.DvpDroppedFrames().ToString();
-        //gviTime.text = UtyGLNvSdi.SdiInputGviTime().ToString("0.0000");
+        captureTime.text = DvpIO.Plugin.DvpInputCaptureElapsedTime().ToString("0.0000");
     }
 
 }

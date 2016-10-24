@@ -383,6 +383,11 @@ extern "C"
 		return static_cast<DvpVideoFormat>(SdiOptions::GetVideoFormatFromNV(global::dvp.GetSignalFormat()));
 	}
 
+	GLNVSDI_API float DvpInputCaptureElapsedTime(int device_index)
+	{
+		return (global::framePtr[device_index] != nullptr) ? global::framePtr[device_index]->captureElapsedTime : FLT_MAX;
+	}
+
 
 	GLNVSDI_API bool DvpInputInitialize()
 	{

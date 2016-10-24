@@ -95,6 +95,7 @@ extern "C"
 	GLNVSDI_API C_Frame* DvpInputPreviousFrame(int device_index = 0);
 	GLNVSDI_API uint64_t DvpInputDroppedFrames(int device_index = 0);
 	GLNVSDI_API uint64_t DvpDroppedFrames(int device_index = 0);
+	GLNVSDI_API float    DvpInputCaptureElapsedTime(int device_index = 0);
 	GLNVSDI_API NVVIOSIGNALFORMAT DvpInputSignalFormat();
 	GLNVSDI_API DvpVideoFormat DvpInputVideoFormat();
 

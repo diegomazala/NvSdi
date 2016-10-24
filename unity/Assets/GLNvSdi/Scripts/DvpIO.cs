@@ -80,6 +80,8 @@ public class DvpIO : MonoBehaviour
         [DllImport("GLNvSdi")]
         public static extern uint DvpDroppedFrames(int device_index = 0);
         [DllImport("GLNvSdi")]
+        public static extern float DvpInputCaptureElapsedTime(int device_index = 0);
+        [DllImport("GLNvSdi")]
         public static extern DvpVideoFormat DvpInputVideoFormat();
         [DllImport("GLNvSdi")]
         public static extern System.IntPtr GetGLNvDvpRenderEventFunc();
