@@ -7,14 +7,14 @@ using System.Collections;
 public class BackgroundTexture : MonoBehaviour 
 {
     public RenderTexture backgroundTex = null;
+    public Shader composite;
     private Material material;
     public float imageScale = 1.0f;
 
     void Awake()
     {
-        Shader shader_comp = Shader.Find("GLNvSdi/SdiComposite");
-        Assert.IsNotNull(shader_comp);
-        material = new Material(shader_comp);
+        Assert.IsNotNull(composite);
+        material = new Material(composite);
     }
 
 
