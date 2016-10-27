@@ -962,6 +962,15 @@ extern "C"
 			DvpMakeAffinityCurrent();
 
 			//
+			// Present Frame
+			//
+			if (global::dvpOutputAvailable)
+				DvpOutputPresentFrame();
+
+			if (global::affinityDC != global::externalDC)
+				::SwapBuffers(global::affinityDC);
+
+			//
 			// Capture Frame
 			//
 			if (global::dvpInputAvailable)
@@ -974,12 +983,7 @@ extern "C"
 						DvpInputBlitTextures(i);
 				}
 			}
-
-			if (global::dvpOutputAvailable)
-				DvpOutputPresentFrame();
-
-			if (global::affinityDC != global::externalDC)
-				::SwapBuffers(global::affinityDC);
+			
 
 			global::dvpOk = (glGetError() == GL_NO_ERROR);
 
@@ -1027,12 +1031,12 @@ extern "C"
 				// Check if output texture has been set externally. If not, set it
 				if (global::outTexture[0].Id() < 1)
 				{
-					if (false) //(captureFields)
-					{
-						DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
-						DvpOutputSetTexture(1, global::inputDisplayTextures[0][1].Id());
-					}
-					else
+					//if (false) //(captureFields)
+					//{
+					//	DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
+					//	DvpOutputSetTexture(1, global::inputDisplayTextures[0][1].Id());
+					//}
+					//else
 					{
 						DvpOutputSetTexture(0, global::inputDisplayTextures[0][0].Id());
 						DvpOutputSetTexture(1, global::inputDisplayTextures[0][0].Id());
