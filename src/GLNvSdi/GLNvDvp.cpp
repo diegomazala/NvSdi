@@ -47,7 +47,7 @@ namespace global
 	static const int				MaxOutputTextureCount = 4;
 	static gl::Texture2D			outTexture[MaxOutputTextureCount];
 
-	static int						duplicateFramesCount = 0;
+	static uint64_t					duplicateFramesCount = 0;
 
 
 	static HDC			prevDC = nullptr;
@@ -372,6 +372,14 @@ extern "C"
 	{
 		return global::numDroppedFrames[device_index];
 	}
+
+	GLNVSDI_API void DvpResetDroppedFrames()
+	{
+		for (int i = 0; i < DvpInputActiveDeviceCount(); ++i)
+			global::numDroppedFrames[i] = 0;
+	}
+
+	
 
 	GLNVSDI_API NVVIOSIGNALFORMAT DvpInputSignalFormat()
 	{
@@ -750,6 +758,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool DvpOutputSetup()
 	{
+		
 		// Setup the video device.
 		if (global::sdiOut.Init(&global::dvpOptions, CNvSDIoutGpuTopology::instance().getGpu(global::dvpOptions.gpu)) != S_OK)
 		{
@@ -804,6 +813,7 @@ extern "C"
 			return false;
 		}
 
+		global::duplicateFramesCount = 0;
 		global::presentFrame.Initialize();
 
 
@@ -876,22 +886,24 @@ extern "C"
 
 		if (global::sdiOut.IsInterlaced())
 		{
-			if (dual_output)
+			if (!dual_output)
+				global::presentFrame.PresentFrame(global::outTexture[0].Type(),
+				global::outTexture[tex0].Id(), global::outTexture[tex1].Id());
+			else
 				global::presentFrame.PresentFrameDual(global::outTexture[0].Type(),
 				global::outTexture[tex0].Id(), global::outTexture[tex1].Id(),
 				global::outTexture[tex2].Id(), global::outTexture[tex3].Id());
-			else
-				global::presentFrame.PresentFrame(global::outTexture[0].Type(),
-				global::outTexture[tex0].Id(), global::outTexture[tex1].Id());
+				
 		}
 		else
 		{
-			if (dual_output)
-				global::presentFrame.PresentFrameDual(global::outTexture[0].Type(),
-				global::outTexture[tex0].Id(), global::outTexture[tex1].Id());
-			else
+			if (!dual_output)
 				global::presentFrame.PresentFrame(global::outTexture[0].Type(),
 				global::outTexture[tex0].Id());
+			else
+				global::presentFrame.PresentFrameDual(global::outTexture[0].Type(),
+				global::outTexture[tex0].Id(), global::outTexture[tex1].Id());
+				
 		}
 
 		const int duplicated_frames = global::presentFrame.GetStats().durationTime - 1;
@@ -899,8 +911,17 @@ extern "C"
 		global::duplicateFramesCount += duplicated_frames;
 	}
 
+	/// Return the count of duplicated frames in the last run
+	GLNVSDI_API uint64_t DvpOutputDuplicatedFramesCount()
+	{
+		return global::duplicateFramesCount;
+	}
 
-
+	/// Return the count of duplicated frames in the last run
+	GLNVSDI_API void DvpOutputResetDuplicatedFramesCount()
+	{
+		global::duplicateFramesCount = 0;
+	}
 
 	static void UNITY_INTERFACE_API OnGLNvDvpRenderEventFunc(int render_event_id)
 	{
@@ -944,8 +965,8 @@ extern "C"
 			if (global::dvpOutputAvailable)
 				DvpOutputPresentFrame();
 
-			if (global::affinityDC != global::externalDC)
-				::SwapBuffers(global::affinityDC);
+			//if (global::affinityDC != global::externalDC)
+			//	::SwapBuffers(global::affinityDC);
 
 			global::dvpOk = (glGetError() == GL_NO_ERROR);
 
@@ -967,8 +988,8 @@ extern "C"
 			if (global::dvpOutputAvailable)
 				DvpOutputPresentFrame();
 
-			if (global::affinityDC != global::externalDC)
-				::SwapBuffers(global::affinityDC);
+			//if (global::affinityDC != global::externalDC)
+			//	::SwapBuffers(global::affinityDC);
 
 			//
 			// Capture Frame

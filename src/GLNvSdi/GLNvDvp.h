@@ -95,9 +95,13 @@ extern "C"
 	GLNVSDI_API C_Frame* DvpInputPreviousFrame(int device_index = 0);
 	GLNVSDI_API uint64_t DvpInputDroppedFrames(int device_index = 0);
 	GLNVSDI_API uint64_t DvpDroppedFrames(int device_index = 0);
+	GLNVSDI_API void	 DvpResetDroppedFrames();
 	GLNVSDI_API float    DvpInputCaptureElapsedTime(int device_index = 0);
 	GLNVSDI_API NVVIOSIGNALFORMAT DvpInputSignalFormat();
 	GLNVSDI_API DvpVideoFormat DvpInputVideoFormat();
+
+	GLNVSDI_API uint64_t DvpOutputDuplicatedFramesCount();
+	GLNVSDI_API void	 DvpOutputResetDuplicatedFramesCount();
 
 		
 	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetGLNvDvpRenderEventFunc();
