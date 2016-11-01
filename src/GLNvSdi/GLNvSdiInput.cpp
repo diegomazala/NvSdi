@@ -658,6 +658,9 @@ extern "C"
 		{
 			case SdiRenderEvent::CaptureFrame:
 			{
+				if (SdiGetGLRC() != wglGetCurrentContext())
+					break;
+
 				if (SdiInputCaptureVideo() != GL_FAILURE_NV)
 				{
 					SdiAncCapture();
@@ -666,6 +669,7 @@ extern "C"
 				{
 					//Debug.LogError("Capture fail");
 				}
+
 
 				sdiError = (int)glGetError();
 

@@ -19,6 +19,10 @@ public class GLNvDvpUI : MonoBehaviour
     public UnityEngine.UI.Text captureTime;
     public UnityEngine.UI.Text status;
 
+    private uint dropFramesIn = 0;
+    private uint dropFramesOut = 0;
+    private uint duplicateOut = 0;
+
     void Start()
     {
         dvp = FindObjectOfType<GLNvDvp>();
@@ -36,10 +40,23 @@ public class GLNvDvpUI : MonoBehaviour
 
     void Update()
     {
-        droppedFramesIn.text = GLNvDvp.Plugin.DvpInputDroppedFrames().ToString();
-        droppedFramesOut.text = GLNvDvp.Plugin.DvpDroppedFrames().ToString();
-        duplicatedFramesOut.text = GLNvDvp.Plugin.DvpOutputDuplicatedFramesCount().ToString();
-        captureTime.text = GLNvDvp.Plugin.DvpInputCaptureElapsedTime().ToString("0.0000");
+        uint drop_in = GLNvDvp.Plugin.DvpInputDroppedFrames();
+        uint drop_out = GLNvDvp.Plugin.DvpDroppedFrames();
+        uint duplicated_out = GLNvDvp.Plugin.DvpOutputDuplicatedFramesCount();
+
+        if (dropFramesIn != drop_in || dropFramesOut != drop_out || duplicateOut != duplicated_out)
+        {
+            dropFramesIn = drop_in;
+            droppedFramesIn.text = dropFramesIn.ToString();
+
+            dropFramesOut = drop_out;
+            droppedFramesOut.text = dropFramesOut.ToString();
+
+            duplicateOut = duplicated_out;
+            duplicatedFramesOut.text = duplicateOut.ToString();
+
+            captureTime.text = GLNvDvp.Plugin.DvpInputCaptureElapsedTime().ToString("0.0000");
+        }
     }
 
 

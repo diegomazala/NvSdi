@@ -18,6 +18,11 @@ public class GLNvSdiUI : MonoBehaviour
     public UnityEngine.UI.Text droppedFramesOut;
     public UnityEngine.UI.Text gviTime;
 
+
+
+    private int dropFramesIn = 0;
+    private int dropFramesOut = 0;
+
     void Start()
     {
         UtyGLNvSdi sdi = FindObjectOfType<UtyGLNvSdi>();
@@ -31,14 +36,27 @@ public class GLNvSdiUI : MonoBehaviour
         options = sdi.options;
 
         OnReloadUI();
+
+        Invoke("OnResetDropFramesIn", 3.0f);
+        Invoke("OnResetDropFramesOut", 3.0f);
+        Invoke("OnReloadUI", 3.5f);
     }
 
     void Update()
     {
-        //droppedFramesIn.text = UtyGLNvSdi.SdiInputDroppedFramesCount().ToString();
-        droppedFramesIn.text = UtyGLNvSdi.DvpDroppedFrames().ToString();
-        droppedFramesOut.text = UtyGLNvSdi.SdiOutputDuplicatedFramesCount().ToString();
-        gviTime.text = UtyGLNvSdi.SdiInputGviTime().ToString("0.0000");
+        int drop_in = UtyGLNvSdi.SdiInputDroppedFramesCount();
+        int drop_out = UtyGLNvSdi.SdiOutputDuplicatedFramesCount();
+
+        if (dropFramesIn != drop_in || dropFramesOut != drop_out)
+        {
+            dropFramesIn = drop_in;
+            droppedFramesIn.text = dropFramesIn.ToString();
+
+            dropFramesOut = drop_out;
+            droppedFramesOut.text = dropFramesOut.ToString();
+
+            gviTime.text = UtyGLNvSdi.SdiInputGviTime().ToString("0.0000");
+        }
     }
 
 

@@ -573,16 +573,18 @@ extern "C"
 	}
 
 
-
-
 	static void UNITY_INTERFACE_API OnSdiOutputRenderEvent(int render_event_id)
 	{
 		switch (static_cast<SdiRenderEvent>(render_event_id))
 		{
 			case SdiRenderEvent::PresentFrame:
 			{
+				if (SdiGetGLRC() != wglGetCurrentContext())
+					break;
+
 				SdiMakeCurrent();
 				SdiOutputPresentFrame();
+
 				sdiError = (int)glGetError();
 				break;
 			}

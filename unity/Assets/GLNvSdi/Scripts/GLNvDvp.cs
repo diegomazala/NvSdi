@@ -207,7 +207,20 @@ public class GLNvDvp : MonoBehaviour
 
     }
 
+    public uint dropFramesIn = 0;
+    public uint dropFramesOut = 0;
+    public uint duplicateOut = 0;
+    void Update()
+    {
+        if (sdiEnabled)
+        {
+            GL.IssuePluginEvent(GLNvDvp.Plugin.GetGLNvDvpRenderEventFunc(), (int)DvpRenderEvent.Update);
 
+            dropFramesIn = GLNvDvp.Plugin.DvpInputDroppedFrames();
+            dropFramesOut = GLNvDvp.Plugin.DvpDroppedFrames();
+            duplicateOut = GLNvDvp.Plugin.DvpOutputDuplicatedFramesCount();
+        }
+    }
 
 
 }

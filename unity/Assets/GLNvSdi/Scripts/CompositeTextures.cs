@@ -45,10 +45,7 @@ public class CompositeTextures : MonoBehaviour
 
         Graphics.Blit(foregroundTex, outputTex[0], material);
         Graphics.Blit(foregroundPrevTex, outputTex[1], material);
-
-        if (dvp.IsRunning)
-            GL.IssuePluginEvent(GLNvDvp.Plugin.GetGLNvDvpRenderEventFunc(), (int)DvpRenderEvent.Update);
-
+                
         Graphics.Blit(source, destination);
     }
 

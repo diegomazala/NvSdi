@@ -5,6 +5,7 @@ using System.Collections;
 [RequireComponent(typeof(Camera))]
 public class GLNvSdiRenderTexture : MonoBehaviour 
 {
+    private GLNvSdiIO sdi = null;
     public int sdiTextureIndex = 0;
 
     [HideInInspector]
@@ -33,6 +34,12 @@ public class GLNvSdiRenderTexture : MonoBehaviour
         this.GetComponent<Camera>().targetTexture = sdiRenderTarget;
     }
     
+    void OnEnable()
+    {
+        sdi = FindObjectOfType<GLNvSdiIO>();
+        if (sdi == null)
+            enabled = false;
+    }
 
     void OnDisable()
     {
@@ -68,6 +75,14 @@ public class GLNvSdiRenderTexture : MonoBehaviour
 			Graphics.Blit(source, destination);
             
 		}
+
+        //if (sdiTextureIndex == 0 && sdi.sdiEnabled)
+        //{
+        //    // Capture frame from device
+        //    GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
+        //    // Present frame
+        //    GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+        //}
     }
 
 

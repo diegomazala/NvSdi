@@ -8,7 +8,7 @@ public class GLNvSdiIO : UtyGLNvSdi
     public Material[] sdiMaterials = { null, null, null, null, null, null, null, null };
     public Material[] sdiCompositeMaterial = { null, null, null, null };
 
-    private RenderTexture[] sdiTexture = { null, null, null, null, null, null, null, null };
+    public RenderTexture[] sdiTexture = { null, null, null, null, null, null, null, null };
         
     public Camera[] m_Camera = { null, null, null, null };
 
@@ -25,7 +25,7 @@ public class GLNvSdiIO : UtyGLNvSdi
 
 
     private IEnumerator IOCoroutine = null;
-    private bool sdiEnabled = false;
+    public bool sdiEnabled = false;
 
     void OnEnable()
     {
@@ -62,6 +62,22 @@ public class GLNvSdiIO : UtyGLNvSdi
         timeCodeHandle.Free();
     }
 
+    
+    void Update()
+    {
+        UpdateFrame();
+    }
+
+    public void UpdateFrame()
+    {
+        if (sdiEnabled)
+        {
+            // Capture frame from device
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
+            // Present frame
+            GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+        }
+    }
 
     private IEnumerator SdiIOCoroutine()
     {
@@ -121,20 +137,22 @@ public class GLNvSdiIO : UtyGLNvSdi
 
             sdiEnabled = true;
 
-            while (true)
-            {
-                // Wait until all frame rendering is done
-                yield return new WaitForEndOfFrame();
+            //while (true)
+            //{
+            //    // Wait until all frame rendering is done
+            //    yield return new WaitForEndOfFrame();
 
-                // Capture frame from device
-                GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
-                // Present frame
-                GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
+            //    // Capture frame from device
+            //    GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
+            //    // Present frame
+            //    GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
 
-            }
+            //}
         }
 
     }
+
+   
 
 
     bool SetupOutputTextures(int texWidth, int texHeight, float aspect, bool interlaced, bool outputDual)
