@@ -33,6 +33,12 @@ public class GLNvSdiOut : UtyGLNvSdi
 
     void OnEnable()
     {
+        if (!SystemInfo.graphicsDeviceVersion.StartsWith("OpenGL"))
+        {
+            enabled = false;
+            return;
+        }
+
         OutputCoroutine = SdiOutputCoroutine();
         sdiEnabled = false;
 

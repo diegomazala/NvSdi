@@ -13,6 +13,12 @@ public class GLNvSdiIn : UtyGLNvSdi
 
     void OnEnable()
     {
+        if (!SystemInfo.graphicsDeviceVersion.StartsWith("OpenGL"))
+        {
+            enabled = false;
+            return;
+        }
+
         sdiEnabled = false;
         InputCoroutine = SdiInputCoroutine();
 

@@ -108,6 +108,12 @@ public class GLNvDvp : MonoBehaviour
 
     void OnEnable()
     {
+        if (!SystemInfo.graphicsDeviceVersion.StartsWith("OpenGL"))
+        {
+            enabled = false;
+            return;
+        }
+
         sdiEnabled = false;
         IOCoroutine = SdiIOCoroutine();
 
