@@ -1,20 +1,13 @@
 using UnityEngine;
 using System.Collections;
 
-[AddComponentMenu("Diem/Video In SDI - GLNvSdiIn")]
-public class GLNvSdiIn : UtyGLNvSdi 
+[AddComponentMenu("Diem/Video In SDI - GLNvSdiInHD")]
+public class GLNvSdiInHD : UtyGLNvSdi 
 {
-    public Material[] sdiMaterials = { null, null, null, null, null, null, null, null };
-
-    public RenderTexture[] sdiTexture = { null, null, null, null, null, null, null, null };
+    public RenderTexture[] sdiInputTexture = { null, null, null, null};
 
     private IEnumerator InputCoroutine = null;
     private bool sdiEnabled = false;
-
-    void Awake()
-    {
-        options.inputCaptureFields = false;
-    }
 
     void OnEnable()
     {
@@ -36,6 +29,8 @@ public class GLNvSdiIn : UtyGLNvSdi
         if (options.logToFile)
             UtyGLNvSdi.SdiSetupLogFile();
 
+        options.inputCaptureFields = false;
+
         StartCoroutine(InputCoroutine);
     }
 
@@ -49,8 +44,6 @@ public class GLNvSdiIn : UtyGLNvSdi
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Shutdown);
             sdiEnabled = false;
         }
-
-        DestroyTextures();
     }
 
 
@@ -63,12 +56,10 @@ public class GLNvSdiIn : UtyGLNvSdi
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
         yield return new WaitForEndOfFrame();
 
-        UtyGLNvSdi.SdiInputSetGlobalOptions(options.inputRingBufferSize, options.inputCaptureFields);
+        options.inputCaptureFields = false;
+        UtyGLNvSdi.SdiInputSetGlobalOptions(options.inputRingBufferSize, options.inputCaptureFields);   // capture_fields = false
 
-        if (options.inputCaptureFields)
-            CreateTextures(8, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight() / 2);
-        else
-            CreateTextures(4, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight());
+        SetupTextures();
 
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Setup);
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.StartCapture);
@@ -81,9 +72,6 @@ public class GLNvSdiIn : UtyGLNvSdi
             // Wait until all frame rendering is done
             yield return new WaitForEndOfFrame();
 
-            // Get status of the capture (GL_SUCCESS_NV, GL_FAILURE_NV, GL_PARTIAL_SUCCESS_NV)
-            //Debug.Log(UtyGLNvSdi.SdiInputCaptureStatus().ToString());
-
             // Capture frame from device
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
         }
@@ -92,41 +80,22 @@ public class GLNvSdiIn : UtyGLNvSdi
 
 
 
-    void CreateTextures(int count, int texWidth, int texHeight)
+    void SetupTextures()
     {
-        for (int i = 0; i < count; ++i)
+        for (int i = 0; i < sdiInputTexture.Length; ++i)
         {
-            sdiTexture[i] = new RenderTexture(texWidth, texHeight, 32, RenderTextureFormat.ARGB32);
-            sdiTexture[i].name = name;
-            sdiTexture[i].isPowerOfTwo = false;
-            sdiTexture[i].wrapMode = TextureWrapMode.Clamp;
-            sdiTexture[i].Create();
+            if (sdiInputTexture[i] == null)
+                continue;
 
-            UtyGLNvSdi.SdiInputSetTexturePtr(i, sdiTexture[i].GetNativeTexturePtr(), sdiTexture[i].width, sdiTexture[i].height);
-
-            int multiplier = options.inputCaptureFields ? 2 : 1;
-            if (i < UtyGLNvSdi.SdiInputVideoCount() * multiplier)
-				sdiMaterials[i].mainTexture = sdiTexture[i];
-        }
-    }
-
-
-
-    void DestroyTextures()
-    {
-        for (int i = 0; i < MAX_COUNT; ++i)
-        {
-            if (sdiTexture[i] != null && sdiTexture[i].IsCreated())
+            if (!sdiInputTexture[i].IsCreated())
             {
-                sdiTexture[i].Release();
-                sdiTexture[i] = null;
+                if (!sdiInputTexture[i].Create())
+                    Debug.LogError("Could not create sdi input texture");
             }
+
+            UtyGLNvSdi.SdiInputSetTexturePtr(i, sdiInputTexture[i].GetNativeTexturePtr(), sdiInputTexture[i].width, sdiInputTexture[i].height);
         }
     }
-
-
-
-
 
 
 }

@@ -100,6 +100,8 @@ public class GLNvSdiIO : UtyGLNvSdi
 
         if (UtyGLNvSdi.SdiError() == 0)
         {
+            UtyGLNvSdi.SdiInputSetGlobalOptions(options.inputRingBufferSize, options.inputCaptureFields);
+
             //
             // Input Setup
             //

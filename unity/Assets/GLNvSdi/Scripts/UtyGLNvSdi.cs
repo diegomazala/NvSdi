@@ -272,7 +272,7 @@ public class UtyGLNvSdi : MonoBehaviour
     [DllImport("GLNvSdi")]
     public static extern void SdiInputUninitialize();
     [DllImport("GLNvSdi")]
-    public static extern void SdiInputSetGlobalOptions(int ringBufferSizeInFrames);
+    public static extern void SdiInputSetGlobalOptions(int ringBufferSizeInFrames, bool captureFields = true);
     [DllImport("GLNvSdi")]
     public static extern bool SdiInputCreateTextures();
     [DllImport("GLNvSdi")]
