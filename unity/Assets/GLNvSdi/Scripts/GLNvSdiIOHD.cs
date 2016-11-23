@@ -139,7 +139,6 @@ public class GLNvSdiIOHD : UtyGLNvSdi
                 GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
                 // Present frame
                 GL.IssuePluginEvent(UtyGLNvSdi.GetSdiOutputRenderEventFunc(), (int)SdiRenderEvent.PresentFrame);
-
             }
         }
 
