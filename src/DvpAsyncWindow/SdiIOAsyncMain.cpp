@@ -58,6 +58,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 	}
 
+	HDC externalDC = wglGetCurrentDC();
+	HGLRC externalGLRC = wglGetCurrentContext();
 
 	//
 	// Initialize sdi

@@ -1,50 +1,19 @@
 #include "GLNvSdi.h"
 #include "SdiWindow.h"
+#include <ctime>
+#include <chrono>
 
-
-#include <fcntl.h>
-#include <io.h>
-static void SetupConsole()
+int main(int argc, char* argv[])
 {
-	int hCrt;
-	FILE *hf;
-	static int initialized = 0;
+	std::chrono::time_point<std::chrono::system_clock> start_timer, end_timer;
+	start_timer = std::chrono::system_clock::now();
 
-	if(initialized == 1) {
-		return;
-	}
+	std::time_t timer = std::time(nullptr);
 
-	AllocConsole();
-
-	// Setup stdout
-	hCrt = _open_osfhandle( (long)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT );
-	hf = _fdopen(hCrt, "w" );
-	*stdout = *hf;
-	setvbuf(stdout, NULL, _IONBF, 0);
-
-	// Setup stderr
-	hCrt = _open_osfhandle( (long)GetStdHandle(STD_ERROR_HANDLE), _O_TEXT );
-	hf = _fdopen(hCrt, "w" );
-	*stderr = *hf;
-	setvbuf(stderr, NULL, _IONBF, 0);
-
-	initialized = 1;
-}
-
-
-
-
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
-{
-	// Debug console.
-#ifdef _DEBUG
-	//SetupConsole();
-	SdiSetupLogConsole();
-#endif
-	SdiSetupLogConsole();
-
-	bool captureFields = true;
-
+	const int ringBufferSizeInFrames = ((argc > 1) ? atoi(argv[1]) : 2);
+	const bool captureFields = (bool)((argc > 2) ? atoi(argv[2]) : true);
+	
+	
 	HWND hWnd;
 	HGLRC hGLRC;
 	if (CreateDummyGLWindow(&hWnd, &hGLRC) == false)
@@ -61,8 +30,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		return false;
 	
 
-	const int ringBufferSizeInFrames = 2;
-	SdiInputSetGlobalOptions(ringBufferSizeInFrames);
+	SdiInputSetGlobalOptions(ringBufferSizeInFrames, captureFields);
 	SdiOutputSetGlobalOptions();
 	
 	//SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 788, 513, false, 2);
@@ -103,7 +71,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 
 
-	if (captureFields)
+	if (SdiGlobalOptions().captureFields)
 	{
 		if (!SdiInputCreateTextures(MAX_VIDEO_STREAMS * 2, SdiInputWidth(), SdiInputHeight() / 2))
 		{
@@ -128,7 +96,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		return EXIT_FAILURE;
 	}
 
-	if (captureFields)
+	if (SdiGlobalOptions().captureFields)
 	{
 		if (!SdiInputBindVideoTextureField())
 		{
@@ -191,15 +159,28 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	lApp.InitSetup();
 	while(lApp.ProcessMainLoop())
 	{
-		if (SdiInputCaptureVideo() != GL_FAILURE_NV)
+		GLenum status = SdiInputCaptureVideo();
+		if (status != GL_SUCCESS_NV)
 		{
-			//SdiAncCapture();
-			passthru.DisplayVideo(SdiInputWidth(), SdiInputHeight());
-			//SdiAncPresent();
-			SdiOutputPresentFrame();
+			std::cout << "Capture fail : " << ((status == GL_FAILURE_NV) ? "GL_FAILURE_NV" : "GL_PARTIAL_SUCCESS_NV") << std::endl;
 		}
+
+
+		SdiAncCapture();
+		passthru.DisplayVideo(SdiInputWidth(), SdiInputHeight());
+		SdiAncPresent();
+		SdiOutputPresentFrame();
+
+		if (SdiInputDroppedFrames() > 0)
+			std::cout 
+			<< "Frame:   " << SdiInputFrameNumber() 
+			<< "\tDropped: " << SdiInputDroppedFrames() 
+			<< "\tTotal:   " << SdiInputDroppedFramesCount() 
+			<< "   " << std::asctime(std::localtime(&timer));
 	}
 
+	unsigned int frame_count = SdiInputFrameNumber();
+	unsigned int drop_frame_count = SdiInputDroppedFramesCount();
 
 	SdiInputStop();
 	
@@ -215,6 +196,25 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	SdiInputCleanupDevices();
 	
 	passthru.Destroy();
+
+
+	end_timer = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end_timer - start_timer;
+
+	std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_timer);
+	std::time_t end_time_t = std::chrono::system_clock::to_time_t(end_timer);
+
+	std::cout
+		<< std::endl
+		<< "---" << std::endl 
+		<< "--- Program finished properly" << std::endl
+		<< "--- Start at          : " << std::ctime(&start_time_t) 
+		<< "--- Stop  at          : " << std::ctime(&end_time_t) 
+		<< "--- Total time        : " << elapsed_seconds.count() << "sec" << std::endl
+		<< "--- Frames displayed  : " << frame_count << std::endl
+		<< "--- Frames dropped    : " << drop_frame_count << std::endl
+		<< "--- Performance loss  : " << (float)drop_frame_count / (float)frame_count * 100.f << "%" << std::endl
+		<< "--------------------------------------------------------" << std::endl;
 
 	return EXIT_SUCCESS;
 }

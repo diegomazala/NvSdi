@@ -5,6 +5,7 @@
 #include "glExtensions.h"
 #include "GLNvSdi.h"
 #include "GLFont.h"
+#include <ctime>
 
 GLFont gFont;
 
@@ -115,9 +116,10 @@ void SdiWindow::DisplayVideo(int vid_w, int vid_h)
 
 
 		glColor3f(WHITE);
-		gFont.Plot(-0.95f, 0.90f, "Dropped %d frames. GPU Time: %f. GVI Time: %f", DroppedFrames, SdiInputGpuTime(), SdiInputGviTime());
+		gFont.Plot(-0.95f, 0.90f, "Dropped %d input frames. GPU Time: %f. GVI Time: %f", SdiInputDroppedFramesCount(), SdiInputGpuTime(), SdiInputGviTime());
 		gFont.Plot(-0.95f, 0.85f, "Input %d", m_CurrentInputIndex);
 
+		
 		int timecode[8];
 		if (SdiAncGetTimeCode(timecode, m_CurrentInputIndex))
 		{

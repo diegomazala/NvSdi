@@ -4,20 +4,6 @@ using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 using System.Globalization;
 
-[System.Serializable]
-public class SerializableEnum<T> where T : struct, System.IConvertible
-{
-    public T Value
-    {
-        get { return m_EnumValue; }
-        set { m_EnumValue = value; }
-    }
-
-    [SerializeField]
-    private string m_EnumValueAsString;
-    [SerializeField]
-    private T m_EnumValue;
-}
 
 [System.Serializable]
 public enum SdiRenderEvent

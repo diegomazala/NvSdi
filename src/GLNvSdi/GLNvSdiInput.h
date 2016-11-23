@@ -14,7 +14,7 @@ extern "C"
 
 
 	/// Set global sdi configuration options for input sdi
-	GLNVSDI_API void SdiInputSetGlobalOptions(int ringBufferSizeInFrames);
+	GLNVSDI_API void SdiInputSetGlobalOptions(int ringBufferSizeInFrames, bool capture_fields = true);
 
 	
 	/// Return video input width
@@ -34,11 +34,13 @@ extern "C"
 	/// Return the time spent by gvi
 	GLNVSDI_API float SdiInputGviTime();
 
+	GLNVSDI_API unsigned int SdiInputFrameNumber();
+
 	/// Return the number of input dropped frames in the last update
-	GLNVSDI_API int SdiInputDroppedFrames();
+	GLNVSDI_API unsigned int SdiInputDroppedFrames();
 
 	/// Return the count of input dropped frames in the last run
-	GLNVSDI_API int SdiInputDroppedFramesCount();
+	GLNVSDI_API unsigned int SdiInputDroppedFramesCount();
 
 	/// Reset the count of input dropped frames in the last run
 	GLNVSDI_API void SdiInputResetDroppedFramesCount();
@@ -82,10 +84,6 @@ extern "C"
 	/// Empty
 	GLNVSDI_API void SdiInputCleanupDevices();
 
-
-
-	/// Setup opengl context for sdi capture
-	GLNVSDI_API bool SdiInputSetupContextGL(HDC hDC, HGLRC hRC);
 	
 	/// Setup opengl dependencies for sdi capture
 	GLNVSDI_API bool SdiInputSetupGL();
@@ -93,7 +91,8 @@ extern "C"
 	/// Cleanup the opengl stuff used in sdi capture
 	GLNVSDI_API void SdiInputCleanupGL();
 
-
+	/// Setup capture for fields/frames
+	GLNVSDI_API bool SdiInputCaptureFields(bool capture_fields = true);
 
 	/// Bind textures and device for sdi input
 	GLNVSDI_API bool SdiInputBindVideoTextureFrame();

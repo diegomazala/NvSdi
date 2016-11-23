@@ -548,7 +548,7 @@ extern "C"
 		NvU32 *a3 = attr::m_ancData[0].AudioGroup1.audioData[2];
 		NvU32 *a4 = attr::m_ancData[0].AudioGroup1.audioData[3];
 
-		printf("Number of audio samples: %d\n", attr::m_ancData[0].AudioGroup1.numAudioSamples);
+		//printf("Number of audio samples: %d\n", attr::m_ancData[0].AudioGroup1.numAudioSamples);
 
 #if 0
 		for (unsigned int i = 0; i < m_ancData[0].AudioGroup1.numAudioSamples; i++) {

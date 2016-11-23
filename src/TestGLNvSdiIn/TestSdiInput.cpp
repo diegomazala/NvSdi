@@ -2,54 +2,13 @@
 #include "SdiInWindow.h"
 
 
-#include <fcntl.h>
-#include <io.h>
-static void SetupConsole()
+
+int main(int argc, char* argv[])
 {
-	int hCrt;
-	FILE *hf;
-	static int initialized = 0;
+	const int ringBufferSizeInFrames = ((argc > 1) ? atoi(argv[1]) : 2);
+	const bool captureFields = (bool)((argc > 2) ? atoi(argv[2]) : true);
 
-	if(initialized == 1) {
-		return;
-	}
-
-	AllocConsole();
-
-	// Setup stdout
-	hCrt = _open_osfhandle( (long)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT );
-	hf = _fdopen(hCrt, "w" );
-	*stdout = *hf;
-	setvbuf(stdout, NULL, _IONBF, 0);
-
-	// Setup stderr
-	hCrt = _open_osfhandle( (long)GetStdHandle(STD_ERROR_HANDLE), _O_TEXT );
-	hf = _fdopen(hCrt, "w" );
-	*stderr = *hf;
-	setvbuf(stderr, NULL, _IONBF, 0);
-
-	initialized = 1;
-}
-
-
-
-#include <time.h>
-time_t start,stop;
-
-
-
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
-{
-
-	// Debug console.
-#ifdef _DEBUG
-	//SetupConsole();
-	SdiSetupLogConsole();
-#endif
-
-	SdiSetupLogConsole();
-
-	bool captureFields = true;
+	
 	
 	SdiInWindow passthru;
 
@@ -65,8 +24,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	if(DestroyGLWindow(&hWnd,&hGLRC) == false)
 		return false;
 
-	const int ringBufferSizeInFrames = 2;
-	SdiInputSetGlobalOptions(ringBufferSizeInFrames);
+	
+	SdiInputSetGlobalOptions(ringBufferSizeInFrames, captureFields);
 
 	if (!SdiInputSetupDevices())
 		return EXIT_FAILURE;
@@ -90,7 +49,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		return EXIT_FAILURE;							// Quit If Window Was Not Created
 	}
 
-	if (captureFields)
+	if (SdiGlobalOptions().captureFields)
 	{
 		if (!SdiInputCreateTextures(MAX_VIDEO_STREAMS * 2, SdiInputWidth(), SdiInputHeight() / 2))
 		{
@@ -119,7 +78,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 
 
-	if (captureFields)
+	if (SdiGlobalOptions().captureFields)
 	{
 		if (!SdiInputBindVideoTextureField())
 		{
@@ -154,6 +113,16 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	lApp.InitSetup();
 	while(lApp.ProcessMainLoop())
 	{
+		GLenum status = SdiInputCaptureVideo();
+		if (status != GL_SUCCESS_NV)
+		{
+			std::cout << "Capture fail : " << ((status == GL_FAILURE_NV) ? "GL_FAILURE_NV" : "GL_PARTIAL_SUCCESS_NV") << std::endl;
+		}
+
+
+		if (SdiInputDroppedFrames() > 0)
+			std::cout << "Frame:   " << SdiInputFrameNumber() << "    Dropped: " << SdiInputDroppedFrames() << "     Total:   " << SdiInputDroppedFramesCount() << std::endl;
+
 	}
 
 

@@ -38,6 +38,7 @@ struct GLNVSDI_API SdiOptions : public Options
 	int inputRingBufferSize;
 	int antiAliasing;
 	bool invertFields;
+	bool captureFields;
 
 	SdiVideoFormat mSdiVideoFormat;
 

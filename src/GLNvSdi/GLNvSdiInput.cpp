@@ -18,8 +18,10 @@ extern "C"
 
 		bool isCapturing = false;
 
-		int droppedFrames = 0;
-		int droppedFramesCount = 0;
+		static unsigned int droppedFrames = 0;
+		static unsigned int droppedFramesCount = 0;
+		static unsigned int sequenceFrameNumber = 0;
+
 
 		GLenum captureStatus = GL_FAILURE_NV;
 
@@ -79,10 +81,15 @@ extern "C"
 		return attr::sdiIn.m_gviTime;
 	}
 
+	GLNVSDI_API unsigned int SdiInputFrameNumber()
+	{
+		return attr::sequenceFrameNumber;
+	}
+
 	///////////////////////////////////////////////////////////////////////
 	/// Return the number of dropped frames in the last update
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API int SdiInputDroppedFrames()
+	GLNVSDI_API unsigned int SdiInputDroppedFrames()
 	{
 		return attr::droppedFrames;
 	}
@@ -91,7 +98,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	/// Return the number of dropped frames since the application started
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API int SdiInputDroppedFramesCount()
+	GLNVSDI_API unsigned int SdiInputDroppedFramesCount()
 	{
 		return attr::droppedFramesCount;
 	}
@@ -178,7 +185,7 @@ extern "C"
 
 
 
-	GLNVSDI_API void SdiInputSetGlobalOptions(int ringBufferSizeInFrames)
+	GLNVSDI_API void SdiInputSetGlobalOptions(int ringBufferSizeInFrames, bool capture_fields)
 	{
 		//set the defaults for all the relevant options
 		SdiGlobalOptions().sampling = NVVIOCOMPONENTSAMPLING_422;
@@ -189,6 +196,7 @@ extern "C"
 		SdiGlobalOptions().captureGPU = CNvGpuTopology::instance().getPrimaryGpuIndex();
 
 		SdiGlobalOptions().inputRingBufferSize = ringBufferSizeInFrames;
+		SdiGlobalOptions().captureFields = capture_fields;
 
 		switch(SdiGlobalOptions().sampling)
 		{
@@ -574,7 +582,6 @@ extern "C"
 	GLNVSDI_API GLenum SdiInputCaptureVideo()
 	{
 		static GLint64EXT captureTime;
-		GLuint sequenceNum;    
 		static GLuint prevSequenceNum = 0;
 		attr::captureStatus = GL_FAILURE_NV;
 		static int numFails = 0;
@@ -586,15 +593,15 @@ extern "C"
 		{
 #endif
 			// Capture the video to a buffer object
-			attr::captureStatus = attr::sdiIn.Capture(&sequenceNum, &captureTime);
-			attr::droppedFrames = sequenceNum - prevSequenceNum - 1;
+			attr::captureStatus = attr::sdiIn.Capture(&attr::sequenceFrameNumber, &captureTime);
+			attr::droppedFrames = attr::sequenceFrameNumber - prevSequenceNum - 1;
 			attr::droppedFramesCount += attr::droppedFrames;
-			if(sequenceNum - prevSequenceNum > 1)
-			{
-				std::cout << "Frame: " << sequenceNum << " Dropped: " << attr::droppedFrames << std::endl;
-			}
+			//if(sequenceNum - prevSequenceNum > 1)
+			//{
+			//	std::cout << "Frame: " << sequenceNum << " Dropped: " << attr::droppedFrames << std::endl;
+			//}
 			
-			prevSequenceNum = sequenceNum;
+			prevSequenceNum = attr::sequenceFrameNumber;
 			switch (attr::captureStatus)
 			{
 				case GL_SUCCESS_NV:
@@ -723,7 +730,7 @@ extern "C"
 					//return false;
 				}
 
-				if (attr::sdiIn.IsInterlaced())
+				if (SdiGlobalOptions().captureFields)
 				{
 					if (!SdiInputBindVideoTextureField())
 					{

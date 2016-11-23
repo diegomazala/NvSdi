@@ -104,12 +104,6 @@ extern "C"
 
 	GLNVSDI_API bool SdiAncGetTimeCode(void* timecode_int8, int video_index);
 
-	
-	GLNVSDI_API int SdiInputDroppedFramesCount();
-	GLNVSDI_API void SdiInputResetDroppedFramesCount();
-
-	GLNVSDI_API int SdiOutputDuplicatedFramesCount();
-	GLNVSDI_API void SdiOutputResetDuplicatedFramesCount();
 };
 
 #endif	//__GL_NV_SDI_H__

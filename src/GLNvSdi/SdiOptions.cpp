@@ -21,6 +21,7 @@ SdiOptions::SdiOptions(): Options(),
 	this->videoInfo = TRUE;
 
 	this->invertFields = false;
+	this->captureFields = true;
 }
 
 void SdiOptions::InvertFields(bool invert)

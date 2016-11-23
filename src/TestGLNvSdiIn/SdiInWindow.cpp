@@ -60,8 +60,7 @@ bool SdiInWindow::InitGL()
 
 void SdiInWindow::Render()
 {
-	if (SdiInputCaptureVideo() != GL_FAILURE_NV)
-		this->DisplayVideo(960, 540);
+	this->DisplayVideo(960, 540);
 }
 
 
