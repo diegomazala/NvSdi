@@ -63,7 +63,6 @@ bool SdiOutWindow::SetupSdi()
 	}
 
 
-
 	if (!SdiOutputBindVideo() || !SdiOutputStart())
 	{
 		std::cerr << "Error: Could not start opengl sdi output" << std::endl;
@@ -103,12 +102,8 @@ void SdiOutWindow::Draw()
 
 void SdiOutWindow::Render()
 {
-
 	if (presenting)
 	{
-
-		//glNvSdi::OutputMakeCurrent();
-
 		SdiOutputBeginRender();
 		{
 			this->Draw();
@@ -122,10 +117,6 @@ void SdiOutWindow::Render()
 			gFont.Print(0.01f, 0.99f, "SDI Text ");				// Print GL Text To The Screen
 		}
 		SdiOutputEndRender();
-
-		SdiOutputPresentFrame();
-
-		//this->MakeCurrent();
 
 		SdiOutputGetTexture()->Plot(this->Width(), this->Height(), SdiOutputWidth(), SdiOutputHeight());
 	}

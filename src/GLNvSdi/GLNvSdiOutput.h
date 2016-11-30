@@ -42,10 +42,6 @@ extern "C"
 	GLNVSDI_API int SdiOutputHeight();
 
 
-	/// Setup a pixel format for outpu sdi
-	//GLNVSDI_API int SdiOutputSetupPixelFormat(HDC hDC);
-
-
 	/// Initialize the NvSdi Input according to options set previously
 	GLNVSDI_API bool SdiOutputInitialize();
 

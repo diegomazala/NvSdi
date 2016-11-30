@@ -17,7 +17,8 @@ int main(int argc, char* argv[])
 {
 	const int ringBufferSizeInFrames = ((argc > 1) ? atoi(argv[1]) : 2);
 	const bool captureFields = (bool)((argc > 2) ? atoi(argv[2]) : true);
-	const unsigned int max_frames = (argc > 3 ? atoi(argv[3]) : 1000);
+	const unsigned int sync_type = (argc > 3 ? atoi(argv[3]) : 2);
+	const unsigned int max_frames = (argc > 4 ? atoi(argv[4]) : 0);
 
 	std::chrono::time_point<std::chrono::system_clock> start_timer, end_timer;
 	start_timer = std::chrono::system_clock::now();
@@ -191,7 +192,7 @@ int main(int argc, char* argv[])
 				<< '\t' << current_time_to_string();
 		}
 
-		if (SdiInputFrameNumber() > max_frames)
+		if (SdiInputFrameNumber() > max_frames && max_frames > 0)
 			passthru.Close();
 	}
 

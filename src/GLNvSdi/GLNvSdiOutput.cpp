@@ -565,11 +565,9 @@ extern "C"
 				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(0));
 		}
 
-		const int duplicated_frames = attr::presentFrame.GetStats().durationTime - 1;
-		if (duplicated_frames > 0)
-			std::cout << "Duplicated Frames: " << duplicated_frames << std::endl;
-
-		attr::duplicateFramesCount += duplicated_frames;
+		attr::duplicateFramesCount += attr::presentFrame.GetStats().durationTime - 1;
+//		if (attr::duplicateFramesCount > 0)
+//			std::cout << "Duplicated Frames: " << attr::duplicateFramesCount << std::endl;
 	}
 
 
@@ -579,10 +577,15 @@ extern "C"
 		{
 			case SdiRenderEvent::PresentFrame:
 			{
+				sdiError = (int)glGetError();
+
 				if (SdiGetGLRC() != wglGetCurrentContext())
 					break;
+				sdiError = (int)glGetError();
 
 				SdiMakeCurrent();
+
+				sdiError = (int)glGetError();
 				SdiOutputPresentFrame();
 
 				sdiError = (int)glGetError();
@@ -620,6 +623,13 @@ extern "C"
 					sdiError = (int)glGetError();
 					return;
 				}
+
+				if (SdiOutputGetTextureId() < 1)
+				{
+					SdiOutputCreateTextures();
+					SdiOutputInitializeFbo();
+				}
+
 
 				if (!SdiOutputBindVideo())
 				{
