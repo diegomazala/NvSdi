@@ -16,9 +16,10 @@ std::string current_time_to_string()
 int main(int argc, char* argv[])
 {
 	const int ringBufferSizeInFrames = ((argc > 1) ? atoi(argv[1]) : 2);
-	const bool captureFields = (bool)((argc > 2) ? atoi(argv[2]) : true);
-	const unsigned int sync_type = (argc > 3 ? atoi(argv[3]) : 2);
-	const unsigned int max_frames = (argc > 4 ? atoi(argv[4]) : 0);
+	const int flipQueueLength = ((argc > 2) ? atoi(argv[2]) : 5);
+	const bool captureFields = (bool)((argc > 3) ? atoi(argv[3]) : true);
+	const SdiSyncSource sync_type = (argc > 4 ? (SdiSyncSource)atoi(argv[4]) : SdiSyncSource::NONE);
+	const unsigned int max_frames = (argc > 5 ? atoi(argv[5]) : 0);
 
 	std::chrono::time_point<std::chrono::system_clock> start_timer, end_timer;
 	start_timer = std::chrono::system_clock::now();
@@ -45,7 +46,7 @@ int main(int argc, char* argv[])
 	SdiOutputSetGlobalOptions();
 	
 	//SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 788, 513, false, 2);
-	SdiOutputSetVideoFormat(HD_1080I_59_94, NONE, 0, 0, false, 2);
+	SdiOutputSetVideoFormat(HD_1080I_59_94, sync_type, 0, 0, false, flipQueueLength);
 	//SdiOutputSetVideoFormat(HD_1080I_59_94, NONE, 0, 0, false, 2);
 	//SdiOutputSetVideoFormat(SD_487I_59_94, COMP_SYNC, 788, 513, false, 2);
 
