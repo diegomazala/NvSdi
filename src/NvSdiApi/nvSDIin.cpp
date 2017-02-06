@@ -1001,9 +1001,11 @@ GLenum CNvSDIin::Capture(GLuint *sequenceNum, GLint64EXT *captureTime)
 	m_gviTime = 0;
 	m_gpuTime = 0;
 	glGetInteger64v(GL_CURRENT_TIME_NV, &captureTimeEnd);
+	*captureTime = captureTimeEnd;
 	assert(glGetError() == GL_NO_ERROR);
 	m_gviTime = (captureTimeEnd - captureTimeStart)*.000000001;
 	float lTimeRef = (GetRingBufferSize() + 0.5) / m_fFrameRate;
+	//std::cout << "capture time: " << captureTimeStart << "  " << captureTimeEnd << "  " << captureTimeEnd - captureTimeStart << " : " << m_gviTime << " ; " << lTimeRef << " " << GetRingBufferSize() << " " << m_fFrameRate << std::endl;
 	if (m_gviTime < lTimeRef)
 	{
 		Sleep(1000.0*(lTimeRef - m_gviTime));

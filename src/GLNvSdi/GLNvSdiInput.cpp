@@ -24,6 +24,7 @@ extern "C"
 
 
 		GLenum captureStatus = GL_FAILURE_NV;
+		static GLint64EXT captureTime;
 
 	}
 
@@ -576,24 +577,36 @@ extern "C"
 		return attr::captureStatus;
 	}
 
+	GLNVSDI_API uint64_t SdiInputCaptureTime()
+	{
+		return attr::captureTime;
+	}
+
+	GLNVSDI_API float SdiInputFrameRate()
+	{
+		float frameRate = 0;
+		attr::sdiIn.GetFrameRate(&frameRate);
+		return frameRate;
+	}
+
 	///////////////////////////////////////////////////////////////////////
 	/// Capture the current frame for all sdi inputs available
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API GLenum SdiInputCaptureVideo()
 	{
-		static GLint64EXT captureTime;
+		
 		static GLuint prevSequenceNum = 0;
 		attr::captureStatus = GL_FAILURE_NV;
 		static int numFails = 0;
 		static int numTries = 0;
 		static bool bShowMessageBox = true;  
-
+		
 #if 0
 		if(numFails < 100)
 		{
 #endif
 			// Capture the video to a buffer object
-			attr::captureStatus = attr::sdiIn.Capture(&attr::sequenceFrameNumber, &captureTime);
+			attr::captureStatus = attr::sdiIn.Capture(&attr::sequenceFrameNumber, &attr::captureTime);
 			attr::droppedFrames = attr::sequenceFrameNumber - prevSequenceNum - 1;
 			attr::droppedFramesCount += attr::droppedFrames;
 			//if(sequenceNum - prevSequenceNum > 1)

@@ -32,7 +32,7 @@ public:
 	SdiWindow();
 	~SdiWindow();
 
-
+	void RenderToSdi(int vid_w, int vid_h);
 	void DisplayVideo(int vid_w, int vid_h);
 
 	void CalcWindowSize(int vid_w, int vid_h, int stream_count, NVVIOSIGNALFORMAT signal_format, int& win_w, int& win_h);
@@ -52,7 +52,7 @@ protected:
 	GLFbo	fbo;
 
 	bool m_ProccessingEnabled;
-	
+
 
 	gl::Texture2D	mOutputTex;
 	int	m_CurrentInputIndex;

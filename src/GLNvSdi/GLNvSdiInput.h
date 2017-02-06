@@ -121,6 +121,9 @@ extern "C"
 
 	/// Return Sdi capture status (GL_SUCCESS_NV, GL_FAILURE_NV, GL_PARTIAL_SUCCESS_NV)
 	GLNVSDI_API int SdiInputCaptureStatus();
+	
+	GLNVSDI_API uint64_t SdiInputCaptureTime();
+	GLNVSDI_API float SdiInputFrameRate();
 
 	/// Function called by Unity through rendering events
 	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetSdiInputRenderEventFunc();

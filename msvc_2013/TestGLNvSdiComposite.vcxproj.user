@@ -11,11 +11,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerEnvironment>PATH=..\lib\WinAppGL\msvc_2013\$(Platform);$OutDir);$(PATH)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>5 5 1 0 0</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>5 5 1 2 0</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerEnvironment>PATH=..\lib\WinAppGL\msvc_2013\$(Platform);$OutDir);$(PATH)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>5 5 1 0 0</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>5 5 1 2 0</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

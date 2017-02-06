@@ -8,16 +8,15 @@
 
 struct SdiStats
 {
-	const int NumQueries;
-	bool queryTime;		
-	GLuint durationTime;	
+	bool queryTime;
+	GLuint durationTime;
 	int frame_count;
 	float presentationInterval;
 	float sendInterval;
 	float latency;
 	float bufsQueued;
 	int	cur_query;
-	SdiStats():NumQueries(5), durationTime(1)
+	SdiStats() :durationTime(1)
 	{}
 };
 
@@ -33,20 +32,20 @@ public:
 
 	virtual void PresentFrame(){};// = 0;
 
-	virtual void PresentFrame(GLenum texType, GLuint texId);
-	virtual void PresentFrame(GLenum texType, GLuint texId_0, GLuint texId_1);
+	virtual void PresentFrame(GLenum texType, GLuint texId, GLuint64EXT minPresentTime = 0);
+	virtual void PresentFrame(GLenum texType, GLuint texId_0, GLuint texId_1, GLuint64EXT minPresentTime = 0);
 
-	virtual void PresentFrame(gl::Texture2D& tex);
-	virtual void PresentFrame(gl::Texture2D& tex_0, gl::Texture2D& tex_1);
+	virtual void PresentFrame(gl::Texture2D& tex, GLuint64EXT minPresentTime = 0);
+	virtual void PresentFrame(gl::Texture2D& tex_0, gl::Texture2D& tex_1, GLuint64EXT minPresentTime = 0);
 
-	virtual void PresentFrameDual(gl::Texture2D& tex_0, gl::Texture2D& tex_1);
-	virtual void PresentFrameDual(gl::Texture2D& tex_0, gl::Texture2D& tex_1, gl::Texture2D& tex_2, gl::Texture2D& tex_3);
+	virtual void PresentFrameDual(gl::Texture2D& tex_0, gl::Texture2D& tex_1, GLuint64EXT minPresentTime = 0);
+	virtual void PresentFrameDual(gl::Texture2D& tex_0, gl::Texture2D& tex_1, gl::Texture2D& tex_2, gl::Texture2D& tex_3, GLuint64EXT minPresentTime = 0);
 
-	virtual void PresentFrameDual(GLenum texType, GLuint texId_0, GLuint texId_1);
-	virtual void PresentFrameDual(GLenum texType, GLuint texId_0, GLuint texId_1, GLuint texId_2, GLuint texId_3);
- 
+	virtual void PresentFrameDual(GLenum texType, GLuint texId_0, GLuint texId_1, GLuint64EXT minPresentTime = 0);
+	virtual void PresentFrameDual(GLenum texType, GLuint texId_0, GLuint texId_1, GLuint texId_2, GLuint texId_3, GLuint64EXT minPresentTime = 0);
 
-	void PrintStats(bool print=true);
+
+	void PrintStats(bool print = true);
 
 	const SdiStats& GetStats() const { return mStats; }
 

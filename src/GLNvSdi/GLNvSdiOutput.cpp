@@ -13,16 +13,16 @@ extern "C"
 	// global variables
 	namespace attr
 	{
-		const int				cOutputTextureMaxCount	= 4;
-		const int				cOutputFboMaxCount		= 2;	
+		const int				cOutputTextureMaxCount = 4;
+		const int				cOutputFboMaxCount = 2;
 
 		gl::Texture2D			outputTexture[cOutputTextureMaxCount];
 		GLFbo					fbo[cOutputFboMaxCount];
-		
+
 		bool					textures = false;
 		bool					fbos = false;
 
-		HGLRC					outRC = NULL;	
+		HGLRC					outRC = NULL;
 
 		HVIDEOOUTPUTDEVICENV*	pVideoDevices;
 
@@ -36,7 +36,7 @@ extern "C"
 
 		bool					isPresentingFrames = false;
 	}
-	
+
 
 	GLNVSDI_API void SdiOutputInvertFields(bool invert)
 	{
@@ -49,7 +49,7 @@ extern "C"
 		SdiGlobalOptions().console = TRUE;
 		SdiGlobalOptions().dataFormat = NVVIODATAFORMAT_R8G8B8A8_TO_YCRCBA4224;
 		SdiGlobalOptions().syncSource = NVVIOSYNCSOURCE_COMPSYNC;
-		SdiGlobalOptions().videoFormat = NVVIOSIGNALFORMAT_1080I_59_94_SMPTE274; 
+		SdiGlobalOptions().videoFormat = NVVIOSIGNALFORMAT_1080I_59_94_SMPTE274;
 		SdiGlobalOptions().field = FALSE;
 		SdiGlobalOptions().flipQueueLength = 5;
 		SdiGlobalOptions().fps = TRUE;
@@ -136,6 +136,10 @@ extern "C"
 		return attr::sdiOut.GetHeight();
 	}
 
+	GLNVSDI_API void SdiOutputPrintStats(bool print)
+	{
+		attr::presentFrame.PrintStats(print);
+	}
 
 	/// Return the number of duplicated frames in the last update 
 	GLNVSDI_API int SdiOutputDuplicatedFrames()
@@ -161,13 +165,13 @@ extern "C"
 	/// Initialize the NvSdi Input according to options set previously
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiOutputInitialize()
-	{	
+	{
 		sdiError = (int)glGetError();
 
 		attr::duplicateFramesCount = 0;
 
 		// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
-		if(SdiOutputGpuCount() <= 0)
+		if (SdiOutputGpuCount() <= 0)
 		{
 			SdiLog() << "Unable to obtain system GPU topology" << std::endl;
 			return false;
@@ -176,7 +180,7 @@ extern "C"
 		sdiError = (int)glGetError();;
 
 		CNvSDIoutGpu* pOutGpu = CNvSDIoutGpuTopology::instance().getGpu(SdiGlobalOptions().gpu);
-		if(pOutGpu == NULL || (pOutGpu->isSDIoutput() == false))
+		if (pOutGpu == NULL || (pOutGpu->isSDIoutput() == false))
 		{
 			SdiLog() << "GPU doesn't have a valid SDI output device attached" << std::endl;
 			return false;
@@ -201,9 +205,9 @@ extern "C"
 	/// Configure the sdi devices for startup
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiOutputSetupDevices()
-	{	
+	{
 		// Setup the video device.
-		if (attr::sdiOut.Init(&SdiGlobalOptions(), CNvSDIoutGpuTopology::instance().getGpu(SdiGlobalOptions().gpu)) != S_OK) 
+		if (attr::sdiOut.Init(&SdiGlobalOptions(), CNvSDIoutGpuTopology::instance().getGpu(SdiGlobalOptions().gpu)) != S_OK)
 		{
 			SdiLog() << "Unable to initialize video device. Check sync signal." << std::endl;
 			return false;
@@ -228,7 +232,7 @@ extern "C"
 	GLNVSDI_API void SdiOutputCreateTextures()
 	{
 		attr::textures = true;
-		for (int i=0; i<attr::cOutputTextureMaxCount; ++i)
+		for (int i = 0; i<attr::cOutputTextureMaxCount; ++i)
 		{
 			// Create texture object
 			attr::outputTexture[i].Create();
@@ -251,7 +255,7 @@ extern "C"
 		if (!attr::textures)
 			return;
 
-		for (int i=0; i<attr::cOutputTextureMaxCount; ++i)
+		for (int i = 0; i<attr::cOutputTextureMaxCount; ++i)
 		{
 			attr::outputTexture[i].Destroy();
 		}
@@ -263,25 +267,25 @@ extern "C"
 	/// Create fbo for output 
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API void SdiOutputInitializeFbo()
-	{	
+	{
 		attr::fbos = true;
 
 		if (attr::sdiOut.IsInterlaced())
 		{
 			// Create FBO, pass in texture object to attach.
-			for (int i=0; i<attr::cOutputFboMaxCount; ++i)
-				attr::fbo[i].Initialize(SdiOutputWidth(), SdiOutputHeight(), 8, SdiGlobalOptions().fsaa, GL_TRUE, GL_TRUE, &attr::outputTexture[i*2], &attr::outputTexture[i*2+1]);
+			for (int i = 0; i<attr::cOutputFboMaxCount; ++i)
+				attr::fbo[i].Initialize(SdiOutputWidth(), SdiOutputHeight(), 8, SdiGlobalOptions().fsaa, GL_TRUE, GL_TRUE, &attr::outputTexture[i * 2], &attr::outputTexture[i * 2 + 1]);
 		}
 		else
 		{
 			// Create FBO, pass in texture object to attach.
-			for (int i=0; i<attr::cOutputFboMaxCount; ++i)
+			for (int i = 0; i<attr::cOutputFboMaxCount; ++i)
 				attr::fbo[i].Initialize(SdiOutputWidth(), SdiOutputHeight(), 8, SdiGlobalOptions().fsaa, GL_TRUE, GL_TRUE, &attr::outputTexture[i], NULL);
 		}
 	}
 
 
-	
+
 	///////////////////////////////////////////////////////////////////////
 	/// Destroy fbo used for output 
 	///////////////////////////////////////////////////////////////////////
@@ -290,7 +294,7 @@ extern "C"
 		if (!attr::fbos)
 			return;
 
-		for (int i=0; i<attr::cOutputFboMaxCount; ++i)
+		for (int i = 0; i<attr::cOutputFboMaxCount; ++i)
 			attr::fbo[i].Uninitialize();
 
 		attr::fbos = false;
@@ -315,7 +319,7 @@ extern "C"
 			{
 				SdiSetAffinityDC(wglCreateAffinityDCNV(handles));
 				SdiSetDC(SdiGetAffinityDC());
-				if(SdiGetDC() == NULL)
+				if (SdiGetDC() == NULL)
 				{
 					int error = GetLastError();
 					SdiLog() << "Error: wglCreateAffinityDCNV error code " << error << std::endl;
@@ -329,14 +333,14 @@ extern "C"
 		{
 			SdiSetDC(hDC);
 		}
-		
+
 		// checking if a rendering context was passed, otherwise we must create it
 		if (outRC == NULL)
 		{
 			if (SdiGetGLRC() == NULL)
 			{
 				// Create rendering context from the affinity device context	
-				SdiSetGLRC(wglCreateContext(SdiGetDC())); 
+				SdiSetGLRC(wglCreateContext(SdiGetDC()));
 				attr::outRC = SdiGetGLRC();
 			}
 			else
@@ -366,7 +370,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiOutputSetupGL()
 	{
-		if(!loadPresentVideoExtension() || !loadAffinityExtension() 
+		if (!loadPresentVideoExtension() || !loadAffinityExtension()
 			|| !loadFramebufferObjectExtension() || !loadTimerQueryExtension() || !loadSwapIntervalExtension())
 		{
 			SdiLog() << "Couldn't load required OpenGL extensions." << std::endl;
@@ -389,7 +393,7 @@ extern "C"
 		// Get list of available video devices.
 		int numDevices = wglEnumerateVideoDevicesNV(SdiGetDC(), NULL);
 
-		if (numDevices <= 0) 
+		if (numDevices <= 0)
 		{
 			SdiLog() << "wglEnumerateVideoDevicesNV() did not return any devices." << std::endl;
 			return false;
@@ -397,13 +401,13 @@ extern "C"
 
 		attr::pVideoDevices = (HVIDEOOUTPUTDEVICENV *)malloc(numDevices * sizeof(HVIDEOOUTPUTDEVICENV));
 
-		if (!attr::pVideoDevices) 
+		if (!attr::pVideoDevices)
 		{
 			SdiLog() << "malloc failed.  OOM?" << std::endl;
 			return false;
 		}
 
-		if (numDevices != wglEnumerateVideoDevicesNV(SdiGetDC(), attr::pVideoDevices)) 
+		if (numDevices != wglEnumerateVideoDevicesNV(SdiGetDC(), attr::pVideoDevices))
 		{
 			free(attr::pVideoDevices);
 			SdiLog() << "Inconsistent results from wglEnumerateVideoDevicesNV()" << std::endl;
@@ -432,12 +436,12 @@ extern "C"
 		SdiOutputUninitializeFbo();
 
 		SdiOutputDestroyTextures();
-		
+
 		wglDeleteDCNV(SdiGetAffinityDC());
 
 		if (attr::outRC != NULL)
 		{
-			wglDeleteContext(attr::outRC);		
+			wglDeleteContext(attr::outRC);
 			SdiSetGLRC(NULL);
 			attr::outRC = NULL;
 		}
@@ -450,7 +454,7 @@ extern "C"
 	GLNVSDI_API bool SdiOutputBindVideo()
 	{
 		//Bind the first device found that is connected to the output GPU
-		if (!wglBindVideoDeviceNV(SdiGetDC(), 1, attr::pVideoDevices[0], NULL)) 
+		if (!wglBindVideoDeviceNV(SdiGetDC(), 1, attr::pVideoDevices[0], NULL))
 		{
 			SdiLog() << "Failed to bind a videoDevice to slot 0." << std::endl;
 			return false;
@@ -464,11 +468,11 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiOutputUnbindVideo()
 	{
-		if (!wglBindVideoDeviceNV(SdiGetDC(), 1, NULL, NULL)) 
+		if (!wglBindVideoDeviceNV(SdiGetDC(), 1, NULL, NULL))
 		{
 			SdiLog() << "Failed to unbind NULL videoDevice to slot 0." << std::endl;
 			return false;
-		}	
+		}
 		return true;
 	}
 
@@ -527,7 +531,7 @@ extern "C"
 
 
 
-	
+
 	///////////////////////////////////////////////////////////////////////
 	/// Send the current frame to sdi output
 	///////////////////////////////////////////////////////////////////////
@@ -548,26 +552,30 @@ extern "C"
 			int tex3 = 2;
 		}
 
+		uint64_t minPresentTime = SdiInputCaptureTime() + SdiOptions().flipQueueLength * SdiInputFrameRate() * 2;
+		//std::cout << minPresentTime << std::endl;
+
 		if (attr::sdiOut.IsInterlaced())
 		{
 			if (dual_output)
-				attr::presentFrame.PresentFrameDual(SdiOutputGetTextureType(0), 
-													SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1),
-													SdiOutputGetTextureId(tex2), SdiOutputGetTextureId(tex3));
+				attr::presentFrame.PresentFrameDual(SdiOutputGetTextureType(0),
+				SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1),
+				SdiOutputGetTextureId(tex2), SdiOutputGetTextureId(tex3),
+				minPresentTime);
 			else
-				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1));
+				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1), minPresentTime);
 		}
 		else
 		{
 			if (dual_output)
-				attr::presentFrame.PresentFrameDual(SdiOutputGetTextureType(0), SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1));
+				attr::presentFrame.PresentFrameDual(SdiOutputGetTextureType(0), SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1), minPresentTime);
 			else
-				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(0));
+				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(0), minPresentTime);
 		}
 
 		attr::duplicateFramesCount += attr::presentFrame.GetStats().durationTime - 1;
-//		if (attr::duplicateFramesCount > 0)
-//			std::cout << "Duplicated Frames: " << attr::duplicateFramesCount << std::endl;
+		//		if (attr::duplicateFramesCount > 0)
+		//			std::cout << "Duplicated Frames: " << attr::duplicateFramesCount << std::endl;
 	}
 
 
@@ -575,97 +583,97 @@ extern "C"
 	{
 		switch (static_cast<SdiRenderEvent>(render_event_id))
 		{
-			case SdiRenderEvent::PresentFrame:
+		case SdiRenderEvent::PresentFrame:
+		{
+			sdiError = (int)glGetError();
+
+			if (SdiGetGLRC() != wglGetCurrentContext())
+				break;
+			sdiError = (int)glGetError();
+
+			SdiMakeCurrent();
+
+			sdiError = (int)glGetError();
+			SdiOutputPresentFrame();
+
+			sdiError = (int)glGetError();
+			break;
+		}
+
+		case SdiRenderEvent::Initialize:
+		{
+			//SdiSetupLogFile();
+			SdiSetCurrentDC();
+			SdiSetCurrentGLRC();
+
+			SdiOutputInitialize();
+
+			sdiError = (int)glGetError();
+			break;
+		}
+
+		case SdiRenderEvent::Setup:
+		{
+			//SdiOutputSetGlobalOptions();
+			//SdiOutputSetVideoFormat(SdiVideoFormat::HD_1080I_59_94, SdiSyncSource::NONE, 0, 0, false, 5);
+
+			if (!SdiOutputSetupDevices())
 			{
 				sdiError = (int)glGetError();
-
-				if (SdiGetGLRC() != wglGetCurrentContext())
-					break;
-				sdiError = (int)glGetError();
-
-				SdiMakeCurrent();
-
-				sdiError = (int)glGetError();
-				SdiOutputPresentFrame();
-
-				sdiError = (int)glGetError();
-				break;
+				return;
 			}
 
-			case SdiRenderEvent::Initialize:
+			SdiMakeCurrent();
+
+			if (!SdiOutputSetupGL())
 			{
-				//SdiSetupLogFile();
-				SdiSetCurrentDC();
-				SdiSetCurrentGLRC();
-
-				SdiOutputInitialize();
-
-				sdiError = (int)glGetError();
-				break;
-			}
-
-			case SdiRenderEvent::Setup:
-			{
-				//SdiOutputSetGlobalOptions();
-				//SdiOutputSetVideoFormat(SdiVideoFormat::HD_1080I_59_94, SdiSyncSource::NONE, 0, 0, false, 5);
-
-				if (!SdiOutputSetupDevices())
-				{
-					sdiError = (int)glGetError();
-					return;
-				}
-
-				SdiMakeCurrent();
-
-				if (!SdiOutputSetupGL())
-				{
-					SdiOutputCleanupDevices();
-					sdiError = (int)glGetError();
-					return;
-				}
-
-				if (SdiOutputGetTextureId() < 1)
-				{
-					SdiOutputCreateTextures();
-					SdiOutputInitializeFbo();
-				}
-
-
-				if (!SdiOutputBindVideo())
-				{
-					SdiOutputCleanupDevices();
-					sdiError = (int)glGetError();
-					return;
-				}
-
-				SdiOutputStart();
-
-				sdiError = (int)glGetError();
-
-				SdiOutputResetDuplicatedFramesCount();
-
-				break;
-			}
-
-
-			case SdiRenderEvent::Shutdown:
-			{
-				HGLRC uty_hglrc = wglGetCurrentContext();
-				HDC uty_hdc = wglGetCurrentDC();
-				
-				
-				SdiMakeCurrent();
-				SdiOutputStop();
-				SdiOutputUnbindVideo();
-				SdiOutputCleanupGL();
 				SdiOutputCleanupDevices();
-				SdiOutputUninitialize();
 				sdiError = (int)glGetError();
-				
-				wglMakeCurrent(uty_hdc, uty_hglrc);
-
-				break;
+				return;
 			}
+
+			if (SdiOutputGetTextureId() < 1)
+			{
+				SdiOutputCreateTextures();
+				SdiOutputInitializeFbo();
+			}
+
+
+			if (!SdiOutputBindVideo())
+			{
+				SdiOutputCleanupDevices();
+				sdiError = (int)glGetError();
+				return;
+			}
+
+			SdiOutputStart();
+
+			sdiError = (int)glGetError();
+
+			SdiOutputResetDuplicatedFramesCount();
+
+			break;
+		}
+
+
+		case SdiRenderEvent::Shutdown:
+		{
+			HGLRC uty_hglrc = wglGetCurrentContext();
+			HDC uty_hdc = wglGetCurrentDC();
+
+
+			SdiMakeCurrent();
+			SdiOutputStop();
+			SdiOutputUnbindVideo();
+			SdiOutputCleanupGL();
+			SdiOutputCleanupDevices();
+			SdiOutputUninitialize();
+			sdiError = (int)glGetError();
+
+			wglMakeCurrent(uty_hdc, uty_hglrc);
+
+			break;
+		}
 		}
 
 	}

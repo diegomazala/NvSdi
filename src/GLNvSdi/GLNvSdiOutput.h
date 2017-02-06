@@ -70,7 +70,7 @@ extern "C"
 
 	/// Bind video device to opengl sdi
 	GLNVSDI_API bool SdiOutputBindVideo();
-	
+
 	/// Unbind video device to opengl sdi
 	GLNVSDI_API bool SdiOutputUnbindVideo();
 
@@ -124,6 +124,8 @@ extern "C"
 
 	/// Send the current frame to sdi output
 	GLNVSDI_API void SdiOutputPresentFrame();
+
+	GLNVSDI_API void SdiOutputPrintStats(bool print);
 
 
 	/// Return the number of duplicated frames in the last update 
