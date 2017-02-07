@@ -552,7 +552,7 @@ extern "C"
 			int tex3 = 2;
 		}
 
-		uint64_t minPresentTime = SdiInputCaptureTime() + SdiOptions().flipQueueLength * SdiInputFrameRate() * 2;
+		uint64_t minPresentTime = SdiInputCaptureTime() + SdiOptions().flipQueueLength * SdiInputFrameRate();
 		//std::cout << minPresentTime << std::endl;
 
 		if (attr::sdiOut.IsInterlaced())
