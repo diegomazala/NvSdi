@@ -4,6 +4,7 @@
 #include <chrono>
 #include "GLFont.h"
 
+
 std::string current_time_to_string()
 {
 	std::chrono::system_clock::time_point p = std::chrono::system_clock::now();
@@ -13,13 +14,14 @@ std::string current_time_to_string()
 	return ss.str();
 }
 
-void frame_count_to_timecode(uint64_t frame_number, uint32_t& hours, uint32_t& minutes, uint32_t& seconds, uint32_t& frames)
+static void frame_count_to_timecode(uint64_t frame_number, uint32_t& hours, uint32_t& minutes, uint32_t& seconds, uint32_t& frames)
 {
 	frames = frame_number % 30;
 	seconds = (frame_number / 30) % 60;
 	minutes = ((frame_number / 30) / 60) % 60;
 	hours = (((frame_number / 30) / 60) / 60) % 24;
 }
+
 
 int main(int argc, char* argv[])
 {
@@ -70,6 +72,8 @@ int main(int argc, char* argv[])
 		std::cerr << "Error: Could not setup sdi devices for output" << std::endl;
 		return EXIT_FAILURE;
 	}
+
+	
 
 	int window_w = SdiInputWidth(),
 		window_h = SdiInputHeight();
@@ -180,14 +184,17 @@ int main(int argc, char* argv[])
 	}
 
 
-
 	SdiInputResetDroppedFramesCount();
 	SdiOutputResetDuplicatedFramesCount();
+
+	uint64_t last_drop = 0;
+	uint64_t out_frame_count = 0;
+	std::chrono::duration<double> loop_elapsed_seconds;
 
 	lApp.InitSetup();
 	while (lApp.ProcessMainLoop())
 	{
-
+		auto begin_loop_timer = std::chrono::system_clock::now();
 
 		GLenum status = SdiInputCaptureVideo();
 		if (status != GL_SUCCESS_NV)
@@ -197,8 +204,38 @@ int main(int argc, char* argv[])
 
 
 		SdiAncCapture();
-		passthru.RenderToSdi(SdiInputWidth(), SdiInputHeight());
-		passthru.DisplayVideo(SdiInputWidth(), SdiInputHeight());
+		SdiAncGetTimeCode(timecode, 0);
+		//passthru.RenderToSdi(SdiInputWidth(), SdiInputHeight());
+
+		for (int f = 0; f < 2; ++f)
+		{
+			SdiOutputBeginRender(0, f);
+			{
+				glClearColor(1 - f, f, 0.0, 0.0);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				SdiInputGetTexture(0)->Enable();
+				SdiInputGetTexture(0)->Bind();
+				SdiInputGetTexture(0)->Plot(SdiInputWidth(), SdiInputHeight(), SdiInputWidth(), SdiInputHeight());
+
+				glColor3f(1, 1, 1);
+				gFont.Plot(-0.95f, -0.60f, "GPU Time: %f. GVI Time: %f", SdiInputGpuTime(), SdiInputGviTime());
+				gFont.Plot(-0.95f, -0.70f, "In(%d) Out(%d) ", SdiInputDroppedFramesCount(), SdiOutputDuplicatedFramesCount());
+				uint32_t hours, minutes, seconds, frame_number;
+				frame_count_to_timecode(out_frame_count, hours, minutes, seconds, frame_number);
+				//gFont.Plot(-0.95f, -0.80f, "%05d - %02d:%02d:%02d:%02d", out_frame_count, hours, minutes, seconds, frame_number);
+				gFont.Plot(-0.95f, -0.80f, "%d %d - %d%d:%d%d:%d%d:%d%d", SdiInputFrameNumber(), SdiInputFrameNumber() - last_drop,
+					timecode[0], timecode[1], timecode[2], timecode[3],
+					timecode[4], timecode[5], timecode[6], timecode[7]);
+				//gFont.Plot(-0.95f, -0.70f, "Out (%d) ", SdiOutputDuplicatedFramesCount());
+				gFont.Plot(-0.95f, -0.90f, "Loop Time (%f) ", loop_elapsed_seconds.count());
+
+				SdiInputGetTexture(0)->Unbind();
+				SdiInputGetTexture(0)->Disable();
+			}
+			SdiOutputEndRender(0, f);
+		}
+
+					
 		SdiAncPresent();
 		SdiOutputPresentFrame();
 
@@ -206,11 +243,23 @@ int main(int argc, char* argv[])
 		if (SdiInputDroppedFrames() > 0 || SdiOutputDuplicatedFrames() > 0)
 		{
 			std::cout
-				<< "Frame: " << SdiInputFrameNumber()
+				<< "Frame: " << SdiInputFrameNumber() << ' ' << SdiInputFrameNumber() - last_drop
 				<< "\tDrop IO : " << SdiInputDroppedFrames() << ", " << SdiOutputDuplicatedFrames()
 				<< "\t- " << SdiInputDroppedFramesCount() << ", " << SdiOutputDuplicatedFramesCount()
 				<< '\t' << SdiInputGviTime() << '\t' << current_time_to_string();
+
+			last_drop = SdiInputFrameNumber();
 		}
+
+		auto end_loop_timer = std::chrono::system_clock::now();
+
+		loop_elapsed_seconds = end_loop_timer - begin_loop_timer;
+
+		int drop = SdiOutputDuplicatedFrames();
+
+		++out_frame_count;
+
+		passthru.DisplayVideo(SdiInputWidth(), SdiInputHeight());
 
 		if (SdiInputFrameNumber() > max_frames && max_frames > 0)
 			passthru.Close();

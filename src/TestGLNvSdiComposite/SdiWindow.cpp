@@ -6,6 +6,12 @@
 #include "GLNvSdi.h"
 #include "GLFont.h"
 #include <ctime>
+#include <chrono>
+
+static uint64_t last_drop = 0;
+static uint64_t out_frame_count = 0;
+static std::chrono::duration<double> loop_elapsed_seconds;
+
 
 GLFont gFont;
 
@@ -14,6 +20,14 @@ GLFont gFont;
 #define GRAY 0.3f, 0.3f, 0.3f
 
 static int timecode[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+static void frame_count_to_timecode(uint64_t frame_number, uint32_t& hours, uint32_t& minutes, uint32_t& seconds, uint32_t& frames)
+{
+	frames = frame_number % 30;
+	seconds = (frame_number / 30) % 60;
+	minutes = ((frame_number / 30) / 60) % 60;
+	hours = (((frame_number / 30) / 60) / 60) % 24;
+}
 
 SdiWindow::SdiWindow() : GLWindow(), m_ProccessingEnabled(true), DroppedFrames(0), m_CurrentInputIndex(0)
 {
@@ -91,32 +105,38 @@ bool SdiWindow::InitFbo()
 
 
 
-
-
-void SdiWindow::RenderToSdi(int vid_w, int vid_h)
-{
-	for (int f = 0; f < 2; ++f)
-	{
-		SdiOutputBeginRender(0, f);
-		{
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			//SdiInputGetTexture(m_CurrentInputIndex)->Enable();
-			//SdiInputGetTexture(m_CurrentInputIndex)->Bind();
-			//SdiInputGetTexture(m_CurrentInputIndex)->Plot(vid_w, vid_h, vid_w, vid_h);
-
-			glColor3f(WHITE);
-			gFont.Plot(-0.95f, -0.70f, "GPU Time: %f. GVI Time: %f", SdiInputGpuTime(), SdiInputGviTime());
-			gFont.Plot(-0.95f, -0.80f, "Drops In(%d) Out(%d) ", SdiInputDroppedFramesCount(), SdiOutputDuplicatedFramesCount());
-			gFont.Plot(-0.95f, -0.90f, "%d%d:%d%d:%d%d:%d%d",
-				timecode[0], timecode[1], timecode[2], timecode[3],
-				timecode[4], timecode[5], timecode[6], timecode[7]);
-
-			//SdiInputGetTexture(m_CurrentInputIndex)->Unbind();
-			//SdiInputGetTexture(m_CurrentInputIndex)->Disable();
-		}
-		SdiOutputEndRender(0, f);
-	}
-}
+//
+//
+//void SdiWindow::RenderToSdi(int vid_w, int vid_h)
+//{
+//	for (int f = 0; f < 2; ++f)
+//	{
+//		SdiOutputBeginRender(0, f);
+//		{
+//			glClearColor(1 - f, f, 0.0, 0.0);
+//			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//			SdiInputGetTexture(0)->Enable();
+//			SdiInputGetTexture(0)->Bind();
+//			SdiInputGetTexture(0)->Plot(SdiInputWidth(), SdiInputHeight(), SdiInputWidth(), SdiInputHeight());
+//
+//			glColor3f(1, 1, 1);
+//			gFont.Plot(-0.95f, -0.60f, "GPU Time: %f. GVI Time: %f", SdiInputGpuTime(), SdiInputGviTime());
+//			gFont.Plot(-0.95f, -0.70f, "In(%d) Out(%d) ", SdiInputDroppedFramesCount(), SdiOutputDuplicatedFramesCount());
+//			uint32_t hours, minutes, seconds, frame_number;
+//			frame_count_to_timecode(out_frame_count, hours, minutes, seconds, frame_number);
+//			//gFont.Plot(-0.95f, -0.80f, "%05d - %02d:%02d:%02d:%02d", out_frame_count, hours, minutes, seconds, frame_number);
+//			gFont.Plot(-0.95f, -0.80f, "%d %d - %d%d:%d%d:%d%d:%d%d", SdiInputFrameNumber(), SdiInputFrameNumber() - last_drop,
+//				timecode[0], timecode[1], timecode[2], timecode[3],
+//				timecode[4], timecode[5], timecode[6], timecode[7]);
+//			//gFont.Plot(-0.95f, -0.70f, "Out (%d) ", SdiOutputDuplicatedFramesCount());
+//			gFont.Plot(-0.95f, -0.90f, "Loop Time (%f) ", loop_elapsed_seconds.count());
+//
+//			SdiInputGetTexture(0)->Unbind();
+//			SdiInputGetTexture(0)->Disable();
+//		}
+//		SdiOutputEndRender(0, f);
+//	}
+//}
 
 void SdiWindow::DisplayVideo(int vid_w, int vid_h)
 {
