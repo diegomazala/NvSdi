@@ -124,6 +124,7 @@ extern "C"
 	
 	GLNVSDI_API uint64_t SdiInputCaptureTime();
 	GLNVSDI_API float SdiInputFrameRate();
+	GLNVSDI_API double SdiInputFrameRateNanoSec();
 
 	/// Function called by Unity through rendering events
 	UnityRenderingEvent GLNVSDI_API UNITY_INTERFACE_API GetSdiInputRenderEventFunc();

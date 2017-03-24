@@ -17,6 +17,7 @@ public class GLNvSdiUI : MonoBehaviour
     public UnityEngine.UI.Text droppedFramesIn;
     public UnityEngine.UI.Text droppedFramesOut;
     public UnityEngine.UI.Text gviTime;
+    public UnityEngine.UI.InputField delay;
 
 
 
@@ -25,15 +26,17 @@ public class GLNvSdiUI : MonoBehaviour
 
     void Start()
     {
-        UtyGLNvSdi sdi = FindObjectOfType<UtyGLNvSdi>();
-        if (sdi == null)
+        if (utySdi == null)
+            utySdi = FindObjectOfType<UtyGLNvSdi>();
+
+        if (utySdi == null)
         {
             Debug.LogError("Could not find sdi object. Disabling sdi UI");
             enabled = false;
             return;
         }
 
-        options = sdi.options;
+        options = utySdi.options;
 
         OnReloadUI();
 
@@ -71,18 +74,24 @@ public class GLNvSdiUI : MonoBehaviour
         UtyGLNvSdi.SdiOutputResetDuplicatedFramesCount();
     }
 
+    public void OnDelayEdit()
+    {
+        options.outputDelay = float.Parse(this.delay.text);
+        UtyGLNvSdi.SdiOutputSetDelay(options.outputDelay);
+    }
 
     public void OnReloadUI()
     {
         videoFormat.text = options.videoFormat.ToString();
         syncSource.text = options.syncSource.ToString();
         ringBufferIn.text = options.inputRingBufferSize.ToString();
-        ringBufferOut.text = options.outputFlipQueueLength.ToString();
+        ringBufferOut.text = options.outputRingBufferSize.ToString();
         hSync.text = options.outputHorizontalDelay.ToString();
         vSync.text = options.outputVerticalDelay.ToString();
         droppedFramesIn.text = UtyGLNvSdi.SdiInputDroppedFramesCount().ToString();
         droppedFramesOut.text = UtyGLNvSdi.SdiOutputDuplicatedFramesCount().ToString();
         gviTime.text = UtyGLNvSdi.SdiInputGviTime().ToString("0.0000");
+        delay.text = options.outputDelay.ToString("0.0");
     }
 
 }

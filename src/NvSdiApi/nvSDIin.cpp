@@ -980,17 +980,19 @@ GLenum CNvSDIin::Capture(GLuint *sequenceNum, GLint64EXT *captureTime)
 }
 
 #else
-GLenum CNvSDIin::Capture(GLuint *sequenceNum, GLint64EXT *captureTime)
-{	
+GLenum CNvSDIin::Capture(GLuint *sequenceNum, GLuint64EXT *captureTime)
+{
 	assert(glGetError() == GL_NO_ERROR);
 	GLenum ret;
 
 	GLint64EXT captureTimeStart;
-	GLint64EXT captureTimeEnd;	
+	GLint64EXT captureTimeEnd;
 	// Capture the video to a buffer object	
 
 	assert(glGetError() == GL_NO_ERROR);
-	ret = glVideoCaptureNV(m_videoSlot, sequenceNum, (GLuint64EXT*) &captureTimeStart);		
+	glGetInteger64v(GL_CURRENT_TIME_NV, &captureTimeStart);
+	ret = glVideoCaptureNV(m_videoSlot, sequenceNum, (GLuint64EXT*)captureTime);
+
 
 	if (ret != GL_SUCCESS_NV)
 		return ret;
@@ -1001,26 +1003,31 @@ GLenum CNvSDIin::Capture(GLuint *sequenceNum, GLint64EXT *captureTime)
 	m_gviTime = 0;
 	m_gpuTime = 0;
 	glGetInteger64v(GL_CURRENT_TIME_NV, &captureTimeEnd);
-	*captureTime = captureTimeEnd;
 	assert(glGetError() == GL_NO_ERROR);
 	m_gviTime = (captureTimeEnd - captureTimeStart)*.000000001;
-	float lTimeRef = (GetRingBufferSize() + 0.5) / m_fFrameRate;
-	//std::cout << "capture time: " << captureTimeStart << "  " << captureTimeEnd << "  " << captureTimeEnd - captureTimeStart << " : " << m_gviTime << " ; " << lTimeRef << " " << GetRingBufferSize() << " " << m_fFrameRate << std::endl;
-	if (m_gviTime < lTimeRef)
-	{
-		Sleep(1000.0*(lTimeRef - m_gviTime));
-	}
-	while(m_gviTime > (GetRingBufferSize() + 0.5) / m_fFrameRate)
-	{
-		ret = glVideoCaptureNV(m_videoSlot, sequenceNum, (GLuint64EXT*) &captureTimeStart);
-		if (ret != GL_SUCCESS_NV)
-		return ret;
 
-		m_gviTime = (captureTimeEnd - captureTimeStart)*.000000001;
-	}
-		
+	//float lTimeRef = (GetRingBufferSize() + 0.5) / m_fFrameRate;
+	//if (m_gviTime < lTimeRef)
+	//{
+	//	Sleep(1000.0*(lTimeRef - m_gviTime));
+	//}
+	//while(m_gviTime > (GetRingBufferSize() + 0.5) / m_fFrameRate)
+	//{
+	//	ret = glVideoCaptureNV(m_videoSlot, sequenceNum, (GLuint64EXT*) &captureTimeStart);
+	//	if (ret != GL_SUCCESS_NV)
+	//	return ret;
+
+	//	m_gviTime = (captureTimeEnd - captureTimeStart)*.000000001;
+	//}
+
+	//std::cout << std::fixed
+	//	<< *sequenceNum << " " << GetRingBufferSize()
+	//	<< " [" << captureTimeStart << " " << *captureTime << " " << captureTimeEnd << "] "
+	//	<< "end-start= " << (captureTimeEnd - captureTimeStart)*.000000001
+	//	<< " end-capture= " << (captureTimeEnd - *captureTime)*.000000001 << std::endl;
+
 	assert(glGetError() == GL_NO_ERROR);
-	return ret;	
+	return ret;
 }
 #endif
 

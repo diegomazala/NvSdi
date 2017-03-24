@@ -869,7 +869,7 @@ HRESULT C_DVP::StopSDIPipeline()
 
 void C_DVP::CaptureThread()
 {	
-	GLint64EXT captureTime;
+	GLuint64EXT captureTime;
 	GLuint sequenceNum;    
 	GLuint numDroppedFrames[NVAPI_MAX_VIO_DEVICES];
 	static GLuint prevSequenceNum[NVAPI_MAX_VIO_DEVICES];

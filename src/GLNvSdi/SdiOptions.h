@@ -36,6 +36,7 @@ enum SdiSyncSource
 struct GLNVSDI_API SdiOptions : public Options
 {
 	int inputRingBufferSize;
+	float outputDelay;
 	int antiAliasing;
 	bool invertFields;
 	bool captureFields;
@@ -43,7 +44,9 @@ struct GLNVSDI_API SdiOptions : public Options
 	SdiVideoFormat mSdiVideoFormat;
 
 	SdiOptions();
-	void SetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, int h_delay = 0, int v_delay = 0, bool dualOutput = false);
+	
+	void SetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, float outputDelay, int h_delay = 0, int v_delay = 0, bool dualOutput = false);
+	void SetOutputDelay(float delay);
 	void InvertFields(bool invert);
 	bool InvertFields() const;
 	void SetDualOutput(bool dual = true);

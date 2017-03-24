@@ -22,6 +22,8 @@ SdiOptions::SdiOptions(): Options(),
 
 	this->invertFields = false;
 	this->captureFields = true;
+
+	this->outputDelay = 0.0f;
 }
 
 void SdiOptions::InvertFields(bool invert)
@@ -55,8 +57,14 @@ bool SdiOptions::IsDualOutput() const
 	}
 }
 
-void SdiOptions::SetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, int h_delay, int v_delay, bool dualOutput)
+void SdiOptions::SetOutputDelay(float delay)
 {
+	this->outputDelay = delay;
+}
+
+void SdiOptions::SetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, float outputDelay, int h_delay, int v_delay, bool dualOutput)
+{
+	this->outputDelay = outputDelay;
 	this->hDelay = h_delay;
 	this->vDelay = v_delay;
 

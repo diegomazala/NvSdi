@@ -119,7 +119,7 @@ public:
 	HRESULT UnbindVideoFrameBuffer(int stream);	
 	
 	HRESULT StartCapture();
-	GLenum Capture(GLuint *sequenceNum, GLint64EXT *captureTime);
+	GLenum Capture(GLuint *sequenceNum, GLuint64EXT *captureTime);
 	HRESULT EndCapture();
 
 	HRESULT Cleanup();

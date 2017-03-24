@@ -76,10 +76,15 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	/// Setup the main attributes for sdi output
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API void SdiOutputSetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, int h_delay, int v_delay, bool dual_output, int flip_queue_lenght)
+	GLNVSDI_API void SdiOutputSetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, float output_delay, int h_delay, int v_delay, bool dual_output, int flip_queue_lenght)
 	{
-		SdiGlobalOptions().SetVideoFormat(video_format, sync_source, h_delay, v_delay, dual_output);
+		SdiGlobalOptions().SetVideoFormat(video_format, sync_source, output_delay, h_delay, v_delay, dual_output);
 		SdiGlobalOptions().flipQueueLength = flip_queue_lenght;
+	}
+
+	GLNVSDI_API void SdiOutputSetDelay(float delay)
+	{ 
+		SdiGlobalOptions().outputDelay = delay;
 	}
 
 	///////////////////////////////////////////////////////////////////////
@@ -144,7 +149,9 @@ extern "C"
 	/// Return the number of duplicated frames in the last update 
 	GLNVSDI_API int SdiOutputDuplicatedFrames()
 	{
-		return attr::presentFrame.GetStats().durationTime - 1;
+		return (attr::presentFrame.GetStats().durationTime > 1)
+			? attr::presentFrame.GetStats().durationTime - 1
+			: 0;
 	}
 
 
@@ -416,6 +423,11 @@ extern "C"
 
 		attr::presentFrame.Initialize();
 
+		std::cout << "============================= \n"
+			<< "  " << SdiGlobalOptions().inputRingBufferSize
+			<< "  " << SdiGlobalOptions().flipQueueLength
+			<< "  " << SdiGlobalOptions().outputDelay << std::endl;
+
 		return true;
 	}
 
@@ -535,7 +547,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	/// Send the current frame to sdi output
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API void SdiOutputPresentFrame()
+	GLNVSDI_API void SdiOutputPresentFrame(uint64_t minPresentTime)
 	{
 		const bool dual_output = SdiGlobalOptions().IsDualOutput();
 
@@ -551,9 +563,7 @@ extern "C"
 			int tex2 = 3;
 			int tex3 = 2;
 		}
-
-		uint64_t minPresentTime = SdiInputCaptureTime() + SdiOptions().flipQueueLength * SdiInputFrameRate();
-		//std::cout << minPresentTime << std::endl;
+			 
 
 		if (attr::sdiOut.IsInterlaced())
 		{
@@ -573,9 +583,8 @@ extern "C"
 				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(0), minPresentTime);
 		}
 
-		attr::duplicateFramesCount += attr::presentFrame.GetStats().durationTime - 1;
-		//		if (attr::duplicateFramesCount > 0)
-		//			std::cout << "Duplicated Frames: " << attr::duplicateFramesCount << std::endl;
+		if (attr::presentFrame.GetStats().durationTime > 1)
+			attr::duplicateFramesCount += attr::presentFrame.GetStats().durationTime - 1;
 	}
 
 
@@ -594,7 +603,9 @@ extern "C"
 			SdiMakeCurrent();
 
 			sdiError = (int)glGetError();
-			SdiOutputPresentFrame();
+			double frame_rate_ns = 1000000000.0 / SdiInputFrameRate();
+			const uint64_t minPresentTime = SdiInputCaptureTime() + SdiGlobalOptions().outputDelay * frame_rate_ns;
+			SdiOutputPresentFrame(minPresentTime);
 
 			sdiError = (int)glGetError();
 			break;
@@ -615,7 +626,7 @@ extern "C"
 		case SdiRenderEvent::Setup:
 		{
 			//SdiOutputSetGlobalOptions();
-			//SdiOutputSetVideoFormat(SdiVideoFormat::HD_1080I_59_94, SdiSyncSource::NONE, 0, 0, false, 5);
+			//SdiOutputSetVideoFormat(SdiVideoFormat::HD_1080I_59_94, SdiSyncSource::NONE, 0, 0, 0, false, 5);
 
 			if (!SdiOutputSetupDevices())
 			{

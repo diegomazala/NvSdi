@@ -58,22 +58,25 @@ public class GLNvSdiOptions
 {
     public SdiVideoFormat videoFormat;
 	public SdiSyncSource syncSource;
-    public int inputRingBufferSize;
     public bool inputCaptureFields;
-    public int outputFlipQueueLength;
+    public int inputRingBufferSize;
+    public int outputRingBufferSize;
+    public float outputDelay;
     public int outputHorizontalDelay;
     public int outputVerticalDelay;
     public bool outputInvertFields;
     public bool outputDual;
     public bool useInputVideoAsBackground;
     public bool logToFile;
+    public bool printStats;
 
     public GLNvSdiOptions()
     {
         videoFormat = SdiVideoFormat.HD_1080I_59_94;
-        inputRingBufferSize = 2;
+        inputRingBufferSize = 5;
         outputDual = false;
-        outputFlipQueueLength = 2;
+        outputRingBufferSize = 5;
+        outputDelay = 3.5f;
         outputHorizontalDelay = 0;
         outputVerticalDelay = 0;
         outputInvertFields = false;
@@ -210,7 +213,9 @@ public class UtyGLNvSdi : MonoBehaviour
     [DllImport("GLNvSdi")]
     public static extern void SdiOutputSetGlobalOptions();
     [DllImport("GLNvSdi")]
-    public static extern void SdiOutputSetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, int h_delay, int v_delay, bool dual_output, int flip_queue_lenght);
+    public static extern void SdiOutputSetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, float oudput_delay, int h_delay, int v_delay, bool dual_output, int flip_queue_lenght);
+    [DllImport("GLNvSdi")]
+    public static extern void SdiOutputSetDelay(float delay);
     [DllImport("GLNvSdi")]
     public static extern bool SdiOutputSetupDevices();
     [DllImport("GLNvSdi")]
@@ -247,6 +252,8 @@ public class UtyGLNvSdi : MonoBehaviour
     public static extern int SdiOutputDuplicatedFramesCount();
     [DllImport("GLNvSdi")]
     public static extern void SdiOutputResetDuplicatedFramesCount();
+    [DllImport("GLNvSdi")]
+    public static extern void SdiOutputPrintStats(bool print);
     [DllImport("GLNvSdi")]
     public static extern System.IntPtr GetSdiOutputRenderEventFunc();
 
@@ -307,6 +314,12 @@ public class UtyGLNvSdi : MonoBehaviour
     public static extern void SdiInputResetDroppedFramesCount();
     [DllImport("GLNvSdi")]
     public static extern SdiReturn SdiInputCaptureStatus();
+    [DllImport("GLNvSdi")]
+    public static extern System.UInt64 SdiInputCaptureTime();
+    [DllImport("GLNvSdi")]
+    public static extern float SdiInputFrameRate();
+    [DllImport("GLNvSdi")]
+    public static extern double SdiInputFrameRateNanoSec();
     [DllImport("GLNvSdi")]
     public static extern System.IntPtr GetSdiInputRenderEventFunc();
 

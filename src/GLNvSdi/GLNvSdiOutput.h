@@ -16,7 +16,8 @@ extern "C"
 	/// Set global sdi configuration options for output sdi
 	GLNVSDI_API void SdiOutputSetGlobalOptions();
 
-	GLNVSDI_API void SdiOutputSetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, int h_delay, int v_delay, bool dual_output, int flip_queue_lenght);
+	GLNVSDI_API void SdiOutputSetVideoFormat(SdiVideoFormat video_format, SdiSyncSource sync_source, float output_delay, int h_delay, int v_delay, bool dual_output, int flip_queue_lenght);
+	GLNVSDI_API void SdiOutputSetDelay(float delay);
 
 	/// Return a texture
 	GLNVSDI_API gl::Texture2D* SdiOutputGetTexture(int index = 0);
@@ -123,7 +124,7 @@ extern "C"
 
 
 	/// Send the current frame to sdi output
-	GLNVSDI_API void SdiOutputPresentFrame();
+	GLNVSDI_API void SdiOutputPresentFrame(uint64_t minPresentTime = 0);
 
 	GLNVSDI_API void SdiOutputPrintStats(bool print);
 

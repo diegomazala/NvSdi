@@ -24,7 +24,7 @@ extern "C"
 
 
 		GLenum captureStatus = GL_FAILURE_NV;
-		static GLint64EXT captureTime;
+		static GLuint64EXT captureTime;
 
 	}
 
@@ -587,6 +587,11 @@ extern "C"
 		float frameRate = 0;
 		attr::sdiIn.GetFrameRate(&frameRate);
 		return frameRate;
+	}
+
+	GLNVSDI_API double SdiInputFrameRateNanoSec()
+	{
+		return 1000000000.0 / SdiInputFrameRate();
 	}
 
 	///////////////////////////////////////////////////////////////////////

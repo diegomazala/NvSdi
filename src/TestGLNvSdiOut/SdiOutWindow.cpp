@@ -36,7 +36,7 @@ bool SdiOutWindow::SetupSdi()
 	}
 
 	SdiOutputSetGlobalOptions();
-	SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 788, 513, false, 2);
+	SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 3.5f, 788, 513, false, 2);
 
 	if (!SdiOutputSetupDevices())
 	{

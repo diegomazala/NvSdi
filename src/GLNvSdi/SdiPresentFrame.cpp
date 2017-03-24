@@ -90,35 +90,41 @@ void SdiPresentFrame::PrePresentFrame()
 		glGetQueryObjectuivARB(presentDurationID, GL_QUERY_RESULT_ARB, &mStats.durationTime);
 		end = clk::GetTime();
 
-		float d_q = clk::GetIntervalMsec(start, end);
-		mStats.latency = clk::GetIntervalMsec(sendTime[mStats.cur_query], presentTime);
-		mStats.presentationInterval = clk::GetIntervalMsec(lastPresentTime, presentTime);
-		mStats.sendInterval = clk::GetIntervalMsec(lastSendTime, sendTime[mStats.cur_query]);
+		float duration_query = end - start;
+		float d_q = (float)duration_query / 1000000.0f;
+		mStats.latency = ((float)presentTime - sendTime[mStats.cur_query]) * .000001f; 
+		mStats.presentationInterval = (presentTime - lastPresentTime) * .000001;
+		mStats.sendInterval = (sendTime[mStats.cur_query] - lastSendTime)* .000001;
 		mStats.bufsQueued = (((float)mStats.latency / mStats.presentationInterval) + 0.5f);
 
 		if (mPrintStats)
 		{
-			fprintf(stderr, "\n send time: %I64d  present time: %I64d  latency: %f msec  \n present interval: %f msec send interval %f \n buffs queued: %.1f  duration: %d frame Query Interval: %.1f \n",
-				sendTime[mStats.cur_query], presentTime, mStats.latency, mStats.presentationInterval, mStats.sendInterval, mStats.bufsQueued, mStats.durationTime, d_q);
-			//std::cout << std::endl
-			//		<< "send time: " << sendTime[mStats.cur_query] << " present time: " << presentTime  
-			//		<< " latency: " << mStats.latency << " msec \n present interval: " << mStats.presentationInterval
-			//		<< " msec send interval " << mStats.sendInterval << "\n buffs queued: " << mStats.bufsQueued
-			//		<< " duration: " << mStats.durationTime << " frame Query Interval: " << d_q << std::endl;
+
+			//fprintf(stderr, "\n send time: %I64d  present time: %I64d  latency: %f msec  \n present interval: %f msec send interval %f \n buffs queued: %.1f  duration: %d frame Query Interval: %.1f \n",
+			//	sendTime[mStats.cur_query], presentTime, mStats.latency, mStats.presentationInterval, mStats.sendInterval, mStats.bufsQueued, mStats.durationTime, d_q);
+			std::cout << std::fixed
+				<< "send time: " << sendTime[mStats.cur_query] << " present time: " << presentTime
+				<< " latency: " << mStats.latency << " msec present interval: " << mStats.presentationInterval
+				<< " msec send interval " << mStats.sendInterval << " buffs queued: " << mStats.bufsQueued
+				<< " duration: " << mStats.durationTime << " frame Query Interval: " << d_q << std::endl;
 
 			if (mStats.durationTime > 1)
 			{
-				fprintf(stderr, "\n Duplicate Frame, Frame Presented %d times.\n", mStats.durationTime);
-				//std::cout << "Duplicate Frame, Frame Presented " << mStats.durationTime << " times." << std::endl;
+				//fprintf(stderr, "\n Duplicate Frame, Frame Presented %d times.\n", mStats.durationTime);
+				std::cout << "Duplicate Frame, Frame Presented " << mStats.durationTime << " times." << std::endl;
 			}
 		}
 
 		if (mStats.durationTime > 1)
 		{
-			fprintf(stderr, "\n send time: %I64d  present time: %I64d  latency: %f msec  \n present interval: %f msec send interval %f \n buffs queued: %.1f  duration: %d frame Query Interval: %.1f \n",
-				sendTime[mStats.cur_query], presentTime, mStats.latency, mStats.presentationInterval, mStats.sendInterval, mStats.bufsQueued, mStats.durationTime, d_q);
+			std::cout << std::fixed 
+				<< "*** send time: " << sendTime[mStats.cur_query] << " present time: " << presentTime
+				<< " latency: " << mStats.latency << " msec present interval: " << mStats.presentationInterval
+				<< " msec send interval " << mStats.sendInterval << " buffs queued: " << mStats.bufsQueued
+				<< " duration: " << mStats.durationTime << " frame Query Interval: " << d_q << std::endl;
 		}
 
+		
 
 		lastPresentTime = presentTime;
 		lastSendTime = sendTime[mStats.cur_query];
@@ -130,7 +136,7 @@ void SdiPresentFrame::PrePresentFrame()
 	glGetVideoui64vNV(1, GL_CURRENT_TIME_NV, &sendTime[mStats.cur_query]);
 	start = clk::GetTime();
 	eVal = glGetError();
-	
+
 	mStartSend = clk::GetTime();
 
 }
@@ -148,7 +154,11 @@ void SdiPresentFrame::PostPresentFrame()
 		mStats.cur_query = 0;
 		mStats.queryTime = GL_TRUE;	// this line cause an debug assertion when input video is active
 	}
+
+	GLuint64 t;
+	glGetVideoui64vNV(1, GL_CURRENT_TIME_NV, &t);
 }
+
 
 
 void SdiPresentFrame::PresentFrame(GLenum texType, GLuint texId, GLuint64EXT minPresentTime)

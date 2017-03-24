@@ -41,7 +41,7 @@
 
 
 // Constants
-#define NUM_QUERIES 5
+#define NUM_QUERIES 10
 
 #define MAX_GPUS 4
 #define MAX_CAPTURE_CARDS 4

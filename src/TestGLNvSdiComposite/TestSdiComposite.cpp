@@ -27,9 +27,10 @@ int main(int argc, char* argv[])
 {
 	const int ringBufferSizeInFrames = ((argc > 1) ? atoi(argv[1]) : 2);
 	const int ringBufferSizeOutFrames = ((argc > 2) ? atoi(argv[2]) : 2);
-	const bool captureFields = (bool)((argc > 3) ? atoi(argv[3]) : true);
-	const unsigned int sync_type = (argc > 4 ? atoi(argv[4]) : 2);
-	const unsigned int max_frames = (argc > 5 ? atoi(argv[5]) : 0);
+	const bool outputDelay = ((argc > 3) ? atof(argv[3]) : 0.f);
+	const bool captureFields = (bool)((argc > 4) ? atoi(argv[4]) : true);
+	const unsigned int sync_type = (argc > 5 ? atoi(argv[5]) : 2);
+	const unsigned int max_frames = (argc > 6 ? atoi(argv[6]) : 0);
 
 	std::chrono::time_point<std::chrono::system_clock> start_timer, end_timer;
 	start_timer = std::chrono::system_clock::now();
@@ -54,10 +55,12 @@ int main(int argc, char* argv[])
 
 	SdiInputSetGlobalOptions(ringBufferSizeInFrames, captureFields);
 	SdiOutputSetGlobalOptions();
-	SdiOutputSetVideoFormat(HD_1080I_59_94, (SdiSyncSource)sync_type, 0, 0, false, ringBufferSizeOutFrames);
-	//SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 788, 513, false, 2);
-	//SdiOutputSetVideoFormat(HD_1080I_59_94, NONE, 0, 0, false, 2);
-	//SdiOutputSetVideoFormat(SD_487I_59_94, COMP_SYNC, 788, 513, false, 2);
+	SdiOutputSetVideoFormat(HD_1080I_59_94, (SdiSyncSource)sync_type, outputDelay, 0, 0, false, ringBufferSizeOutFrames);
+	//SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, outputDelay, 788, 513, false, 2);
+	//SdiOutputSetVideoFormat(HD_1080I_59_94, NONE, 4.5f, 0, 0, false, 2);
+	//SdiOutputSetVideoFormat(SD_487I_59_94, COMP_SYNC, 4.5f, 788, 513, false, 2);
+
+	SdiOutputPrintStats(false);
 
 	if (!SdiInputSetupDevices())
 		return EXIT_FAILURE;
@@ -237,8 +240,11 @@ int main(int argc, char* argv[])
 
 					
 		SdiAncPresent();
-		SdiOutputPresentFrame();
 
+		double frame_rate_ns = 1000000000.0 / SdiInputFrameRate();
+		const uint64_t minPresentTime = SdiInputCaptureTime() + outputDelay * frame_rate_ns;
+		SdiOutputPresentFrame(minPresentTime);
+		
 
 		if (SdiInputDroppedFrames() > 0 || SdiOutputDuplicatedFrames() > 0)
 		{

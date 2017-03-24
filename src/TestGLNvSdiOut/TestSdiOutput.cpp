@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 
 
 		SdiOutputSetGlobalOptions();
-		SdiOutputSetVideoFormat(HD_1080I_59_94, (SdiSyncSource)sync_type, 0, 0, false, flipQueueLenght);
+		SdiOutputSetVideoFormat(HD_1080I_59_94, (SdiSyncSource)sync_type, 3.5f, 0, 0, false, flipQueueLenght);
 
 		//
 		// Setup sdi

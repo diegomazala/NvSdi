@@ -74,10 +74,11 @@ public class GLNvSdiOut : UtyGLNvSdi
         UtyGLNvSdi.SdiOutputSetVideoFormat(
             options.videoFormat,
             options.syncSource,
+            options.outputDelay,
             options.outputHorizontalDelay,
             options.outputVerticalDelay,
             options.outputDual,
-            options.outputFlipQueueLength);
+            options.outputRingBufferSize);
 
         yield return new WaitForEndOfFrame();
 
