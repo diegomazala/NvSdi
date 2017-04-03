@@ -45,16 +45,13 @@ bool SdiWindow::InitGL()
 	this->MakeCurrent();
 	this->VSync(0);
 
+	if (!loadPresentVideoExtension() || !loadFramebufferObjectExtension() || !loadBufferObjectExtension())
+	{
+		MessageBox(NULL, "Couldn't load required OpenGL extensions.", "Error", MB_OK);
+		return false;
+	}
 
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glClearDepth(1.0);
-
-	glDisable(GL_DEPTH_TEST);
-
-	glDisable(GL_TEXTURE_1D);
-	glDisable(GL_TEXTURE_2D);
-
-	if (!loadSwapIntervalExtension())
+	if (!loadSwapIntervalExtension() || !loadCopyImageExtension())
 	{
 		MessageBox(NULL, "Couldn't load required OpenGL extensions.", "Error", MB_OK);
 		return false;
@@ -67,19 +64,15 @@ bool SdiWindow::InitGL()
 	// returns.
 	wglSwapIntervalEXT(0);
 
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearDepth(1.0);
+
+	glDisable(GL_DEPTH_TEST);
+
+	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_TEXTURE_2D);
 
 
-	if (!loadCaptureVideoExtension() || !loadBufferObjectExtension())
-	{
-		printf("Could not load the required OpenGL extensions\n");
-		return false;
-	}
-
-	if (!loadPresentVideoExtension() || !loadFramebufferObjectExtension())
-	{
-		MessageBox(NULL, "Couldn't load required OpenGL extensions.", "Error", MB_OK);
-		return false;
-	}
 
 	gFont.Create(-48, "Arial");
 
@@ -87,7 +80,7 @@ bool SdiWindow::InitGL()
 }
 
 
-bool SdiWindow::InitFbo()
+bool SdiWindow::InitFbo(int w, int h)
 {
 	mOutputTex.Create();
 	mOutputTex.Bind();
@@ -96,47 +89,14 @@ bool SdiWindow::InitFbo()
 	mOutputTex.SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	mOutputTex.SetParameter(GL_TEXTURE_WRAP_S, GL_CLAMP);
 	mOutputTex.SetParameter(GL_TEXTURE_WRAP_T, GL_CLAMP);
-	mOutputTex.BuildNull(SdiInputWidth(), SdiInputHeight());
-	fbo.Initialize(SdiInputWidth(), SdiInputHeight(), 8, 1, GL_TRUE, GL_TRUE, &mOutputTex);
+	mOutputTex.BuildNull(w, h);
+	fbo.Initialize(w, h, 8, 1, GL_TRUE, GL_TRUE, &mOutputTex);
 
 	return true;
 }
 
 
 
-
-//
-//
-//void SdiWindow::RenderToSdi(int vid_w, int vid_h)
-//{
-//	for (int f = 0; f < 2; ++f)
-//	{
-//		SdiOutputBeginRender(0, f);
-//		{
-//			glClearColor(1 - f, f, 0.0, 0.0);
-//			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//			SdiInputGetTexture(0)->Enable();
-//			SdiInputGetTexture(0)->Bind();
-//			SdiInputGetTexture(0)->Plot(SdiInputWidth(), SdiInputHeight(), SdiInputWidth(), SdiInputHeight());
-//
-//			glColor3f(1, 1, 1);
-//			gFont.Plot(-0.95f, -0.60f, "GPU Time: %f. GVI Time: %f", SdiInputGpuTime(), SdiInputGviTime());
-//			gFont.Plot(-0.95f, -0.70f, "In(%d) Out(%d) ", SdiInputDroppedFramesCount(), SdiOutputDuplicatedFramesCount());
-//			uint32_t hours, minutes, seconds, frame_number;
-//			frame_count_to_timecode(out_frame_count, hours, minutes, seconds, frame_number);
-//			//gFont.Plot(-0.95f, -0.80f, "%05d - %02d:%02d:%02d:%02d", out_frame_count, hours, minutes, seconds, frame_number);
-//			gFont.Plot(-0.95f, -0.80f, "%d %d - %d%d:%d%d:%d%d:%d%d", SdiInputFrameNumber(), SdiInputFrameNumber() - last_drop,
-//				timecode[0], timecode[1], timecode[2], timecode[3],
-//				timecode[4], timecode[5], timecode[6], timecode[7]);
-//			//gFont.Plot(-0.95f, -0.70f, "Out (%d) ", SdiOutputDuplicatedFramesCount());
-//			gFont.Plot(-0.95f, -0.90f, "Loop Time (%f) ", loop_elapsed_seconds.count());
-//
-//			SdiInputGetTexture(0)->Unbind();
-//			SdiInputGetTexture(0)->Disable();
-//		}
-//		SdiOutputEndRender(0, f);
-//	}
-//}
 
 void SdiWindow::DisplayVideo(int vid_w, int vid_h)
 {

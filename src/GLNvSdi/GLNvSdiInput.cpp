@@ -13,6 +13,9 @@ extern "C"
 		static gl::Texture2D inputTextures[MAX_VIDEO_STREAMS * 2];
 
 		HGLRC inputOwnRC = NULL;
+		HGLRC	inputGLRC = NULL;
+		HDC		inputDC = NULL;
+		HDC		inputAffinityDC = NULL;
 
 		static CNvSDIin sdiIn;
 
@@ -35,6 +38,28 @@ extern "C"
 	GLNVSDI_API CNvSDIin* SdiInput()
 	{
 		return &attr::sdiIn;
+	}
+
+	GLNVSDI_API bool SdiInputMakeCurrent()
+	{
+		return wglMakeCurrent(attr::inputDC, attr::inputGLRC);
+	}
+
+
+	GLNVSDI_API bool SdiInputLoadExtensions()
+	{
+		if (!loadCaptureVideoExtension() || !loadBufferObjectExtension())
+		{
+			printf("Could not load the required OpenGL extensions\n");
+			return false;
+		}
+
+		if (!loadPresentVideoExtension() || !loadFramebufferObjectExtension())
+		{
+			MessageBox(NULL, "Couldn't load required OpenGL extensions.", "Error", MB_OK);
+			return false;
+		}
+		return true;
 	}
 
 	///////////////////////////////////////////////////////////////////////
@@ -186,7 +211,7 @@ extern "C"
 
 
 
-	GLNVSDI_API void SdiInputSetGlobalOptions(int ringBufferSizeInFrames, bool capture_fields)
+	GLNVSDI_API void SdiInputSetGlobalOptions()
 	{
 		//set the defaults for all the relevant options
 		SdiGlobalOptions().sampling = NVVIOCOMPONENTSAMPLING_422;
@@ -195,9 +220,6 @@ extern "C"
 		SdiGlobalOptions().expansionEnable = true;
 		SdiGlobalOptions().captureDevice = 0;
 		SdiGlobalOptions().captureGPU = CNvGpuTopology::instance().getPrimaryGpuIndex();
-
-		SdiGlobalOptions().inputRingBufferSize = ringBufferSizeInFrames;
-		SdiGlobalOptions().captureFields = capture_fields;
 
 		switch(SdiGlobalOptions().sampling)
 		{
@@ -215,6 +237,17 @@ extern "C"
 		if(SdiGlobalOptions().bitsPerComponent > 10)
 			SdiGlobalOptions().dualLink = true;
 	}
+
+	GLNVSDI_API void SdiInputSetBufferSize(int ringBufferSizeInFrames)
+	{
+		SdiGlobalOptions().inputRingBufferSize = ringBufferSizeInFrames;
+	}
+
+	GLNVSDI_API void SdiInputSetCaptureFields(bool capture_fields)
+	{
+		SdiGlobalOptions().captureFields = capture_fields;
+	}
+
 
 
 #if 0
@@ -321,63 +354,62 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	/// Setup opengl dependencies for sdi capture
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API bool SdiInputSetupContextGL(HDC hDC, HGLRC hRC)
+	GLNVSDI_API bool SdiInputSetupContextGL()
 	{
-		if (hRC == NULL)
+		HGPUNV  gpuMask[2];
+		gpuMask[0] = CNvGpuTopology::instance().getGpu(SdiGlobalOptions().captureGPU)->getAffinityHandle();
+		gpuMask[1] = NULL;
+
+		if (SdiGetExternalDC() == NULL)
 		{
-			hRC = SdiGetGLRC();
+			attr::inputAffinityDC = wglCreateAffinityDCNV(gpuMask);
+			attr::inputDC = attr::inputAffinityDC;
+
+			if (!attr::inputAffinityDC)
+			{
+				std::cerr << "Unable to create GPU affinity DC " << std::endl;
+			}
+
+			PIXELFORMATDESCRIPTOR  pfd;
+			int  iPixelFormat;
+
+			// get the current pixel format index  
+			iPixelFormat = GetPixelFormat(attr::inputDC);
+
+			// obtain a detailed description of that pixel format  
+			DescribePixelFormat(attr::inputDC, iPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
+
+			//int pf = ChoosePixelFormat(attr::hAffinityDC, &pfd);
+			// Set pixel format.
+			if (SetPixelFormat(attr::inputDC, iPixelFormat, &pfd) == FALSE)
+			{
+				MessageBox(NULL, "SetPixelFormat failed", "Error", MB_OK);
+				return false;
+			}
+		}
+		else
+		{
+			attr::inputDC = SdiGetExternalDC();
 		}
 
-		SdiSetDC(hDC);
-		SdiSetGLRC(hRC);
-
-		if (SdiGetGLRC() == NULL)
+		//Create affinity-rendering context from affinity-DC
+		attr::inputGLRC = wglCreateContext(attr::inputDC);
+		if (attr::inputGLRC == NULL)
 		{
-			HGPUNV  gpuMask[2];
-			gpuMask[0] = CNvGpuTopology::instance().getGpu(SdiGlobalOptions().captureGPU)->getAffinityHandle();
-			gpuMask[1] = NULL;
+			printf("Unable to create GPU affinity RC\n");
+		}
+		else
+		{
+			attr::inputOwnRC = attr::inputGLRC;
+		}
 
-			if (hDC == NULL)
-			{
-				SdiSetAffinityDC(wglCreateAffinityDCNV(gpuMask));
-				SdiSetDC(SdiGetAffinityDC());
-				if (!SdiGetAffinityDC()) 
-				{
-					std::cerr << "Unable to create GPU affinity DC " << std::endl;
-				}
-
-				PIXELFORMATDESCRIPTOR  pfd;
-				int  iPixelFormat;
-
-				// get the current pixel format index  
-				iPixelFormat = GetPixelFormat(SdiGetDC()); 
-
-				// obtain a detailed description of that pixel format  
-				DescribePixelFormat(SdiGetDC(), iPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
-
-				//int pf = ChoosePixelFormat(attr::hAffinityDC, &pfd);
-				// Set pixel format.
-				if (SetPixelFormat(SdiGetDC(), iPixelFormat, &pfd) == FALSE) 
-				{ 
-					MessageBox(NULL, "SetPixelFormat failed", "Error", MB_OK); 
-					return false; 
-				}
-			}
-
-			//Create affinity-rendering context from affinity-DC
-			SdiSetGLRC(wglCreateContext(SdiGetDC()));
-			if (SdiGetGLRC() == NULL)
-			{
-				printf("Unable to create GPU affinity RC\n");
-			}
-			else
-			{
-				attr::inputOwnRC = SdiGetGLRC();
-			}
+		if (!wglShareLists(SdiGetExternalGLRC(), attr::inputGLRC))
+		{
+			std::cerr << "Could not share gl contexts" << std::endl;
 		}
 		
 		// Make window rendering context current.
-		SdiMakeCurrent();
+		SdiInputMakeCurrent();
 
 		return true;
 	}
@@ -448,7 +480,7 @@ extern "C"
 	GLNVSDI_API bool SdiInputBindVideoTextureFrame()
 	{
 		GLuint gpuVideoSlot = 1;
-		if (attr::sdiIn.BindDevice(gpuVideoSlot, SdiGetDC()) == E_FAIL) 
+		if (attr::sdiIn.BindDevice(gpuVideoSlot, attr::inputDC) == E_FAIL)
 			return false;
 
 		for (unsigned int i = 0; i < attr::sdiIn.GetNumStreams(); i++)
@@ -480,7 +512,7 @@ extern "C"
 	{
 		GLuint gpuVideoSlot = 1;
 		
-		if (attr::sdiIn.BindDevice(gpuVideoSlot, SdiGetDC()) == E_FAIL)
+		if (attr::sdiIn.BindDevice(gpuVideoSlot, attr::inputDC) == E_FAIL)
 			return false;
 
 		for (unsigned int i = 0; i < attr::sdiIn.GetNumStreams(); i++)
@@ -518,16 +550,16 @@ extern "C"
 	{
 		SdiInputDestroyTextures();
 
-		if (SdiGetGLRC() != NULL && SdiGetGLRC() == attr::inputOwnRC) 
+		if (attr::inputGLRC != NULL && attr::inputGLRC == attr::inputOwnRC) 
 		{
 			// Delete OpenGL rendering context.
 			wglMakeCurrent(NULL,NULL); 
 
-			wglDeleteContext(SdiGetGLRC());
+			wglDeleteContext(attr::inputGLRC);
 			attr::inputOwnRC = NULL;
-			SdiSetGLRC(NULL);
+			attr::inputGLRC = NULL;
 
-			wglDeleteDCNV(SdiGetAffinityDC());
+			wglDeleteDCNV(attr::inputAffinityDC);
 		}		
 		
 	}
@@ -683,8 +715,7 @@ extern "C"
 		{
 			case SdiRenderEvent::CaptureFrame:
 			{
-				if (SdiGetGLRC() != wglGetCurrentContext())
-					break;
+				SdiInputMakeCurrent();
 
 				if (SdiInputCaptureVideo() != GL_FAILURE_NV)
 				{
@@ -695,6 +726,7 @@ extern "C"
 					//Debug.LogError("Capture fail");
 				}
 
+				SdiMakeCurrentExternal();
 
 				sdiError = (int)glGetError();
 
@@ -704,10 +736,20 @@ extern "C"
 
 			case SdiRenderEvent::Initialize:
 			{
+				SdiSetCurrentDC();		// get external DC
+				SdiSetCurrentGLRC();	// get external GLRC
 
-				//SdiSetupLogFile();
-				SdiSetCurrentDC();
-				SdiSetCurrentGLRC();
+				if (!SdiInputSetupContextGL())
+				{
+					std::cerr << "ERROR: Could not setup gl context for input sdi. " << std::endl;
+					return;
+				}
+				
+				if (!SdiInputLoadExtensions())
+				{
+					std::cerr << "ERROR: Could not load gl extensions. " << std::endl;
+					return;
+				}
 
 				if (!SdiInputInitialize())
 				{
@@ -715,9 +757,10 @@ extern "C"
 					sdiError = (int)glGetError();
 					return;
 				}
+				
+				SdiInputMakeCurrent();
 
-				const int ringBufferSizeInFrames = 2;
-				SdiInputSetGlobalOptions(ringBufferSizeInFrames);
+				SdiInputSetGlobalOptions();
 
 				if (!SdiInputSetupDevices())
 				{
@@ -726,7 +769,7 @@ extern "C"
 					return;
 				}
 
-				if (!SdiMakeCurrent())
+				if (!SdiInputMakeCurrent())
 				{
 					SdiLog() << "SdiMakeCurrent failed" << std::endl;
 					sdiError = (int)glGetError();
@@ -735,12 +778,46 @@ extern "C"
 
 				sdiError = (int)glGetError();
 
+				SdiMakeCurrentExternal();
+
 				break;
 			}
 
 			case SdiRenderEvent::Setup:
 			{
 				sdiError = (int)glGetError();
+
+
+				if (!SdiInputMakeCurrent())
+				{
+					SdiLog() << "SdiMakeCurrent failed" << std::endl;
+					sdiError = (int)glGetError();
+					return;
+				}
+
+				// Check if textures have already been created
+				if (!attr::inputTextures[0].Id() > 0)
+				{
+					if (SdiGlobalOptions().captureFields)
+					{
+						if (!SdiInputCreateTextures(MAX_VIDEO_STREAMS * 2, SdiInputWidth(), SdiInputHeight() / 2))
+						{
+							std::cerr << "ERROR: Could not creat opengl textures for SDI input. Abort. " << std::endl;
+							return;
+						}
+					}
+					else
+					{
+						if (!SdiInputCreateTextures(MAX_VIDEO_STREAMS, SdiInputWidth(), SdiInputHeight()))
+						{
+							std::cerr << "ERROR: Could not creat opengl textures for SDI input. Abort. " << std::endl;
+							return;
+						}
+					}
+				}
+
+
+
 
 				if (!SdiInputSetupGL())
 				{
@@ -773,11 +850,21 @@ extern "C"
 
 				sdiError = (int)glGetError();
 
+				SdiMakeCurrentExternal();
+
 				break;
 			}
 
 			case SdiRenderEvent::StartCapture:
 			{
+				if (!SdiInputMakeCurrent())
+				{
+					SdiLog() << "SdiMakeCurrent failed" << std::endl;
+					sdiError = (int)glGetError();
+					return;
+				}
+
+
 				if (!SdiInputStart())
 				{
 					//UnityEngine.Debug.LogError("GLNvSdi_Plugin: " + UtyGLNvSdi.SdiGetLog());
@@ -786,12 +873,15 @@ extern "C"
 				sdiError = (int)glGetError();
 
 				SdiInputResetDroppedFramesCount();
+
+				SdiMakeCurrentExternal();
+
 				break;
 			}
 
 			case SdiRenderEvent::StopCapture:
 			{
-				SdiMakeCurrent();
+				SdiInputMakeCurrent();
 				SdiInputStop();
 				SdiAncCleanupInput();
 				sdiError = (int)glGetError();
@@ -800,9 +890,10 @@ extern "C"
 
 			case SdiRenderEvent::Shutdown:
 			{
-				HGLRC uty_hglrc = wglGetCurrentContext();
-				HDC uty_hdc = wglGetCurrentDC();
-				SdiMakeCurrent();
+				HGLRC ext_hglrc = wglGetCurrentContext();
+				HDC ext_hdc = wglGetCurrentDC();
+
+				SdiInputMakeCurrent();
 
 				SdiInputStop();
 				SdiAncCleanupInput();
@@ -816,7 +907,8 @@ extern "C"
 				SdiInputUninitialize();
 
 				sdiError = (int)glGetError();
-				wglMakeCurrent(uty_hdc, uty_hglrc);
+				
+				wglMakeCurrent(ext_hdc, ext_hglrc);
 
 				break;
 			}

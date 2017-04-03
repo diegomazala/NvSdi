@@ -10,6 +10,14 @@ extern "C"
 	/// Return the Sdi Output object
 	GLNVSDI_API CNvSDIout* SdiOutput();
 
+	/// Make rendering context current 
+	GLNVSDI_API bool SdiOutputMakeCurrent();
+
+	GLNVSDI_API int SdiOutputSetupPixelFormat(HDC hDC);
+
+	/// Load required extensions
+	GLNVSDI_API bool SdiOutputLoadExtensions();
+
 	/// Invert the order to present the textures on sdi ouput
 	GLNVSDI_API void SdiOutputInvertFields(bool invert);
 
@@ -60,7 +68,7 @@ extern "C"
 
 
 	/// Setup opengl context for sdi capture
-	GLNVSDI_API bool SdiOutputSetupContextGL(HDC hDC = NULL, HGLRC outRC = NULL);
+	GLNVSDI_API bool SdiOutputSetupContextGL();
 
 	/// Setup opengl dependencies for sdi capture
 	GLNVSDI_API bool SdiOutputSetupGL();
@@ -121,11 +129,15 @@ extern "C"
 	/// Unbind fbo to finish render
 	GLNVSDI_API void SdiOutputEndRender(int index = 0, int field = 0);
 
+	/// Use capture frame time to compute when frame must be presented
+	GLNVSDI_API void SdiOutputComputePresentTimeFromCapture(bool compute);
 
+	/// Set minimum time to present frame
+	GLNVSDI_API void SdiOutputSetMinPresentTime(uint64_t minPresentTime);
 
 	/// Send the current frame to sdi output
-	GLNVSDI_API void SdiOutputPresentFrame(uint64_t minPresentTime = 0);
-
+	GLNVSDI_API void SdiOutputPresentFrame();
+	
 	GLNVSDI_API void SdiOutputPrintStats(bool print);
 
 

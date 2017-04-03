@@ -192,14 +192,7 @@ public class UtyGLNvSdi : MonoBehaviour
     [DllImport("GLNvSdi")]
     public static extern void SdiSetCurrentGLRC();
     [DllImport("GLNvSdi")]
-    public static extern bool SdiMakeCurrent();
-
-    [DllImport("GLNvSdi")]
-    public static extern void SdiSetUtyDC();
-    [DllImport("GLNvSdi")]
-    public static extern void SdiSetUtyGLRC();
-    [DllImport("GLNvSdi")]
-    public static extern bool SdiMakeUtyCurrent();
+    public static extern bool SdiMakeCurrentExternal();
     [DllImport("GLNvSdi")]
     public static extern int SdiGpuCount();
 
@@ -233,6 +226,10 @@ public class UtyGLNvSdi : MonoBehaviour
     [DllImport("GLNvSdi")]
     public static extern bool SdiOutputStop();
     [DllImport("GLNvSdi")]
+    public static extern void SdiOutputComputePresentTimeFromCapture(bool compute);
+    [DllImport("GLNvSdi")]
+    public static extern void SdiOutputSetMinPresentTime(ulong minPresentTime);
+    [DllImport("GLNvSdi")]
     public static extern void SdiOutputPresentFrame();
     [DllImport("GLNvSdi")]
     public static extern bool SdiOutpuIsPresentingFrames();
@@ -265,7 +262,11 @@ public class UtyGLNvSdi : MonoBehaviour
     [DllImport("GLNvSdi")]
     public static extern void SdiInputUninitialize();
     [DllImport("GLNvSdi")]
-    public static extern void SdiInputSetGlobalOptions(int ringBufferSizeInFrames, bool captureFields = true);
+    public static extern void SdiInputSetBufferSize(int ringBufferSizeInFrames);
+    [DllImport("GLNvSdi")]
+    public static extern void SdiInputSetCaptureFields(bool captureFields);
+    [DllImport("GLNvSdi")]
+    public static extern void SdiInputSetGlobalOptions();
     [DllImport("GLNvSdi")]
     public static extern bool SdiInputCreateTextures();
     [DllImport("GLNvSdi")]

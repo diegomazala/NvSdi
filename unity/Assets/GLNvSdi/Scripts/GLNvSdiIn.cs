@@ -57,18 +57,27 @@ public class GLNvSdiIn : UtyGLNvSdi
     private IEnumerator SdiInputCoroutine()
     {
         yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+
+        UtyGLNvSdi.SdiSetupLogFile();
+
+        UtyGLNvSdi.SdiInputSetBufferSize(options.inputRingBufferSize);
+        UtyGLNvSdi.SdiInputSetCaptureFields(options.inputCaptureFields);
+
 
         // Issue a plugin event with an integer identifier.
         // The plugin can distinguish between different based on this ID.
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
         yield return new WaitForEndOfFrame();
 
-        UtyGLNvSdi.SdiInputSetGlobalOptions(options.inputRingBufferSize, options.inputCaptureFields);
 
         if (options.inputCaptureFields)
             CreateTextures(8, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight() / 2);
         else
             CreateTextures(4, UtyGLNvSdi.SdiInputWidth(), UtyGLNvSdi.SdiInputHeight());
+        
+        yield return new WaitForEndOfFrame();
+
 
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Setup);
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.StartCapture);
@@ -87,7 +96,7 @@ public class GLNvSdiIn : UtyGLNvSdi
             // Capture frame from device
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);
         }
-        
+
     }
 
 

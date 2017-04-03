@@ -24,11 +24,17 @@ extern "C"
 
 		HGLRC					outRC = NULL;
 
+		HGLRC					outputGLRC = NULL;
+		HDC						outputDC = NULL;
+		HDC						outputAffinityDC = NULL;
+
 		HVIDEOOUTPUTDEVICENV*	pVideoDevices;
 
 		static CNvSDIout		sdiOut;						// SDI out object
 
 		SdiPresentFrame			presentFrame;
+		uint64_t				minPresentTime = 0;
+		bool					computePresentTimeFromCapture = false;
 
 		int						duplicateFramesCount = 0;
 
@@ -85,6 +91,82 @@ extern "C"
 	GLNVSDI_API void SdiOutputSetDelay(float delay)
 	{ 
 		SdiGlobalOptions().outputDelay = delay;
+	}
+
+	GLNVSDI_API int SdiOutputSetupPixelFormat(HDC hDC)
+	{
+		int pf;
+		PIXELFORMATDESCRIPTOR pfd;
+
+		// fill in the pixel format descriptor 
+		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+		pfd.nVersion = 1;		    // version (should be 1) 
+		pfd.dwFlags = PFD_DRAW_TO_WINDOW | // draw to window (not bitmap) 
+			PFD_SUPPORT_OPENGL | // draw using opengl 
+			PFD_DOUBLEBUFFER;
+		pfd.iPixelType = PFD_TYPE_RGBA;                // PFD_TYPE_RGBA or COLORINDEX 
+		pfd.cColorBits = 24;
+		pfd.cDepthBits = 32;
+
+		// get the appropriate pixel format 
+		pf = ::ChoosePixelFormat(hDC, &pfd);
+		if (pf == 0) {
+			printf("ChoosePixelFormat() failed:  Cannot find format specified.");
+			return 0;
+		}
+
+		// set the pixel format 
+		if (::SetPixelFormat(hDC, pf, &pfd) == FALSE) {
+			printf("SetPixelFormat() failed:  Cannot set format specified.");
+			return 0;
+		}
+
+		return pf;
+	}
+
+	GLNVSDI_API bool SdiOutputLoadExtensions()
+	{
+		if (!loadPresentVideoExtension() || !loadFramebufferObjectExtension() || !loadBufferObjectExtension())
+		{
+			MessageBox(NULL, "Couldn't load required OpenGL extensions.", "Error", MB_OK);
+			return false;
+		}
+
+		if (!loadSwapIntervalExtension() || !loadCopyImageExtension())
+		{
+			MessageBox(NULL, "Couldn't load required OpenGL extensions.", "Error", MB_OK);
+			return false;
+		}
+
+		// Don't sync graphics drawing to the vblank.m  This permits
+		// drawing to be synchronized to the SDI scanout.  Otherwise,
+		// duplicate frames on the SDI output will result as drawing
+		// of the next frame is blocked until the SwapBuffer call
+		// returns.
+		wglSwapIntervalEXT(0);
+
+		return true;
+	}
+
+	GLNVSDI_API bool SdiOutputMakeCurrent()
+	{
+		return wglMakeCurrent(attr::outputDC, attr::outputGLRC);
+	}
+
+	GLNVSDI_API void SdiOutputSetDC(HDC hdc)
+	{
+		if (hdc == NULL)
+			attr::outputDC = wglGetCurrentDC();
+		else
+			attr::outputDC = hdc;
+	}
+
+	GLNVSDI_API void SdiOutputSetGLRC(HGLRC hglrc)
+	{
+		if (hglrc == NULL)
+			attr::outputGLRC = wglGetCurrentContext();
+		else
+			attr::outputGLRC = hglrc;
 	}
 
 	///////////////////////////////////////////////////////////////////////
@@ -313,56 +395,53 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	/// Setup opengl dependencies for sdi capture
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API bool SdiOutputSetupContextGL(HDC hDC, HGLRC outRC)
+	GLNVSDI_API bool SdiOutputSetupContextGL()
 	{
 		//Create Affinity DC for SDI output
 		HGPUNV handles[2];
 		handles[0] = CNvSDIoutGpuTopology::instance().getGpu(SdiGlobalOptions().gpu)->getAffinityHandle();
 		handles[1] = NULL;
 
-		if (hDC == NULL)
+		if (SdiGetExternalDC() == NULL)
 		{
-			if (SdiGetDC() == NULL)
+			if (attr::outputDC == NULL)
 			{
-				SdiSetAffinityDC(wglCreateAffinityDCNV(handles));
-				SdiSetDC(SdiGetAffinityDC());
-				if (SdiGetDC() == NULL)
+				attr::outputAffinityDC = wglCreateAffinityDCNV(handles);
+				attr::outputDC = attr::outputAffinityDC;
+				if (attr::outputDC == NULL)
 				{
 					int error = GetLastError();
 					SdiLog() << "Error: wglCreateAffinityDCNV error code " << error << std::endl;
 					return false;
 				}
-				if (SdiSetupPixelFormat(SdiGetDC()) == 0)
+				if (SdiOutputSetupPixelFormat(attr::outputDC) == 0)
 					return false;
 			}
 		}
 		else
 		{
-			SdiSetDC(hDC);
+			attr::outputDC = SdiGetExternalDC();
 		}
 
 		// checking if a rendering context was passed, otherwise we must create it
-		if (outRC == NULL)
+		if (attr::outputGLRC == NULL)
 		{
-			if (SdiGetGLRC() == NULL)
-			{
-				// Create rendering context from the affinity device context	
-				SdiSetGLRC(wglCreateContext(SdiGetDC()));
-				attr::outRC = SdiGetGLRC();
-			}
-			else
-			{
-				outRC = SdiGetGLRC();
-			}
+			// Create rendering context from the affinity device context	
+			attr::outputGLRC = wglCreateContext(attr::outputDC);
+			attr::outRC = attr::outputGLRC;
 		}
 		else
 		{
-			SdiSetGLRC(outRC);
+			attr::outRC = attr::outputGLRC;
 		}
 
+		if (!wglShareLists(SdiGetExternalGLRC(), attr::outputGLRC))
+		{
+			std::cerr << "Could not share gl contexts" << std::endl;
+		}
 
 		// Make  SDI output GL context current.
-		SdiMakeCurrent();
+		SdiOutputMakeCurrent();
 
 		CHECK_OGL_ERROR;
 
@@ -398,7 +477,7 @@ extern "C"
 		// bind to the first one found
 
 		// Get list of available video devices.
-		int numDevices = wglEnumerateVideoDevicesNV(SdiGetDC(), NULL);
+		int numDevices = wglEnumerateVideoDevicesNV(attr::outputDC, NULL);
 
 		if (numDevices <= 0)
 		{
@@ -414,7 +493,7 @@ extern "C"
 			return false;
 		}
 
-		if (numDevices != wglEnumerateVideoDevicesNV(SdiGetDC(), attr::pVideoDevices))
+		if (numDevices != wglEnumerateVideoDevicesNV(attr::outputDC, attr::pVideoDevices))
 		{
 			free(attr::pVideoDevices);
 			SdiLog() << "Inconsistent results from wglEnumerateVideoDevicesNV()" << std::endl;
@@ -437,7 +516,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API void SdiOutputCleanupGL()
 	{
-		SdiMakeCurrent();
+		SdiOutputMakeCurrent();
 
 		// Free video devices
 		free(attr::pVideoDevices);
@@ -449,12 +528,12 @@ extern "C"
 
 		SdiOutputDestroyTextures();
 
-		wglDeleteDCNV(SdiGetAffinityDC());
+		wglDeleteDCNV(attr::outputAffinityDC);
 
 		if (attr::outRC != NULL)
 		{
 			wglDeleteContext(attr::outRC);
-			SdiSetGLRC(NULL);
+			attr::outputGLRC = NULL;
 			attr::outRC = NULL;
 		}
 	}
@@ -466,7 +545,7 @@ extern "C"
 	GLNVSDI_API bool SdiOutputBindVideo()
 	{
 		//Bind the first device found that is connected to the output GPU
-		if (!wglBindVideoDeviceNV(SdiGetDC(), 1, attr::pVideoDevices[0], NULL))
+		if (!wglBindVideoDeviceNV(attr::outputDC, 1, attr::pVideoDevices[0], NULL))
 		{
 			SdiLog() << "Failed to bind a videoDevice to slot 0." << std::endl;
 			return false;
@@ -480,7 +559,7 @@ extern "C"
 	///////////////////////////////////////////////////////////////////////
 	GLNVSDI_API bool SdiOutputUnbindVideo()
 	{
-		if (!wglBindVideoDeviceNV(SdiGetDC(), 1, NULL, NULL))
+		if (!wglBindVideoDeviceNV(attr::outputDC, 1, NULL, NULL))
 		{
 			SdiLog() << "Failed to unbind NULL videoDevice to slot 0." << std::endl;
 			return false;
@@ -540,15 +619,34 @@ extern "C"
 		attr::fbo[index].EndRender(field);
 	}
 
+	///////////////////////////////////////////////////////////////////////
+	/// Use capture frame time to compute when frame must be presented
+	///////////////////////////////////////////////////////////////////////
+	GLNVSDI_API void SdiOutputComputePresentTimeFromCapture(bool compute)
+	{
+		attr::computePresentTimeFromCapture = compute;
+	}
 
-
+	///////////////////////////////////////////////////////////////////////
+	/// Set minimum time to present frame
+	///////////////////////////////////////////////////////////////////////
+	GLNVSDI_API void SdiOutputSetMinPresentTime(uint64_t minPresentTime)
+	{
+		// Euquivalent to the following line:
+		// minPresentTime = SdiInputCaptureTime() + SdiGlobalOptions().outputDelay * SdiInputFrameRateNanoSec();
+		attr::minPresentTime = minPresentTime;
+	}
 
 
 	///////////////////////////////////////////////////////////////////////
 	/// Send the current frame to sdi output
 	///////////////////////////////////////////////////////////////////////
-	GLNVSDI_API void SdiOutputPresentFrame(uint64_t minPresentTime)
+	GLNVSDI_API void SdiOutputPresentFrame()
 	{
+		if (attr::computePresentTimeFromCapture)
+			attr::minPresentTime = SdiInputCaptureTime() + SdiGlobalOptions().outputDelay * SdiInputFrameRateNanoSec();
+
+
 		const bool dual_output = SdiGlobalOptions().IsDualOutput();
 
 		int tex0 = 0;
@@ -571,21 +669,23 @@ extern "C"
 				attr::presentFrame.PresentFrameDual(SdiOutputGetTextureType(0),
 				SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1),
 				SdiOutputGetTextureId(tex2), SdiOutputGetTextureId(tex3),
-				minPresentTime);
+				attr::minPresentTime);
 			else
-				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1), minPresentTime);
+				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1), attr::minPresentTime);
 		}
 		else
 		{
 			if (dual_output)
-				attr::presentFrame.PresentFrameDual(SdiOutputGetTextureType(0), SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1), minPresentTime);
+				attr::presentFrame.PresentFrameDual(SdiOutputGetTextureType(0), SdiOutputGetTextureId(tex0), SdiOutputGetTextureId(tex1), attr::minPresentTime);
 			else
-				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(0), minPresentTime);
+				attr::presentFrame.PresentFrame(SdiOutputGetTextureType(0), SdiOutputGetTextureId(0), attr::minPresentTime);
 		}
 
 		if (attr::presentFrame.GetStats().durationTime > 1)
 			attr::duplicateFramesCount += attr::presentFrame.GetStats().durationTime - 1;
 	}
+
+
 
 
 	static void UNITY_INTERFACE_API OnSdiOutputRenderEvent(int render_event_id)
@@ -594,18 +694,9 @@ extern "C"
 		{
 		case SdiRenderEvent::PresentFrame:
 		{
-			sdiError = (int)glGetError();
-
-			if (SdiGetGLRC() != wglGetCurrentContext())
-				break;
-			sdiError = (int)glGetError();
-
-			SdiMakeCurrent();
-
-			sdiError = (int)glGetError();
-			double frame_rate_ns = 1000000000.0 / SdiInputFrameRate();
-			const uint64_t minPresentTime = SdiInputCaptureTime() + SdiGlobalOptions().outputDelay * frame_rate_ns;
-			SdiOutputPresentFrame(minPresentTime);
+			SdiOutputMakeCurrent();
+			SdiOutputPresentFrame();
+			SdiMakeCurrentExternal();
 
 			sdiError = (int)glGetError();
 			break;
@@ -613,11 +704,25 @@ extern "C"
 
 		case SdiRenderEvent::Initialize:
 		{
-			//SdiSetupLogFile();
 			SdiSetCurrentDC();
 			SdiSetCurrentGLRC();
 
+			if (!SdiOutputSetupContextGL())
+			{
+				std::cerr << "ERROR: Could not setup gl context for output sdi. " << std::endl;
+				return;
+			}
+
+			if (!SdiOutputLoadExtensions())
+			{
+				std::cerr << "ERROR: Could not load gl extensions. " << std::endl;
+				return;
+			}
+
 			SdiOutputInitialize();
+
+
+			SdiMakeCurrentExternal();
 
 			sdiError = (int)glGetError();
 			break;
@@ -625,8 +730,7 @@ extern "C"
 
 		case SdiRenderEvent::Setup:
 		{
-			//SdiOutputSetGlobalOptions();
-			//SdiOutputSetVideoFormat(SdiVideoFormat::HD_1080I_59_94, SdiSyncSource::NONE, 0, 0, 0, false, 5);
+			SdiOutputMakeCurrent();
 
 			if (!SdiOutputSetupDevices())
 			{
@@ -634,7 +738,7 @@ extern "C"
 				return;
 			}
 
-			SdiMakeCurrent();
+			SdiOutputMakeCurrent();
 
 			if (!SdiOutputSetupGL())
 			{
@@ -663,17 +767,21 @@ extern "C"
 
 			SdiOutputResetDuplicatedFramesCount();
 
+			SdiMakeCurrentExternal();
+
+			sdiError = (int)glGetError();
+
 			break;
 		}
 
 
 		case SdiRenderEvent::Shutdown:
 		{
-			HGLRC uty_hglrc = wglGetCurrentContext();
-			HDC uty_hdc = wglGetCurrentDC();
+			HGLRC ext_hglrc = wglGetCurrentContext();
+			HDC ext_hdc = wglGetCurrentDC();
 
 
-			SdiMakeCurrent();
+			SdiOutputMakeCurrent();
 			SdiOutputStop();
 			SdiOutputUnbindVideo();
 			SdiOutputCleanupGL();
@@ -681,10 +789,11 @@ extern "C"
 			SdiOutputUninitialize();
 			sdiError = (int)glGetError();
 
-			wglMakeCurrent(uty_hdc, uty_hglrc);
+			wglMakeCurrent(ext_hdc, ext_hglrc);
 
 			break;
 		}
+
 		}
 
 	}

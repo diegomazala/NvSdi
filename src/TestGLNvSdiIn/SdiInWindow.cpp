@@ -39,18 +39,6 @@ bool SdiInWindow::InitGL()
 	glDisable(GL_TEXTURE_2D);
 
 
-	if(!loadCaptureVideoExtension() || !loadBufferObjectExtension() )
-	{
-		printf("Could not load the required OpenGL extensions\n");
-		return false;
-	}
-
-	if(!loadPresentVideoExtension() ||  !loadFramebufferObjectExtension())
-	{
-		MessageBox(NULL, "Couldn't load required OpenGL extensions.", "Error", MB_OK);
-		return false;
-	}
-
 	gFont.Create(-18, "Arial");
 
 	return true;
@@ -60,7 +48,7 @@ bool SdiInWindow::InitGL()
 
 void SdiInWindow::Render()
 {
-	this->DisplayVideo(960, 540);
+	
 }
 
 

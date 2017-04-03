@@ -75,6 +75,8 @@ public class GLNvSdiIOHD : UtyGLNvSdi
     {
         yield return new WaitForEndOfFrame();
 
+        UtyGLNvSdi.SdiInputSetBufferSize(options.inputRingBufferSize);
+        UtyGLNvSdi.SdiInputSetCaptureFields(options.inputCaptureFields);
 
         //
         // Input/Ouput Initialization
@@ -86,8 +88,6 @@ public class GLNvSdiIOHD : UtyGLNvSdi
 
         if (UtyGLNvSdi.SdiError() == 0)
         {
-            UtyGLNvSdi.SdiInputSetGlobalOptions(options.inputRingBufferSize, options.inputCaptureFields);
-
             //
             // Input Setup
             //
@@ -111,6 +111,8 @@ public class GLNvSdiIOHD : UtyGLNvSdi
                 options.outputVerticalDelay,
                 options.outputDual,
                 options.outputRingBufferSize);
+
+            UtyGLNvSdi.SdiOutputComputePresentTimeFromCapture(true);
 
             yield return new WaitForEndOfFrame();
 

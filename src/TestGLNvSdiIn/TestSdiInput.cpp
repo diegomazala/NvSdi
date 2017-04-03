@@ -25,114 +25,63 @@ int main(int argc, char* argv[])
 	start_timer = std::chrono::system_clock::now();
 	std::string start_time_str = current_time_to_string();
 
-	SdiInWindow passthru;
-
-	HWND hWnd;
-	HGLRC hGLRC;
-	if(CreateDummyGLWindow(&hWnd,&hGLRC) == false)
-		return false;
-
-	if (!SdiInputInitialize())
-		return EXIT_FAILURE;
-
-	// We can kill the dummy window now
-	if(DestroyGLWindow(&hWnd,&hGLRC) == false)
-		return false;
-
+	int win_width = 960;
+	int win_height = 540;
 	
-	SdiInputSetGlobalOptions(ringBufferSizeInFrames, captureFields);
-
-	if (!SdiInputSetupDevices())
-		return EXIT_FAILURE;
-
-
-	int window_w = SdiInputWidth(), 
-		window_h = SdiInputHeight();
-
 	WinApp lApp;
+	SdiInWindow sdiWindow;
 	CreationParameters lCreationParams;
 	lCreationParams.Title = "Sdi Input Window";
-	lCreationParams.WindowSize.Width  = window_w / 2;
-	lCreationParams.WindowSize.Height = window_h / 2;
-	
+	lCreationParams.WindowSize.Width = win_width;
+	lCreationParams.WindowSize.Height = win_height;
 
-	passthru.ShowConsoleWindow(true);
-
-	if(!passthru.Create(lCreationParams, &lApp))        // Create Our Window
+	if (!sdiWindow.Create(lCreationParams, &lApp))        // Create Our Window
 	{
 		std::cerr << "ERROR: Cannot create the window application. Abort. " << std::endl;
 		return EXIT_FAILURE;							// Quit If Window Was Not Created
 	}
-
-	if (SdiGlobalOptions().captureFields)
-	{
-		if (!SdiInputCreateTextures(MAX_VIDEO_STREAMS * 2, SdiInputWidth(), SdiInputHeight() / 2))
-		{
-			std::cerr << "ERROR: Could not creat opengl textures for SDI input. Abort. " << std::endl;
-			return EXIT_FAILURE;
-		}
-	}
-	else
-	{
-		if (!SdiInputCreateTextures(MAX_VIDEO_STREAMS, SdiInputWidth(), SdiInputHeight()))
-		{
-			std::cerr << "ERROR: Could not creat opengl textures for SDI input. Abort. " << std::endl;
-			return EXIT_FAILURE;
-		}
-	}
+	sdiWindow.MakeCurrent();
 
 
-	SdiSetDC(passthru.GetDC());
-	SdiSetGLRC(passthru.GetGLRC());
-	SdiMakeCurrent();
-
-	if (!SdiInputSetupGL())
-	{
-		std::cerr << "ERROR: Cannot setup opengl for SDI. Abort. " << std::endl;
-		return EXIT_FAILURE;
-	}
 
 
-	if (SdiGlobalOptions().captureFields)
-	{
-		if (!SdiInputBindVideoTextureField())
-		{
-			std::cerr << "ERROR: Cannot bind textures for SDI. Abort. " << std::endl;
-			return EXIT_FAILURE;
-		}
-	}
-	else
-	{
-		if (!SdiInputBindVideoTextureFrame())
-		{
-			std::cerr << "ERROR: Cannot bind textures for SDI. Abort. " << std::endl;
-			return EXIT_FAILURE;
-		}
-	}
 
+	//
+	// Get the pointer to the funtion which manager the render events
+	// This is an attempt to reproduce the same mechanism used by Unity
+	//
+	UnityRenderingEvent(*SdiInRenderEventFunc)(void);
+	SdiInRenderEventFunc = &GetSdiInputRenderEventFunc;
 
-	if (!SdiAncSetupInput())
-	{
-		std::cerr << "ERROR: Cannot setup audio capture for SDI. Abort. " << std::endl;
-		return EXIT_FAILURE;
-	}
+	//
+	// Set input parameters
+	//
+	SdiInputSetBufferSize(ringBufferSizeInFrames);
+	SdiInputSetCaptureFields(captureFields);
+
+	//
+	// Initialize sdi
+	//
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::Initialize));
+	//
+	// Setup
+	//
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::Setup));
+	//
+	// Start Capture
+	//
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::StartCapture));
 	
-
-	if (!SdiInputStart())
-	{
-		std::cerr << "Error: Could not start video capture." << std::endl;
-		return EXIT_FAILURE;
-	}
-
-
+	
 	lApp.InitSetup();
 	while(lApp.ProcessMainLoop())
 	{
-		GLenum status = SdiInputCaptureVideo();
-		if (status != GL_SUCCESS_NV)
-		{
-			std::cout << "Capture fail : " << ((status == GL_FAILURE_NV) ? "GL_FAILURE_NV" : "GL_PARTIAL_SUCCESS_NV") << std::endl;
-		}
+
+		//
+		// Capture frame
+		//
+		SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::CaptureFrame));
+
 
 		if (SdiInputDroppedFrames() > 0)
 		{
@@ -144,7 +93,10 @@ int main(int argc, char* argv[])
 		}
 
 		if (SdiInputFrameNumber() > max_frames && max_frames > 0)
-			passthru.Close();
+			sdiWindow.Close();
+
+		
+		sdiWindow.DisplayVideo(win_width, win_height);
 	}
 
 	std::cout
@@ -156,18 +108,14 @@ int main(int argc, char* argv[])
 	unsigned int frame_count = SdiInputFrameNumber();
 	unsigned int drop_frame_count = SdiInputDroppedFramesCount();
 
-	SdiInputStop();
 
-	SdiInputUnbindVideoTextureFrame();
+	//
+	// Cleanup
+	//
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::StopCapture));
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::Shutdown));
 
-	SdiInputCleanupGL();
-
-	SdiAncCleanupInput();
-
-	SdiInputCleanupDevices();
-
-	passthru.Destroy();
-
+	sdiWindow.Destroy();
 
 
 	end_timer = std::chrono::system_clock::now();

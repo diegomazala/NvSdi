@@ -37,31 +37,32 @@ int main(int argc, char* argv[])
 	SdiOutRenderEventFunc = &GetSdiOutputRenderEventFunc;
 
 
-
+	int win_width = 960;
+	int win_height = 540;
 
 	WinApp		lApp;
 	CreationParameters lCreationParams;
 	lCreationParams.Title = "Sdi Out Window";
-	lCreationParams.WindowSize.Width  = 960;
-	lCreationParams.WindowSize.Height = 540;
+	lCreationParams.WindowSize.Width = win_width;
+	lCreationParams.WindowSize.Height = win_height;
 
-	SdiOutWindow lWindow;
+	
 		
 	unsigned int frame_count = 0;
 	try
 	{
-		if(!lWindow.Create(lCreationParams, &lApp))        // Create Our Window
+		SdiOutWindow sdiWindow;
+		if (!sdiWindow.Create(lCreationParams, &lApp))        // Create Our Window
 		{
 			std::cerr << "ERROR: Cannot create the window application. Abort. " << std::endl;
 			return EXIT_FAILURE;							// Quit If Window Was Not Created
 		}
 
-		HGLRC glrc1 = lWindow.GetGLRC();
 
-		SdiSetDC(lWindow.GetDC());
-		SdiSetGLRC(lWindow.GetGLRC());
+		sdiWindow.MakeCurrent();
+		SdiSetExternalDC(sdiWindow.GetDC());
+		SdiSetExternalGLRC(sdiWindow.GetGLRC());
 
-		
 
 		//
 		// Initialize sdi
@@ -76,41 +77,52 @@ int main(int argc, char* argv[])
 		// Setup sdi
 		//
 		SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::Setup));
+		//
+		// make sdi state similar to window state
+		//
+		SdiOutputMakeCurrent();
+		sdiWindow.SetOpenGLState();	 
 
-		HGLRC glrc2 = SdiGetGLRC();
-
-		//if (lWindow.SetupSdi())
+		sdiWindow.MakeCurrent();
+		lApp.InitSetup();
+		while (lApp.ProcessMainLoop())
 		{
-			
-			lApp.InitSetup();
-			while (lApp.ProcessMainLoop())
+			SdiOutputMakeCurrent();
+
+			GLfloat diffuse[] = { 0.04136, 0.54136, 0.31424 };
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+
+			for (int i = 0; i<2; ++i)
 			{
-				SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::PresentFrame));
-
-				if (SdiOutputDuplicatedFrames() > 0)
-					std::cout
-					<< "Duplicated: " << SdiOutputDuplicatedFrames()
-					<< "\tTotal: " << SdiOutputDuplicatedFramesCount()
-					<< '\t' << current_time_to_string();
-
-				if (++frame_count > max_frames && max_frames > 0)
-					lWindow.Close();
+				SdiOutputBeginRender(0, i);
+				sdiWindow.Draw(win_width * 2, win_height * 2);
+				SdiOutputEndRender(0, i);
 			}
 
-			//
-			// Shutdown sdi
-			//
-			SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::Shutdown));
+			SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::PresentFrame));
+
+			if (SdiOutputDuplicatedFrames() > 0)
+				std::cout
+				<< "Duplicated: " << SdiOutputDuplicatedFrames()
+				<< "\tTotal: " << SdiOutputDuplicatedFramesCount()
+				<< '\t' << current_time_to_string();
+
+			if (++frame_count > max_frames && max_frames > 0)
+				sdiWindow.Close();
 		}
+
+		//
+		// Shutdown sdi
+		//
+		SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::Shutdown));
 		
+		sdiWindow.Destroy();
 	}
 	catch(const std::exception& e)
 	{
 		MessageBox(NULL, e.what(), "GLNvSdi Exception", MB_ICONERROR | MB_OK);
 	}
 	
-	lWindow.Destroy();
-
 
 	end_timer = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end_timer - start_timer;

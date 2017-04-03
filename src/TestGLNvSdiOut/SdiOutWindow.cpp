@@ -27,67 +27,25 @@ SdiOutWindow::~SdiOutWindow()
 }
 
 
-bool SdiOutWindow::SetupSdi()
-{
-	if (!SdiOutputInitialize())
-	{
-		std::cerr << "Error: Could not initialize output sdi" << std::endl;
-		return false;
-	}
-
-	SdiOutputSetGlobalOptions();
-	SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, 3.5f, 788, 513, false, 2);
-
-	if (!SdiOutputSetupDevices())
-	{
-		std::cerr << "Error: Could not setup sdi devices for output" << std::endl;
-		SdiOutputCleanupDevices();
-		SdiOutputUninitialize();
-		return false;
-	}
-
-	this->MakeCurrent();
-
-	if (!SdiOutputSetupContextGL(this->GetDC(), this->GetGLRC()) || !SdiOutputSetupGL())
-	{
-		std::cerr << "Error: Could not setup opengl for sdi output" << std::endl;
-		SdiOutputCleanupGL();
-		SdiOutputCleanupDevices();
-		SdiOutputUninitialize();
-		return false;
-	}
-	else
-	{
-		SdiOutputCreateTextures();
-		SdiOutputInitializeFbo();
-	}
-
-
-	if (!SdiOutputBindVideo() || !SdiOutputStart())
-	{
-		std::cerr << "Error: Could not start opengl sdi output" << std::endl;
-		CleanupSdi();
-		return false;
-	}
-
-	CHECK_OGL_ERROR;
-
-	return true;
-}
 
 
 
 
-void SdiOutWindow::Draw()
+void SdiOutWindow::Draw(int w, int h)
 {	
+	static uint64_t frame_counter = 0;
+	static char frame_counter_str[8];
+	itoa(++frame_counter, frame_counter_str, 10);
+
+
 	glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glViewport(0, 0, Width(), Height());
+	glViewport(0, 0, w, h);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(40, float(Width())/float(Height()), 1, 100);
+	gluPerspective(40, float(Width()) / float(Height()), 1, 100);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -95,6 +53,15 @@ void SdiOutWindow::Draw()
 	glRotatef(gAngle++, 0, 1, 0);
 
 	gTeapot.Render();
+
+	// 2D Projection
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	gFont.Print(0.01f, 0.9f, frame_counter_str);				// Print GL Text To The Screen
 }
 
 
@@ -102,6 +69,14 @@ void SdiOutWindow::Draw()
 
 void SdiOutWindow::Render()
 {
+	this->MakeCurrent();
+
+	GLfloat diffuse[] = {0.84136, 0.54136, 0.01424};
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+
+	Draw(Width(), Height());
+
+#if 0
 	if (presenting)
 	{
 		SdiOutputBeginRender();
@@ -124,38 +99,18 @@ void SdiOutWindow::Render()
 	{
 		Draw();
 	}
+#endif
 }
 
 
-
-void SdiOutWindow::OnKeyEvent(const KeyEvent* pEvent)
-{
-	if(!pEvent->PressedDown)
-		return;
-
-	if(pEvent->Key==KEY_ESCAPE)
-	{
-		this->Close();
-	}
-	else if(pEvent->Key==KEY_F5)
-	{
-		this->SetupSdi();
-	}
-	else if(pEvent->Key==KEY_F6)
-	{
-		this->CleanupSdi();
-	}
-	else if(pEvent->Key==KEY_RETURN)
-	{
-		presenting = !presenting;
-	}
-}
 
 
 
 bool SdiOutWindow::InitGL()
 {		
-	if(!loadSwapIntervalExtension() || !loadCopyImageExtension())
+	MakeCurrent();
+
+	if (!loadSwapIntervalExtension() || !loadCopyImageExtension())
 	{
 		MessageBox(NULL, "Couldn't load required OpenGL extensions.", "Error", MB_OK);
 		return false;
@@ -168,18 +123,30 @@ bool SdiOutWindow::InitGL()
 	// returns.
 	wglSwapIntervalEXT(0);
 
-	glClearColor( 0.0, 0.0, 0.0, 0.0); 
-	glClearDepth( 1.0 ); 
+	SetOpenGLState();
 
-	glEnable(GL_DEPTH_TEST); 
+	gTeapot.Create(1, 16);
+
+	gFont.Create(-24);
+
+	return true;
+}
+
+
+void SdiOutWindow::SetOpenGLState()
+{
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearDepth(1.0);
+
+	glEnable(GL_DEPTH_TEST);
 
 	// Initialize lighting for render to texture
-	GLfloat spot_ambient[] = {1.0, 1.0, 1.0, 1.0};
-	GLfloat spot_position[] = {0.0, 3.0, 3.0, 0.0};
-	GLfloat local_view[] = {0.0};
-	GLfloat ambient[] = {0.01175, 0.01175, 0.1745};
-	GLfloat diffuse[] = {0.04136, 0.04136, 0.61424};
-	GLfloat specular[] = {0.626959, 0.626959, 0.727811};
+	GLfloat spot_ambient[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat spot_position[] = { 0.0, 3.0, 3.0, 0.0 };
+	GLfloat local_view[] = { 0.0 };
+	GLfloat ambient[] = { 0.11175, 0.11175, 0.3745 };
+	GLfloat diffuse[] = { 0.04136, 0.54136, 0.31424 };
+	GLfloat specular[] = { 0.626959, 0.626959, 0.727811 };
 
 	glLightfv(GL_LIGHT0, GL_POSITION, spot_position);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, spot_ambient);
@@ -199,25 +166,19 @@ bool SdiOutWindow::InitGL()
 	glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 	glMaterialf(GL_FRONT, GL_SHININESS, 0.6*128.0);
 
-	//glDisable(GL_LIGHTING);
-
 	glColor3f(0.0, 0.0, 1.0);
 
 	glClearColor(0.0, 0.0, 0.0, 1.0);
-
-	gTeapot.Create(1, 16);
-
-	gFont.Create(-24);
-
-	return true;
 }
 
 
-void SdiOutWindow::CleanupSdi()
+void SdiOutWindow::OnKeyEvent(const KeyEvent* pEvent)
 {
-	SdiOutputStop();
-	SdiOutputUnbindVideo();
-	SdiOutputCleanupGL();
-	SdiOutputCleanupDevices();
-	SdiOutputUninitialize();
+	if (!pEvent->PressedDown)
+		return;
+
+	if (pEvent->Key == KEY_ESCAPE)
+	{
+		this->Close();
+	}
 }

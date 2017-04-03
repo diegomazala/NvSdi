@@ -25,7 +25,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		return false;
 
 	const int ringBufferSizeInFrames = 2;
-	SdiInputSetGlobalOptions(ringBufferSizeInFrames);
+	SdiInputSetBufferSize(ringBufferSizeInFrames);
 
 	if (!SdiInputSetupDevices())
 		return EXIT_FAILURE;
@@ -65,9 +65,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 
 
-	SdiSetDC(passthru.GetDC());
-	SdiSetGLRC(passthru.GetGLRC());
-	SdiMakeCurrent();
+	SdiSetExternalDC(passthru.GetDC());
+	SdiSetExternalGLRC(passthru.GetGLRC());
 
 	if (!SdiInputSetupGL())
 	{

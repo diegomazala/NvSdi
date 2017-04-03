@@ -46,37 +46,22 @@ extern "C"
 	GLNVSDI_API void SdiSetupLogConsole();
 	GLNVSDI_API void SdiSetupLogFile();
 
-	
-	/// Set the opengl rendering context. If the parameter is null, get the current context
-	GLNVSDI_API void  SdiSetGLRC(HGLRC hglrc = NULL);
-	GLNVSDI_API void  SdiSetCurrentGLRC();
-	GLNVSDI_API void SdiCreateGLRC(HDC hdc);
-	
-	/// Return the rendering context that is being used for sdi.
-	GLNVSDI_API HGLRC SdiGetGLRC();
-
-
-	GLNVSDI_API void SdiSetAffinityDC(HDC hdc);
-	GLNVSDI_API HDC  SdiGetAffinityDC();
-	GLNVSDI_API HDC SdiCreateAffinityDC();
-
-
 	/// Set the device context. If the parameter is null, get the current context
-	GLNVSDI_API void SdiSetDC(HDC hdc = NULL);
+	GLNVSDI_API void SdiSetExternalDC(HDC hdc);
 	GLNVSDI_API void SdiSetCurrentDC();
+
+	/// Set the opengl rendering context. If the parameter is null, get the current context
+	GLNVSDI_API void  SdiSetExternalGLRC(HGLRC hglrc);
+	GLNVSDI_API void  SdiSetCurrentGLRC();
 	
 	/// Return the device context that is being used for sdi.
-	GLNVSDI_API HDC  SdiGetDC();
+	GLNVSDI_API HDC SdiGetExternalDC(); 
 
+	/// Return the rendering context that is being used for sdi.
+	GLNVSDI_API HGLRC SdiGetExternalGLRC();
 
-	GLNVSDI_API int SdiSetupPixelFormat(HDC hDC);
-
-	GLNVSDI_API bool SdiMakeCurrent();
-
-
-	GLNVSDI_API void SdiSetCurrentDC();
-	GLNVSDI_API void SdiSetUtyGLRC();
-	GLNVSDI_API bool SdiMakeUtyCurrent();
+	/// Make external GLRC current.
+	GLNVSDI_API bool SdiMakeCurrentExternal();
 
 
 	/// Get global sdi configuration options

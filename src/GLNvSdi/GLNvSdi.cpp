@@ -10,21 +10,15 @@
 extern "C"
 {
 	std::stringstream gSdiLog;
-	
-	static HWND		gSdiWnd = NULL;
-	static HGLRC	gSdiGLRC = NULL;
-	static HDC		gSdiDC = NULL;
-	static HDC		gSdiAffinityDC = NULL;
-	static HGLRC	gUtyGLRC = NULL;
-	static HDC		gUtyDC = NULL;
-	
 
 	static SdiOptions gOptions;
-
 	
 
 	namespace attr
 	{
+		HDC		externalDC = NULL;
+		HGLRC	externalGLRC = NULL;
+
 		bool m_bAncInInitialized		= false;
 		bool m_bAncOutInitialized		= false;
 		NVVIOANCDATAFRAME m_ancData[4];				// Per-stream ancillary data
@@ -73,124 +67,51 @@ extern "C"
 	}
 
 
-	GLNVSDI_API void SdiSetGLRC(HGLRC hglrc)
-	{
-		if (hglrc == NULL)
-			gSdiGLRC = wglGetCurrentContext();
-		else
-			gSdiGLRC = hglrc;
-	}
-
-	GLNVSDI_API void SdiSetCurrentGLRC()
-	{
-		gSdiGLRC = wglGetCurrentContext();
-	}
-
-	GLNVSDI_API HGLRC SdiGetGLRC()
-	{
-		return gSdiGLRC;
-	}
-
-	GLNVSDI_API void SdiCreateGLRC(HDC hdc)
-	{
-		//Create affinity-rendering context from affinity-DC
-		gSdiGLRC = wglCreateContext(hdc);
-	}
-
-	GLNVSDI_API void SdiSetDC(HDC hdc)
-	{
-		if (hdc == NULL)
-			gSdiDC = wglGetCurrentDC();
-		else
-			gSdiDC = hdc;
-	}
 
 	GLNVSDI_API void SdiSetCurrentDC()
 	{
-		gSdiDC = wglGetCurrentDC();
-	}
-
-	GLNVSDI_API HDC SdiGetDC()
-	{
-		return gSdiDC;
-	}
-
-	GLNVSDI_API void SdiSetAffinityDC(HDC hdc)
-	{
-		gSdiAffinityDC = hdc;
-	}
-
-	GLNVSDI_API HDC SdiGetAffinityDC()
-	{
-		return gSdiAffinityDC;
+		attr::externalDC = wglGetCurrentDC();
 	}
 
 
-	GLNVSDI_API HDC SdiCreateAffinityDC()
+	GLNVSDI_API void SdiSetCurrentGLRC()
 	{
-		HGPUNV  gpuMask[2];
-		gpuMask[0] = CNvGpuTopology::instance().getPrimaryGpu()->getAffinityHandle();
-		gpuMask[1] = NULL;
+		attr::externalGLRC = wglGetCurrentContext();
+	}
 
-		gSdiAffinityDC = wglCreateAffinityDCNV(gpuMask);
-		if (gSdiAffinityDC != NULL)
-		{
-			PIXELFORMATDESCRIPTOR pfd =							// pfd Tells Windows How We Want Things To Be
-			{
-				sizeof (PIXELFORMATDESCRIPTOR),					// Size Of This Pixel Format Descriptor
-				1,												// Version Number
-				PFD_DRAW_TO_WINDOW |							// Format Must Support Window
-				PFD_SUPPORT_OPENGL |							// Format Must Support OpenGL
-				PFD_DOUBLEBUFFER,								// Must Support Double Buffering
-				PFD_TYPE_RGBA,									// Request An RGBA Format
-				32,												// Select Our Color Depth
-				0, 0, 0, 0, 0, 0,								// Color Bits Ignored
-				1,												// Alpha Buffer
-				0,												// Shift Bit Ignored
-				0,												// No Accumulation Buffer
-				0, 0, 0, 0,										// Accumulation Bits Ignored
-				24,												// 24 Bit Z-Buffer (Depth Buffer)  
-				8,												// 8 Bit Stencil Buffer
-				0,												// No Auxiliary Buffer
-				PFD_MAIN_PLANE,									// Main Drawing Layer
-				0,												// Reserved
-				0, 0, 0											// Layer Masks Ignored
-			};
-
-			GLuint pf = ChoosePixelFormat(gSdiAffinityDC, &pfd);
-			HRESULT rslt = ::SetPixelFormat(gSdiAffinityDC, pf, &pfd);
-
-			return gSdiAffinityDC;
-		}
+	GLNVSDI_API void SdiSetExternalDC(HDC hdc)
+	{
+		if (hdc == NULL)
+			attr::externalDC = wglGetCurrentDC();
 		else
-		{
-			std::cout << "Unable to create GPU affinity DC" << std::endl;
-			return NULL;
-		}
+			attr::externalDC = hdc;
 	}
 
-	GLNVSDI_API bool SdiMakeCurrent()
+
+	GLNVSDI_API void SdiSetExternalGLRC(HGLRC hglrc)
 	{
-		return wglMakeCurrent(SdiGetDC(), SdiGetGLRC()); 	
+		if (hglrc == NULL)
+			attr::externalGLRC = wglGetCurrentContext();
+		else
+			attr::externalGLRC = hglrc;
 	}
 
 
-	GLNVSDI_API void SdiSetUtyDC()
+	GLNVSDI_API HDC SdiGetExternalDC()
 	{
-		gUtyDC = wglGetCurrentDC();
+		return attr::externalDC;
 	}
 
-	GLNVSDI_API void SdiSetUtyGLRC()
+	GLNVSDI_API HGLRC SdiGetExternalGLRC()
 	{
-		gUtyGLRC = wglGetCurrentContext();
+		return attr::externalGLRC;
 	}
 
-	GLNVSDI_API bool SdiMakeUtyCurrent()
+	GLNVSDI_API bool SdiMakeCurrentExternal()
 	{
-		return wglMakeCurrent(gUtyDC, gUtyGLRC); 	
+		return wglMakeCurrent(attr::externalDC, attr::externalGLRC);
 	}
 
-	
 
 
 

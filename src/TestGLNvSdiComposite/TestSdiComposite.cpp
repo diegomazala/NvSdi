@@ -5,6 +5,10 @@
 #include "GLFont.h"
 
 
+UnityRenderingEvent(*SdiInRenderEventFunc)(void);
+UnityRenderingEvent(*SdiOutRenderEventFunc)(void);
+
+
 std::string current_time_to_string()
 {
 	std::chrono::system_clock::time_point p = std::chrono::system_clock::now();
@@ -23,11 +27,81 @@ static void frame_count_to_timecode(uint64_t frame_number, uint32_t& hours, uint
 }
 
 
+
+
+
+void SetupInputSdi(int inputBufferLength, bool captureFields)
+{
+	//
+	// Set input parameters
+	//
+	SdiInputSetBufferSize(inputBufferLength);
+	SdiInputSetCaptureFields(captureFields);
+
+	//
+	// Initialize sdi
+	//
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::Initialize));
+	//
+	// Setup
+	//
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::Setup));
+	//
+	// Start Capture
+	//
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::StartCapture));
+}
+
+
+
+
+void CleanupInputSdi()
+{
+	//
+	// Cleanup
+	//
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::StopCapture));
+	SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::Shutdown));
+}
+
+
+
+
+void SetupOutputSdi(NVVIOSIGNALFORMAT video_format, SdiSyncSource sync_source, float output_delay, int h_delay, int v_delay, bool dual_output, int flip_queue_lenght)
+{
+	//
+	// Initialize sdi
+	//
+	SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::Initialize));
+
+
+	SdiOutputSetGlobalOptions();
+	SdiOutputSetVideoFormat(HD_1080I_59_94, sync_source, output_delay, 0, 0, false, flip_queue_lenght);
+
+	//
+	// Setup sdi
+	//
+	SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::Setup));
+}
+
+
+void CleanupOutputSdi()
+{
+	//
+	// Shutdown sdi
+	//
+	SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::Shutdown));
+}
+
+
+
+
+
 int main(int argc, char* argv[])
 {
 	const int ringBufferSizeInFrames = ((argc > 1) ? atoi(argv[1]) : 2);
 	const int ringBufferSizeOutFrames = ((argc > 2) ? atoi(argv[2]) : 2);
-	const bool outputDelay = ((argc > 3) ? atof(argv[3]) : 0.f);
+	const float outputDelay = ((argc > 3) ? atof(argv[3]) : 4.5f);
 	const bool captureFields = (bool)((argc > 4) ? atoi(argv[4]) : true);
 	const unsigned int sync_type = (argc > 5 ? atoi(argv[5]) : 2);
 	const unsigned int max_frames = (argc > 6 ? atoi(argv[6]) : 0);
@@ -37,154 +111,57 @@ int main(int argc, char* argv[])
 	std::string start_time_str = current_time_to_string();
 
 
-	HWND hWnd;
-	HGLRC hGLRC;
-	if (CreateDummyGLWindow(&hWnd, &hGLRC) == false)
-		return false;
-
-	GLFont gFont;
-	gFont.Create(-48, "Arial");
-	static int timecode[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-	SdiSetDC();
-	SdiSetGLRC(hGLRC);
-
-	if (!SdiInputInitialize() || !SdiOutputInitialize())
-		return EXIT_FAILURE;
-
-
-	SdiInputSetGlobalOptions(ringBufferSizeInFrames, captureFields);
-	SdiOutputSetGlobalOptions();
-	SdiOutputSetVideoFormat(HD_1080I_59_94, (SdiSyncSource)sync_type, outputDelay, 0, 0, false, ringBufferSizeOutFrames);
-	//SdiOutputSetVideoFormat(HD_1080I_59_94, COMP_SYNC, outputDelay, 788, 513, false, 2);
-	//SdiOutputSetVideoFormat(HD_1080I_59_94, NONE, 4.5f, 0, 0, false, 2);
-	//SdiOutputSetVideoFormat(SD_487I_59_94, COMP_SYNC, 4.5f, 788, 513, false, 2);
-
-	SdiOutputPrintStats(false);
-
-	if (!SdiInputSetupDevices())
-		return EXIT_FAILURE;
-
-
-	// Output video format matches input video format.
-	SdiGlobalOptions().videoFormat = SdiInput()->GetSignalFormat();
-
-
-	if (!SdiOutputSetupDevices())
-	{
-		std::cerr << "Error: Could not setup sdi devices for output" << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	
-
-	int window_w = SdiInputWidth(),
-		window_h = SdiInputHeight();
+	int win_width = 960,
+		win_height = 540;
 
 
 	WinApp lApp;
 	CreationParameters lCreationParams;
 	lCreationParams.Title = "Sdi Window";
-	lCreationParams.WindowSize.Width = window_w / 2;
-	lCreationParams.WindowSize.Height = window_h / 2;
+	lCreationParams.WindowSize.Width = win_width;
+	lCreationParams.WindowSize.Height = win_height;
 
-
-	SdiWindow passthru;
-	if (!passthru.Create(lCreationParams, &lApp))        // Create Our Window
+	SdiWindow sdiWindow;
+	if (!sdiWindow.Create(lCreationParams, &lApp))        // Create Our Window
 	{
 		std::cerr << "ERROR: Cannot create the window application. Abort. " << std::endl;
 		return EXIT_FAILURE;							// Quit If Window Was Not Created
 	}
 
+	sdiWindow.MakeCurrent();
+	sdiWindow.InitFbo(win_width * 2, win_height * 2);
 
-	if (SdiGlobalOptions().captureFields)
-	{
-		if (!SdiInputCreateTextures(MAX_VIDEO_STREAMS * 2, SdiInputWidth(), SdiInputHeight() / 2))
-		{
-			std::cerr << "ERROR: Could not creat opengl textures for SDI input. Abort. " << std::endl;
-			return EXIT_FAILURE;
-		}
-	}
-	else
-	{
-		if (!SdiInputCreateTextures(MAX_VIDEO_STREAMS, SdiInputWidth(), SdiInputHeight()))
-		{
-			std::cerr << "ERROR: Could not creat opengl textures for SDI input. Abort. " << std::endl;
-			return EXIT_FAILURE;
-		}
-	}
+	
+	SdiInRenderEventFunc = &GetSdiInputRenderEventFunc;
+	SdiOutRenderEventFunc = &GetSdiOutputRenderEventFunc;
 
 
-	SdiSetDC(passthru.GetDC());
-	if (!SdiInputSetupGL())
-	{
-		std::cerr << "ERROR: Cannot setup opengl for input SDI. Abort. " << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	if (SdiGlobalOptions().captureFields)
-	{
-		if (!SdiInputBindVideoTextureField())
-		{
-			std::cerr << "ERROR: Cannot bind textures for SDI. Abort. " << std::endl;
-			return EXIT_FAILURE;
-		}
-	}
-	else
-	{
-		if (!SdiInputBindVideoTextureFrame())
-		{
-			std::cerr << "ERROR: Cannot bind textures for SDI. Abort. " << std::endl;
-			return EXIT_FAILURE;
-		}
-	}
-
-	if (!SdiOutputSetupGL())
-	{
-		std::cerr << "ERROR: Cannot setup opengl for output SDI. Abort. " << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	if (!SdiOutputBindVideo())
-	{
-		std::cerr << "ERROR: Cannot bind opengl video for output SDI. Abort. " << std::endl;
-		return EXIT_FAILURE;
-	}
-
-#if 0
-	if (captureFields)
-	{
-		SdiOutputSetTexture(0, SdiInputGetTextureId(0));
-		SdiOutputSetTexture(1, SdiInputGetTextureId(1));
-	}
-	else
-	{
-		SdiOutputSetTexture(0, SdiInputGetTextureId(0));
-		SdiOutputSetTexture(1, SdiInputGetTextureId(0));
-	}
-#else
-	SdiOutputCreateTextures();
-	SdiOutputInitializeFbo();
-#endif
-
-	passthru.InitFbo();
-
-
+	//
+	//
+	//
+	SetupInputSdi(ringBufferSizeInFrames, captureFields);
+	//
+	sdiWindow.MakeCurrent();
+	//
+	SetupOutputSdi(SdiInput()->GetSignalFormat(), COMP_SYNC, outputDelay, 788, 513, false, ringBufferSizeOutFrames);
+	//
+	SdiOutputComputePresentTimeFromCapture(true);
+	//
+	//
 	SdiAncSetupInput();
 	SdiAncSetupOutput();
+	//
+	SdiOutputPrintStats(true);
 
+	
+	
+	
+	
+	GLFont gFont;
+	gFont.Create(-48, "Arial");
+	static int timecode[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	if (!SdiInputStart())
-	{
-		std::cerr << "Error: Could not start video capture." << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	if (!SdiOutputStart())
-	{
-		std::cerr << "Error: Could not start to present video." << std::endl;
-		return EXIT_FAILURE;
-	}
+	lApp.InitSetup();
 
 
 	SdiInputResetDroppedFramesCount();
@@ -199,17 +176,23 @@ int main(int argc, char* argv[])
 	{
 		auto begin_loop_timer = std::chrono::system_clock::now();
 
-		GLenum status = SdiInputCaptureVideo();
-		if (status != GL_SUCCESS_NV)
-		{
-			std::cout << "Capture fail : " << ((status == GL_FAILURE_NV) ? "GL_FAILURE_NV" : "GL_PARTIAL_SUCCESS_NV") << std::endl;
-		}
 
-
+		//
+		// Capture frame
+		//
+		SdiInRenderEventFunc()(static_cast<int>(SdiRenderEvent::CaptureFrame));
+		//
+		// Capture Ancillary Data
+		//
 		SdiAncCapture();
 		SdiAncGetTimeCode(timecode, 0);
-		//passthru.RenderToSdi(SdiInputWidth(), SdiInputHeight());
+		
 
+
+		//
+		// Render to sdi fbo
+		//
+		SdiOutputMakeCurrent();
 		for (int f = 0; f < 2; ++f)
 		{
 			SdiOutputBeginRender(0, f);
@@ -238,14 +221,19 @@ int main(int argc, char* argv[])
 			SdiOutputEndRender(0, f);
 		}
 
-					
-		SdiAncPresent();
+		//
+		// Present ancillary data
+		//
+		// SdiAncPresent();
+		//
+		// Present frame
+		//
+		SdiOutRenderEventFunc()(static_cast<int>(SdiRenderEvent::PresentFrame));
 
-		double frame_rate_ns = 1000000000.0 / SdiInputFrameRate();
-		const uint64_t minPresentTime = SdiInputCaptureTime() + outputDelay * frame_rate_ns;
-		SdiOutputPresentFrame(minPresentTime);
-		
 
+		//
+		// Compute stats
+		//
 		if (SdiInputDroppedFrames() > 0 || SdiOutputDuplicatedFrames() > 0)
 		{
 			std::cout
@@ -256,37 +244,31 @@ int main(int argc, char* argv[])
 
 			last_drop = SdiInputFrameNumber();
 		}
-
 		auto end_loop_timer = std::chrono::system_clock::now();
-
 		loop_elapsed_seconds = end_loop_timer - begin_loop_timer;
-
 		int drop = SdiOutputDuplicatedFrames();
-
 		++out_frame_count;
 
-		passthru.DisplayVideo(SdiInputWidth(), SdiInputHeight());
+		//
+		// Render to window
+		sdiWindow.DisplayVideo(SdiInputWidth(), SdiInputHeight());
 
+		// 
+		// Check stop condition
+		//
 		if (SdiInputFrameNumber() > max_frames && max_frames > 0)
-			passthru.Close();
+			sdiWindow.Close();
 	}
 
 
-	SdiInputStop();
-
-	SdiInputUnbindVideoTextureFrame();
-
-	SdiInputCleanupGL();
-	SdiOutputCleanupGL();
+	CleanupInputSdi();
+	CleanupOutputSdi();
 
 	SdiAncCleanupInput();
 	SdiAncCleanupOutput();
 
-	SdiOutputCleanupDevices();
-	SdiInputCleanupDevices();
 
-	passthru.Destroy();
-
+	sdiWindow.Destroy();
 
 	std::cout
 		<< "Last : " << SdiInputFrameNumber()

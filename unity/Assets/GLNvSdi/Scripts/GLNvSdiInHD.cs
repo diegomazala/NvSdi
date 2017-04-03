@@ -51,13 +51,13 @@ public class GLNvSdiInHD : UtyGLNvSdi
     {
         yield return new WaitForEndOfFrame();
 
+        UtyGLNvSdi.SdiInputSetBufferSize(options.inputRingBufferSize);
+        UtyGLNvSdi.SdiInputSetCaptureFields(false);
+
         // Issue a plugin event with an integer identifier.
         // The plugin can distinguish between different based on this ID.
         GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.Initialize);
         yield return new WaitForEndOfFrame();
-
-        options.inputCaptureFields = false;
-        UtyGLNvSdi.SdiInputSetGlobalOptions(options.inputRingBufferSize, options.inputCaptureFields);   // capture_fields = false
 
         SetupTextures();
 
@@ -71,6 +71,9 @@ public class GLNvSdiInHD : UtyGLNvSdi
         {
             // Wait until all frame rendering is done
             yield return new WaitForEndOfFrame();
+
+            // Get status of the capture (GL_SUCCESS_NV, GL_FAILURE_NV, GL_PARTIAL_SUCCESS_NV)
+            //Debug.Log(UtyGLNvSdi.SdiInputCaptureStatus().ToString());
 
             // Capture frame from device
             GL.IssuePluginEvent(UtyGLNvSdi.GetSdiInputRenderEventFunc(), (int)SdiRenderEvent.CaptureFrame);

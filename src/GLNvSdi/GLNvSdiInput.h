@@ -12,10 +12,16 @@ extern "C"
 	/// Return the Sdi Input object
 	GLNVSDI_API CNvSDIin* SdiInput();
 
+	/// Make rendering context current 
+	GLNVSDI_API bool SdiInputMakeCurrent();
 
+	/// Load required extensions
+	GLNVSDI_API bool SdiInputLoadExtensions();
+		
 	/// Set global sdi configuration options for input sdi
-	GLNVSDI_API void SdiInputSetGlobalOptions(int ringBufferSizeInFrames, bool capture_fields = true);
-
+	GLNVSDI_API void SdiInputSetGlobalOptions();
+	GLNVSDI_API void SdiInputSetBufferSize(int ringBufferSizeInFrames);
+	GLNVSDI_API void SdiInputSetCaptureFields(bool capture_fields);
 	
 	/// Return video input width
 	GLNVSDI_API int SdiInputWidth();
@@ -77,6 +83,9 @@ extern "C"
 	GLNVSDI_API void SdiInputUninitialize();
 
 
+	\
+
+
 
 	/// Configure the sdi devices for startup
 	GLNVSDI_API bool SdiInputSetupDevices();
@@ -84,7 +93,8 @@ extern "C"
 	/// Empty
 	GLNVSDI_API void SdiInputCleanupDevices();
 
-	
+	GLNVSDI_API bool SdiInputSetupContextGL();
+
 	/// Setup opengl dependencies for sdi capture
 	GLNVSDI_API bool SdiInputSetupGL();
 

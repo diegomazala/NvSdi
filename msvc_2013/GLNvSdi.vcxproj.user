@@ -15,13 +15,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerEnvironment>PATH=..\lib\WinAppGL\$(Platform);$OutDir);$(PATH)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommand>C:\Program Files\Unity_54\Editor\Unity.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>C:\Program Files\Unity_55\Editor\Unity.exe</LocalDebuggerCommand>
     <LocalDebuggerCommandArguments>-projectPath $(SolutionDir)..\unity</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerEnvironment>PATH=..\lib\WinAppGL\$(Platform);$OutDir);$(PATH)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommand>C:\Program Files\Unity_54\Editor\Unity.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>C:\Program Files\Unity_55\Editor\Unity.exe</LocalDebuggerCommand>
     <LocalDebuggerCommandArguments>-projectPath $(SolutionDir)..\unity</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

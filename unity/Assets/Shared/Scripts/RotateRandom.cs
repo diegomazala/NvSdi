@@ -8,6 +8,6 @@ public class RotateRandom : MonoBehaviour
 
 	void Update () 
     {
-        transform.Rotate(Time.deltaTime * speed * axis);
+        transform.Rotate(speed * axis);
 	}
 }

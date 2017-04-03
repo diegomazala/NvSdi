@@ -18,10 +18,9 @@ public:
 	
 	void Render();
 
-	bool SetupSdi();
-	void CleanupSdi();
+	void SetOpenGLState();
 	
-	void Draw();
+	void Draw(int w, int h);
 	
 	void OnKeyEvent(const KeyEvent* pEvent);
 
