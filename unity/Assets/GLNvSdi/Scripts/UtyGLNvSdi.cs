@@ -38,9 +38,9 @@ public enum SdiVideoFormat
 [System.Serializable]
 public enum SdiSyncSource
 {
-    NONE,
+    SDI_SYNC,
     COMP_SYNC,
-    SDI_SYNC
+    NONE
 };
 
 [System.Serializable]
