@@ -274,9 +274,9 @@ public class GLNvSdiIO : UtyGLNvSdi
         for (int i = 0; i < count; ++i)
         {
             if (options.inputCaptureFields && texHeight == 243 && i % 2 == 0)
-                sdiTexture[i] = new RenderTexture(texWidth, texHeight + 1, 32, RenderTextureFormat.ARGB32);
+                sdiTexture[i] = new RenderTexture(texWidth, texHeight + 1, 32, RenderTextureFormat.ARGBFloat);
             else
-                sdiTexture[i] = new RenderTexture(texWidth, texHeight, 32, RenderTextureFormat.ARGB32);
+                sdiTexture[i] = new RenderTexture(texWidth, texHeight, 32, RenderTextureFormat.ARGBFloat);
             sdiTexture[i].name = name;
             sdiTexture[i].isPowerOfTwo = false;
             sdiTexture[i].useMipMap = false;

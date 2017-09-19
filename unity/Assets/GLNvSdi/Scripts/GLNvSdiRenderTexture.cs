@@ -20,7 +20,7 @@ public class GLNvSdiRenderTexture : MonoBehaviour
 
     public void CreateSdiTexture(int w, int h, int depth, bool is_power_of_two, string name)
     {
-        sdiRenderTarget = new RenderTexture(w, h, depth, RenderTextureFormat.ARGB32);
+        sdiRenderTarget = new RenderTexture(w, h, depth, RenderTextureFormat.ARGBFloat);
         sdiRenderTarget.name = name;
         sdiRenderTarget.isPowerOfTwo = is_power_of_two;
         sdiRenderTarget.useMipMap = false;

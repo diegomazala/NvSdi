@@ -2,12 +2,13 @@
 
 
 
-Shader "Custom/Composite" 
+Shader "GLNvSdi/Composite" 
 {
 	Properties	
 	{	
 		_MainTex ("Foreground (RGBA)", 2D) = "" {}	
 		_BgTex ("Background (RGB)", 2D) = "" {}	
+		_GammaCorrection("Gamma Correction ", Float) = 2.2
 		_Scale ("Image Scaling Factor ", Float) = 1.0	
 	}
 	
@@ -17,6 +18,7 @@ Shader "Custom/Composite"
 
 	uniform sampler2D	_BgTex;
 	uniform sampler2D	_MainTex;
+	uniform float		_GammaCorrection;
 	uniform float		_Scale;
 	
 	v2f_img vert( appdata_img v ) 
@@ -33,6 +35,7 @@ Shader "Custom/Composite"
 		float4 bg = tex2D(_BgTex, i.uv);
 		float4 fg = tex2D(_MainTex, i.uv);
 		float alpha = clamp(fg.a, 0, 1);
+		fg = float4(pow(fg.rgb, _GammaCorrection), fg.a);
 		return (alpha * fg) + ((1.0 - alpha) * bg);
 	}
 

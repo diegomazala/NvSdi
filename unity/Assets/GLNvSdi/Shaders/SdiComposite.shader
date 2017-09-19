@@ -1,6 +1,3 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-
 
 Shader "GLNvSdi/SdiComposite" 
 {
@@ -32,7 +29,10 @@ Shader "GLNvSdi/SdiComposite"
 	{
 		float4 bg = tex2D(_BgTex, i.uv);
 		float4 fg = tex2D(_MainTex, i.uv);
-		return (fg.a * fg) + ((1.0 - fg.a) * bg);
+		float alpha = clamp(fg.a, 0, 1);	// for HDR rendering
+		//float alpha = fg.a;	// for HDR rendering
+		fg = pow(fg, 1.f / 2.2f);
+		return (alpha * fg) + ((1.0 - alpha) * bg);
 	}
 
 	ENDCG 

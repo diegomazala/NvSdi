@@ -11,6 +11,7 @@ public class Composite : MonoBehaviour
     public Shader composite;
     private Material material;
     public float imageScale = 1.0f;
+    public float gammaCorrection = 2.2f;
 
     void Awake()
     {
@@ -29,7 +30,9 @@ public class Composite : MonoBehaviour
         material.SetTexture("_BgTex", backgroundTex);
         material.SetTexture("_MainTex", foregroundTex);
         material.SetFloat("_Scale", imageScale);
+        material.SetFloat("_GammaCorrection", gammaCorrection);
         Graphics.Blit(foregroundTex, destination, material);
     }
 
 }
+
