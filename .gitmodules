@@ -1,0 +1,3 @@
+[submodule "unity/Assets/PostProcessing-v2"]
+	path = unity/Assets/PostProcessing-v2
+	url = https://github.com/Unity-Technologies/PostProcessing/

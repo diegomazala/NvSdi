@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using System.Collections;
 
-
+[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
 public class Composite : MonoBehaviour 
 {
