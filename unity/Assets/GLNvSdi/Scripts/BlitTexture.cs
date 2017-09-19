@@ -5,7 +5,9 @@ using System;
 [RequireComponent(typeof(Camera))]
 public class BlitTexture : MonoBehaviour 
 {
-    public RenderTexture texture = null;
+    public Texture texture = null;
+
+#if false
     public float targetAspect = 1.77778f;
 
 
@@ -51,12 +53,12 @@ public class BlitTexture : MonoBehaviour
             GetComponent<Camera>().rect = rect;
         }
     }
-
+#endif
 
     
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        CorrectAspectRatio(targetAspect);
+        //CorrectAspectRatio(targetAspect);
 
         if (texture != null)
             Graphics.Blit(texture, destination);

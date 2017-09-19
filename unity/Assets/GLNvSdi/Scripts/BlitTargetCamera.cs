@@ -16,6 +16,4 @@ public class BlitTargetTexture : MonoBehaviour
         }
         RenderTexture.active = destination;
     }
-      
-
 }
