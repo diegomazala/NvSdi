@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 
 
 Shader "GLNvSdi/SdiCompositeFillKey" 
@@ -22,7 +24,7 @@ Shader "GLNvSdi/SdiCompositeFillKey"
 	v2f_img vert( appdata_img v ) 
 	{
 		v2f_img o;
-		o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
+		o.pos = UnityObjectToClipPos(v.vertex);
 		o.pos.xy *= _Scale;
 		o.uv = v.texcoord.xy;
 		return o;
